@@ -1,2 +1,2 @@
-period_id,month,start_date,end_date,agreement_year,adj_usd,bp_hours,po_hours,unav_hours,unavprod_hours,gse_hours,pfm_hours,ip_hours,source_reference,notes
-1,2026-01,2026-01-01,2026-01-31,1,0,,,,,,,,,
+timestamp_month,ADJ,BP,PO,UNAV,UNAVPROD,GSE,PFM,IP,source_reference,notes
+2026-01,0,,,,,,,,"Appendix F pp. 108; 112-115",
