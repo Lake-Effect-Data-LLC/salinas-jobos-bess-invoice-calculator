@@ -1,0 +1,39 @@
+Facility Information,
+Maximum Dispatch Limit (MW),80.35
+Number of Inverters,25
+Commerical Operation Date,2026-01-01 00:00:00
+Plane of Array Area (m2),1100000
+P50 Energy Yield (kWh),540500000
+Base Tariff ($),0.09253
+Yearly Total Output (kWh), 0
+,
+Billing Period Information,
+Period ID,1
+Other Credits,0
+,
+Inverter Nominal Capacities (kw),
+inv_000,3100
+inv_001,3300
+inv_002,3100
+inv_003,3300
+inv_004,3000
+inv_005,3400
+inv_006,3000
+inv_007,3400
+inv_008,2900
+inv_009,3500
+inv_010,2900
+inv_011,3500
+inv_012,3200
+inv_013,3200
+inv_014,3200
+inv_015,3200
+inv_016,3100
+inv_017,3300
+inv_018,3000
+inv_019,3400
+inv_020,3200
+inv_021,3200
+inv_022,3100
+inv_023,3300
+inv_024,3350
