@@ -28,7 +28,6 @@ TEXT_EXTENSIONS = {".csv", ".txt", ".md"}
 DEFAULT_OUTPUT_DIR = Path("local") / "luma-index"
 
 PROJECT_OVERRIDES = {
-    "jobos_solar": "Salinas and Jobos",
     "jobos_bess": "Salinas and Jobos",
 }
 
@@ -88,13 +87,8 @@ def infer_source_level(path: Path) -> str:
 
 def infer_service_type(path: Path) -> str:
     parts = lower_parts(path)
-    if "ppoa" in parts:
-        return "PPOA"
     if "bess" in parts:
         return "BESS"
-    joined = " ".join(parts)
-    if "solar" in joined:
-        return "PPOA"
     return ""
 
 
