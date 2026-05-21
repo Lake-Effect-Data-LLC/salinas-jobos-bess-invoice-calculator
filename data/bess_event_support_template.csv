@@ -1,0 +1,2 @@
+event_id,period_id,event_type,start_timestamp,end_timestamp,hours,availability_bucket,is_excluded,source_reference,notes
+EVT-001,1,,2026-01-01 00:00:00,2026-01-01 00:00:00,,,false,,
