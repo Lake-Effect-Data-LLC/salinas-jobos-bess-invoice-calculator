@@ -26,18 +26,18 @@ def format_percentage(value):
 
 
 def generate_report(facility_info, billing_data, calculations, start_date, end_date):
-    """Generate a formatted monthly payment report per PPOA"""
+    """Generate a formatted monthly compensation report."""
 
     report = []
     report.append("=" * 80)
-    report.append("MONTHLY PAYMENT REPORT")
+    report.append("MONTHLY COMPENSATION REPORT")
     report.append("=" * 80)
     report.append("")
 
     # Facility Information
     report.append("FACILITY INFORMATION")
     report.append("-" * 80)
-    report.append(f"Facility:             Jobos Solar (Clean Flexible Energy LLC)")
+    report.append(f"Facility:             Salinas and Jobos BESS")
     report.append(f"Maximum Dispatch Limit: {facility_info.maximum_dispatch_limit_mw * 1000:,.0f} kW")
     report.append(f"Number of Inverters:  {facility_info.num_inverters}")
     report.append(f"Commercial Op Date:   {facility_info.commercial_operation_date.strftime('%Y-%m-%d')}")
