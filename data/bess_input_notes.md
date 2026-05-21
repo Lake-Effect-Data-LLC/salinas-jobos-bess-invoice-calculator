@@ -33,9 +33,9 @@ The first code milestone should be a BESS data reader that loads these templates
 - required columns exist
 - timestamps parse
 - agreement year can be determined from the monthly timestamp using a sourced rule
-- `DDE`, `TR`, `BP`, `PO`, `UNAV`, `UNAVPROD`, `GSE`, `PFM`, `IP`, and `ADJ` are numeric
+- `DDE`, `TR`, `BPHRS`, `POHRS`, `UNAVHRS`, `UNAVPRODHRS`, `GSE`, `PFM`, `IP`, and `ADJ` are numeric
 - monthly hour totals are non-negative
-- monthly outage/risk hours do not exceed `BP` where the cited formula requires it
+- monthly outage/risk hours do not exceed `BPHRS` where the cited formula requires it
 - adjustment rows include a reason and source reference when `ADJ` is non-zero
 
 ## Open Questions Before Implementation

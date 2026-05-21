@@ -1,4 +1,4 @@
-JOBOS AND SALINAS MONTHLY PAYMENT CALCULATION SYSTEM
+JOBOS AND SALINAS BESS MONTHLY PAYMENT CALCULATION SYSTEM
 ================================
 
 This program calculates the monthly payment for a solar facility using
@@ -11,33 +11,7 @@ The workflow is organized into three phases: Input, Calculations, and Output.
 
 Input Files
 -----------
-The system requires five input datasets:
-
-1. Facility & Billing Configuration
-   - Facility characteristics (capacity, inverter capacities, COD, tariff info,
-     P50 energy yield, yearly NEO, etc.)
-   - Billing period metadata (period ID, other credits)
-
-2. Plant Data
-   - Interval-level Net Energy Output (NEO)
-   - Interval-level Plane-of-Array irradiance (GK)
-
-3. Inverter Availability History (Cumulative Sum)
-   - Per-inverter cumulative counts of valid, event, and failure intervals
-   - Used for tracking long-term inverter performance
-
-4. Complete No-Event Days History
-   - Historical record of all no-event days with their (NEO, GK) pairs
-   - System extracts the most recent 7 days for ENEO calculations
-
-5. Complete Inverter Availability History (Rolling Window)
-   - Full historical record of inverter states by timestamp
-   - System extracts the most recent 30 days for FA calculations
-
-6. Previous Monthly Outputs History
-   - Historical record of monthly total output (NEO + DNEO) per billing period
-   - Used for the rolling 2-year performance guarantee calculation
-
+The system requires three input datasets:
 
 Validation
 ----------
@@ -49,20 +23,10 @@ message indicating the expected file path.
 Data Loading
 ------------
 Validated input files are parsed into structured objects:
-- FacilityData
-- BillingPeriodData
-- TimeIntervalData (10-minute intervals)
-- DailyData (daily aggregates)
-- InverterState (availability counters)
 
 Historical data is loaded in its entirety:
-- Complete history of no-event days stored in a deque
-- Complete history of inverter states by timestamp stored in a deque
-- Complete history of monthly total outputs stored in a deque
 
 The system dynamically extracts the relevant windows during calculations:
-- Most recent 7 no-event days for ENEO
-- Most recent 30 days (4320 intervals) for inverter availability
 
 --------------------------------------------------
 2. CALCULATION PHASE
@@ -72,86 +36,24 @@ Facility Availability (FA)
 --------------------------
 Facility Availability is calculated hierarchically:
 
-UA -> WA -> FA
-
 The calculation processes each 10-minute interval in the current billing period:
 
 **Per-Interval Processing:**
-
-1. Create Inverter State Snapshot
-   For each interval, the system captures the current state of all inverters:
-   - t: whether this interval has valid irradiance (1 if > 0.1 kW/m², 0 otherwise)
-   - u_e: whether this interval is a PREPA-caused event (1 or 0)
-   - u_i: whether this interval is a non-PREPA failure (1 or 0)
    
    This snapshot is appended to the historical inverter availability deque.
 
-2. Extract Rolling 30-Day Window
-   The system retrieves the most recent 4320 intervals (30 days × 144 intervals/day)
-   from the complete historical deque.
-
-3. Calculate Unit Availability (UA)
-   For each inverter, sum the counts across the 30-day window:
-   
-   UA_i = (T - U_E - U_I) / (T - U_E)
-   
-   where:
-     T   = sum of valid irradiance intervals over 30 days
-     U_E = sum of PREPA-caused event intervals over 30 days
-     U_I = sum of non-PREPA failure intervals over 30 days
-   
-   This calculation excludes intervals where the inverter experienced PREPA events
-   from both the numerator and denominator, treating them as unavailable time that
-   doesn't count against the facility's performance.
-
-4. Calculate Weighted Availability (WA)
-   For each interval, inverter availabilities are weighted by their nominal capacity:
-   
-   WA = Σ(UA_i × UC_i) / NC
-   
-   where:
-     UA_i = unit availability for inverter i
-     UC_i = nominal capacity of inverter i (kW)
-     NC   = total nominal capacity of facility (kW)
 
 5. Calculate Facility Availability (FA)
    FA is the average of all weighted availabilities across the current billing period:
-   
-   FA = Σ(WA) / number_of_intervals
 
 The historical deque grows continuously as new intervals are processed, maintaining
 the complete record while allowing efficient extraction of the rolling 30-day window.
-
-
-Expected Net Energy Output (ENEO)
---------------------------------
-ENEO is calculated per interval using historical performance data and current conditions.
 
 **Per-Interval Processing:**
 
 1. Extract Rolling 7-Day Window
    The system retrieves the most recent 7 no-event days from the complete historical
    deque of no-event days.
-
-2. Calculate Average Performance Ratio
-   For each of the 7 days, calculate the performance ratio:
-   
-   PR_j = NEO_j / (GK_j × PV_area)
-   
-   Then average across all 7 days:
-   
-   Average_PR = Σ(PR_j) / 7
-
-3. Calculate Expected Energy for Current Interval
-   Apply the average performance ratio to current interval conditions:
-   
-   ENEO_i = (Average_PR × GK_i × FA) / 100
-   
-   where:
-     GK_i    = current interval irradiance (kWh/m²) × PV_area (m²)
-     FA      = facility availability (calculated above)
-   
-   Note: The result is scaled by a factor of 1/100.
 
 4. Update No-Event Days History
    At the end of each day (last interval at 23:50), if the day had no PREPA events:
@@ -160,103 +62,11 @@ ENEO is calculated per interval using historical performance data and current co
    
    The deque grows continuously, maintaining the full record of all no-event days.
 
-**Billing Period ENEO:**
 
-ENEO_n = Σ(ENEO_i) for all intervals in the billing period
-
-
-Deemed Net Energy Output (DNEO)
---------------------------------
-DNEO represents the shortfall between expected and actual output. No Adjustment
-Factor (AF) is applied in this version:
-
-DNEO_n = ENEO_n - NEO_n
-
-
-Contract Rate (CR)
-------------------
-The Contract Rate is calculated based on the agreement terms and current status.
-
-**Yearly NEO Tracking:**
-
-The facility configuration tracks cumulative yearly NEO. In January (month 1),
-the yearly counter resets to the current month's total output (NEO + DNEO). In
-all other months, the current output is added to the running total.
-
-**Base Rate Adjustment:**
-
-If yearly total output (NEO + DNEO) exceeds 110% of the P50 energy yield, the
-base rate is reduced by 20%:
-
-Base_Rate = BR × 0.8  (if yearly output > P50 × 1.1)
-
-Otherwise, the contract rate equals the base rate:
-
-CR = BR
-
-**Escalation Calculation:**
-
-Starting after the first agreement year, the rate escalates 2% annually on July 1:
-
-1. Determine if the current date is before the first agreement year ends
-   (COD + 1 year). If so, return the base tariff unchanged.
-
-2. Count the number of July 1st dates between (COD + 1 year) and the current date.
-
-3. Apply compound escalation:
-   
-   Escalated_Rate = Base_Tariff × (1.02)^escalation_count
-
-Note: No rate cap is applied in this version.
 
 
 Monthly Payment (MP)
 --------------------
-The final Monthly Payment combines energy revenue and credits:
-
-**Energy Components:**
-- NEO_n  = Σ(actual NEO) for all intervals in billing period
-- DNEO_n = ENEO_n - NEO_n
-
-**Financial Components:**
-- CR_n = contract rate ($/kWh)
-- OC_n = other credits ($)
-
-**Final Calculation:**
-
-MP = ((NEO_n + DNEO_n) × CR_n) - OC_n
-
-Note: Insurance proceeds and reimbursement installments are not included in
-this version of the payment formula.
-
-
-Shortfall Credits (SC) — Performance Guarantee
------------------------------------------------
-At the end of each billing period, cumulative output is checked against the
-performance guarantee threshold.
-
-1. The rolling window requires at least 24 months of history. If fewer than
-   24 prior outputs exist, no shortfall credit is applied.
-
-2. Estimate the expected output for the rolling 2-year period:
-   
-   Estimated_Output = P50 × 2 × 0.9
-
-3. Sum the actual total output (NEO + DNEO) over the most recent 24 months.
-
-4. Calculate the Energy Quantity Shortfall (EQS):
-   
-   EQS = Estimated_Output - Actual_Output
-
-   If EQS <= 0, no shortfall credit is applied.
-
-5. Calculate Shortfall Credit:
-   
-   SC = (RER - BR) × EQS
-   
-   where:
-     RER = $0.17/kWh  (Replacement Energy Rate)
-     BR  = current base rate
 
 --------------------------------------------------
 3. OUTPUT PHASE
@@ -268,20 +78,6 @@ Updated data required for the next billing period is written to disk.
 
 **Complete Historical Records:**
 
-1. Updated No-Event Days History
-   - Appends new no-event days to the complete historical record
-   - Maintains all historical data, not just the most recent 7 days
-   - Next billing period will extract its own 7-day window
-
-2. Updated Inverter Availability History
-   - Appends new interval-level inverter states to the complete historical record
-   - Maintains all historical data, not just the most recent 30 days
-   - Next billing period will extract its own 30-day window
-
-3. Updated Facility Configuration
-   - Updates yearly NEO accumulator
-   - Increments period ID for next billing cycle
-
 4. Updated Monthly Outputs History
    - Appends the current period's total output to the historical record
    - Used for future shortfall credit calculations
@@ -291,31 +87,12 @@ Reporting
 ---------
 A formatted monthly payment report is generated that includes:
 - Facility and billing period information
-- Energy production and availability metrics
 - Financial calculations
 - Full payment formula breakdown
-- Performance guarantee / shortfall credit status
+- Performance guarantee
 
 The report is saved to the output directory for review and auditing.
 
 --------------------------------------------------
 SUMMARY
 --------------------------------------------------
-
-This system:
-- Maintains complete historical records of all no-event days, inverter states,
-  and monthly outputs
-- Dynamically extracts rolling windows (7 days for ENEO, 30 days for FA) from
-  the complete historical data during calculations
-- Calculates DNEO directly as ENEO - NEO (no Adjustment Factor)
-- Computes the Monthly Payment as ((NEO + DNEO) × CR) - OC, without insurance
-  proceeds or reimbursement installment components
-- Applies a 20% base rate reduction when yearly output exceeds 110% of P50,
-  with no rate cap
-- Evaluates a rolling 2-year performance guarantee and calculates shortfall
-  credits when applicable
-- Cleanly separates input handling, calculations, and output generation
-- Produces both machine-readable state files for future billing periods and a
-  human-readable report for stakeholders
-- Grows historical datasets over time while maintaining efficient window-based
-  calculations
