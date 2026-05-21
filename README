@@ -78,7 +78,7 @@ Updated data required for the next billing period is written to disk.
 
 **Complete Historical Records:**
 
-4. Updated Monthly Outputs History
+4. Updated Monthly Outputs History 
    - Appends the current period's total output to the historical record
    - Used for future shortfall credit calculations
 
