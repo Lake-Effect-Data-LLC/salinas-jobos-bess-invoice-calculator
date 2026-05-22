@@ -1,9 +1,5 @@
-JOBOS AND SALINAS BESS MONTHLY PAYMENT CALCULATION SYSTEM
+ SALINAS BESS MONTHLY PAYMENT CALCULATION SYSTEM
 ================================
-
-This program calculates the monthly payment for a solar facility using
-interval-level production, irradiance, and inverter availability data.
-The workflow is organized into three phases: Input, Calculations, and Output.
 
 --------------------------------------------------
 1. INPUT PHASE
@@ -28,42 +24,6 @@ Historical data is loaded in its entirety:
 
 The system dynamically extracts the relevant windows during calculations:
 
---------------------------------------------------
-2. CALCULATION PHASE
---------------------------------------------------
-
-Facility Availability (FA)
---------------------------
-Facility Availability is calculated hierarchically:
-
-The calculation processes each 10-minute interval in the current billing period:
-
-**Per-Interval Processing:**
-   
-   This snapshot is appended to the historical inverter availability deque.
-
-
-5. Calculate Facility Availability (FA)
-   FA is the average of all weighted availabilities across the current billing period:
-
-The historical deque grows continuously as new intervals are processed, maintaining
-the complete record while allowing efficient extraction of the rolling 30-day window.
-
-**Per-Interval Processing:**
-
-1. Extract Rolling 7-Day Window
-   The system retrieves the most recent 7 no-event days from the complete historical
-   deque of no-event days.
-
-4. Update No-Event Days History
-   At the end of each day (last interval at 23:50), if the day had no PREPA events:
-   - Calculate daily totals (NEO, GK)
-   - Append the day's data to the complete historical deque
-   
-
-
-
-
 Monthly Payment (MP)
 --------------------
 
@@ -71,24 +31,9 @@ Monthly Payment (MP)
 3. OUTPUT PHASE
 --------------------------------------------------
 
-State Persistence
------------------
-Updated data required for the next billing period is written to disk.
-
-**Complete Historical Records:**
-
-4. Updated Monthly Outputs History 
-   - Appends the current period's total output to the historical record
-   - Used for future shortfall credit calculations
-
 
 Reporting
 ---------
-A formatted monthly payment report is generated that includes:
-- Facility and billing period information
-- Financial calculations
-- Full payment formula breakdown
-- Performance guarantee
 
 The report is saved to the output directory for review and auditing.
 
