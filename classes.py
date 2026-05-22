@@ -28,6 +28,7 @@ class BessMonthlyInputs:
     """Monthly inputs needed for ADJ, FA, FAA, and PRA calculations."""
 
     timestamp_month: str
+    agreement_year: int
     adj: float
     bphrs: float
     pohrs: float
@@ -38,3 +39,19 @@ class BessMonthlyInputs:
     ip: float
     source_reference: str = ""
     notes: str = ""
+
+
+@dataclass(frozen=True)
+class BessMonthlyResult:
+    """Calculated monthly payment values for one billing month."""
+
+    timestamp_month: str
+    agreement_year: int
+    cpp: float
+    mcc: float
+    fa: float
+    faa: float
+    pra: float
+    mfp: float
+    adj: float
+    mp: float

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from compensation_calculator import calculate_monthly_results
+from data_reader import load_bess_inputs
 from error_checks import input_validation
 
 
@@ -17,7 +19,24 @@ def main():
         monthly_inputs_csv,
     )
 
+    contract_values, yearly_inputs, monthly_inputs = load_bess_inputs(
+        contract_values_csv,
+        yearly_inputs_csv,
+        monthly_inputs_csv,
+    )
+    monthly_results = calculate_monthly_results(
+        contract_values,
+        yearly_inputs,
+        monthly_inputs,
+    )
+
     print("BESS input files passed validation.")
+    for result in monthly_results:
+        print(
+            f"{result.timestamp_month}: "
+            f"agreement_year={result.agreement_year}, "
+            f"MP=${result.mp:,.2f}"
+        )
 
 
 if __name__ == "__main__":

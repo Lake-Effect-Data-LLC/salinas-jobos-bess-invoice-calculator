@@ -1,6 +1,4 @@
 from datetime import datetime, time
-from classes import InverterState
-from itertools import islice
 
 
 def is_last_interval_of_day(timestamp: datetime) -> bool:
