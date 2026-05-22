@@ -1,7 +1,7 @@
 GRID_SYSTEM_WAITING_PERIOD_HOURS = 80
 FORCE_MAJEURE_WAITING_PERIOD_HOURS = 720
-SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS = 160
 
+SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS = 160
 
 def calculate_included_hours(current_hours, prior_hours, annual_allowance_hours):
     if any(value < 0 for value in [current_hours, prior_hours, annual_allowance_hours]):
