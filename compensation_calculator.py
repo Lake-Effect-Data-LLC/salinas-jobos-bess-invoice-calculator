@@ -1,19 +1,29 @@
 from calculations import (
     calculate_FA,
     calculate_FAA,
+    calculate_annual_mcc,
     calculate_capabability_payment_price,
-    calculate_monthly_contract_capability,
+    calculate_included_POHRS,
     calculate_monthly_fixed_payment,
     calculate_monthly_payment,
-    simple_calculate_risk_adjustment,
+    calculate_risk_adjustment_with_waiting_periods,
 )
 from classes import BessMonthlyResult
 
 
 def calculate_monthly_results(contract_values, yearly_inputs, monthly_inputs):
     results = []
+    prior_pohrs_by_year = {}
+    prior_gsehrs_by_year = {}
+    prior_pfmhrs_by_year = {}
 
-    for monthly_input in monthly_inputs:
+    for monthly_input in sorted(
+        monthly_inputs,
+        key=lambda monthly_input: (
+            monthly_input.agreement_year,
+            monthly_input.timestamp_month,
+        ),
+    ):
         contract = _get_agreement_year_values(
             contract_values,
             monthly_input.agreement_year,
@@ -25,23 +35,37 @@ def calculate_monthly_results(contract_values, yearly_inputs, monthly_inputs):
             "yearly inputs",
         )
 
+        agreement_year = monthly_input.agreement_year
+        prior_pohrs = prior_pohrs_by_year.get(agreement_year, 0.0)
+        prior_gsehrs = prior_gsehrs_by_year.get(agreement_year, 0.0)
+        prior_pfmhrs = prior_pfmhrs_by_year.get(agreement_year, 0.0)
+
         cpp = calculate_capabability_payment_price(contract.cppf, contract.cpppif)
-        mcc = calculate_monthly_contract_capability(yearly.dde, contract.ddd, yearly.tr)
+        mcc = calculate_annual_mcc(yearly.dde, contract.ddd, yearly.tr)
+        included_pohrs = calculate_included_POHRS(monthly_input.pohrs, prior_pohrs)
+        excess_pohrs = monthly_input.pohrs - included_pohrs
+        unavhrs = monthly_input.unavhrs + excess_pohrs
         fa = calculate_FA(
             monthly_input.bphrs,
-            monthly_input.pohrs,
-            monthly_input.unavhrs,
+            included_pohrs,
+            unavhrs,
             monthly_input.unavprodhrs,
         )
         faa = calculate_FAA(fa)
-        pra = simple_calculate_risk_adjustment(
+        pra = calculate_risk_adjustment_with_waiting_periods(
             monthly_input.bphrs,
             monthly_input.gse,
             monthly_input.pfm,
             monthly_input.ip,
+            prior_gsehrs,
+            prior_pfmhrs,
         )
         mfp = calculate_monthly_fixed_payment(cpp, mcc, faa, pra)
         mp = calculate_monthly_payment(mfp, monthly_input.adj)
+
+        prior_pohrs_by_year[agreement_year] = prior_pohrs + monthly_input.pohrs
+        prior_gsehrs_by_year[agreement_year] = prior_gsehrs + monthly_input.gse
+        prior_pfmhrs_by_year[agreement_year] = prior_pfmhrs + monthly_input.pfm
 
         results.append(
             BessMonthlyResult(
