@@ -60,7 +60,6 @@ the complete record while allowing efficient extraction of the rolling 30-day wi
    - Calculate daily totals (NEO, GK)
    - Append the day's data to the complete historical deque
    
-   The deque grows continuously, maintaining the full record of all no-event days.
 
 
 
