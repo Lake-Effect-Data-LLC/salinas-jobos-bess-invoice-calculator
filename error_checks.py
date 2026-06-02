@@ -27,6 +27,24 @@ BESS_REQUIRED_COLUMNS = {
         "PFM",
         "IP",
     },
+    "Performance_Tests.csv": {
+        "test_id",
+        "agreement_year",
+        "test_type",
+        "test_date",
+        "requested_by",
+        "TDE",
+        "measured_ramp_rate",
+        "prepa_approved",
+    },
+    "Monthly_Performance_Guarantee.csv": {
+        "timestamp_month",
+        "agreement_year",
+        "CE",
+        "DE",
+        "AE_beg",
+        "AE_end",
+    },
 }
 
 

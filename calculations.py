@@ -34,6 +34,7 @@ def calculate_included_POHRS(POHRS, prior_POHRS):
     )
 
 
+
 def calculate_FA_with_included_POHRS(currentPOHRS, prior_POHRS, BPHRS, UNAVHRS, UNAVPRODHRS):
     included_POHRS = calculate_included_POHRS(currentPOHRS, prior_POHRS)
     return calculate_FA(BPHRS, included_POHRS, UNAVHRS, UNAVPRODHRS)
@@ -120,10 +121,8 @@ def calculate_risk_adjustment_with_waiting_periods(BPHRS, GSEHRS, PFMHRS, IPHRS,
 
 
 
-# The date/effective-period rule should live outside this formula later: first choose which performance test applies to the billing period, then pass that test’s TDE into this function.
 
-def calculate_initial_mcc(design_dmax):
-    return design_dmax
+
 
 def calculate_performance_test_mcc(DDE, DDD, TDE):
 
@@ -158,9 +157,67 @@ def calculate_monthly_fixed_payment(CPP, MCC, FAA, PRA):
     # MFPn = CPP x MCCn x FAAn x PRAn
         return CPP * MCC * FAA * PRA
 
-
 def calculate_monthly_payment(MFP, ADJ):
     # MPn = MFPn - ADJn
     return MFP - ADJ
 
+def calculate_liquidated_damages_rate(RER, CPP):
+    # Source: Appendix P Sections 1-3.
+    return RER - (CPP / (30.33 * 24))
 
+
+def calculate_availability_liquidated_damages(TA, FA, DDE, RER, CPP):
+    # Source: Appendix P Section 1(b), Availability Liquidated Damages.
+    # ALD = Availability Liquidated Damages, expressed in dollars.
+    # TA = Threshold Availability, expressed as a percentage.
+    # FA = Facility Availability for the Billing Period, expressed as a percentage.
+    # DDE = Degraded Duration Energy for the Agreement Year, expressed in MWh.
+    # RER = Replacement Energy Rate, expressed in $/MWh.
+    # CPP = Capability Payment Price for the Agreement Year, expressed in $/MW-Month.
+    if any(value < 0 for value in [TA, FA, DDE, RER, CPP]):
+        raise ValueError("ALD inputs must be non-negative.")
+
+    availability_shortfall = max(TA - FA, 0)
+    return availability_shortfall * DDE * calculate_liquidated_damages_rate(RER, CPP)
+
+
+def calculate_capability_liquidated_damages_per_day(GC, TDE, RER, CPP):
+    # Source: Appendix P Section 2(b), Capability Liquidated Damages.
+    # CLD = Capability Liquidated Damages per Day, expressed in dollars.
+    # GC = Guaranteed Capability, expressed in MWh.
+    # TDE = Tested Duration Energy, expressed in MWh.
+    # RER = Replacement Energy Rate, expressed in $/MWh.
+    # CPP = Capability Payment Price for the Agreement Year, expressed in $/MW-Month.
+    if any(value < 0 for value in [GC, TDE, RER, CPP]):
+        raise ValueError("CLD inputs must be non-negative.")
+
+    capability_shortfall = max(GC - TDE, 0)
+    return capability_shortfall * calculate_liquidated_damages_rate(RER, CPP)
+
+
+def calculate_actual_efficiency(DE, CE, AE_beg, AE_end):
+    # Source: Appendix P Section 3(b), Actual Efficiency.
+    if CE <= 0:
+        raise ValueError("CE must be greater than zero.")
+    if any(value < 0 for value in [DE, AE_beg, AE_end]):
+        raise ValueError("Actual Efficiency inputs must be non-negative.")
+
+    return (DE + (AE_end - AE_beg)) / CE
+
+
+def calculate_efficiency_liquidated_damages(RER, CPP, CE, GE, DE, actual_efficiency):
+    # Source: Appendix P Section 3(c), Efficiency Liquidated Damages.
+    # ELD = Efficiency Liquidated Damages, expressed in dollars.
+    # CE = Charge Energy for the Billing Period, expressed in MWh.
+    # GE = Guaranteed Efficiency, expressed as its decimal equivalent.
+    # DE = Discharge Energy for the Billing Period, expressed in MWh.
+    # RER = Replacement Energy Rate, expressed in $/MWh.
+    # CPP = Capability Payment Price for the Agreement Year, expressed in $/MW-Month.
+    if any(value < 0 for value in [RER, CPP, CE, GE, DE, actual_efficiency]):
+        raise ValueError("ELD inputs must be non-negative.")
+
+    if actual_efficiency >= GE:
+        return 0.0
+
+    energy_shortfall = max((CE * GE) - DE, 0)
+    return calculate_liquidated_damages_rate(RER, CPP) * energy_shortfall

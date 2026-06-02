@@ -1,42 +1,141 @@
- SALINAS BESS MONTHLY PAYMENT CALCULATION SYSTEM
-================================
+Salinas and Jobos BESS Invoice Calculator
+=========================================
 
---------------------------------------------------
-1. INPUT PHASE
---------------------------------------------------
+This project calculates monthly compensation for the Salinas and Jobos BESS
+contract and reports selected Appendix P performance-guarantee damages.
+
+The current calculator is built around Appendix F monthly compensation, with
+Appendix P values reported separately so they can be reviewed before deciding
+whether they should be netted through `ADJ` or invoice presentation.
+
+
+What It Calculates
+------------------
+
+Monthly compensation:
+
+- `CPP = CPPF + CPPPIF`
+- `MCC`, including approved Performance Test adjustments
+- `FA`
+- `FAA`
+- `PRA`
+- `MFP = CPP x MCC x FAA x PRA`
+- `MP = MFP - ADJ`
+
+Performance guarantee reporting:
+
+- `ALD` Availability Liquidated Damages
+- `Actual_Efficiency`
+- `ELD` Efficiency Liquidated Damages
+- `CLD_per_day` formula exists, but total monthly CLD allocation is not wired yet
+
+`MP` is currently reduced by `ALD` and `ELD` through `ADJ_Total`, based on the
+working assumption that Appendix F `ADJ` includes other credits or amounts to
+which PREPA has a right under the Agreement. `CLD` is not included yet because
+total CLD allocation across the failed-test/cure period is not implemented.
+
 
 Input Files
 -----------
-The system requires three input datasets:
 
-Validation
+Primary files used by `main.py`:
+
+| File | Purpose |
+| --- | --- |
+| `data/bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, and design values |
+| `data/bess_yearly_inputs_template.csv` | Yearly values: `DDE` and fallback/manual `TR` |
+| `data/bess_monthly_inputs_template.csv` | Monthly compensation inputs: `ADJ`, availability hours, and PREPA risk hours |
+| `data/Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
+| `data/Performance_Tests.csv` | Event-based performance tests: `TDE`, ramp rate, test date, approval status, and cure/retest fields |
+
+The current code still reads the `bess_*_template.csv` files for the main
+compensation path. The friendlier sample names may be useful for review, but
+they are not the active inputs unless `main.py` is changed.
+
+
+Important Contract Modeling Decisions
+-------------------------------------
+
+`DDE` is currently a yearly input.
+
+Contractually, Degraded Duration Energy means Design Duration Energy adjusted
+downward by the applicable Energy Degradation Factor and adjusted upward by
+qualifying Performance Tests after maintenance or technology upgrades, capped
+at Design Duration Energy. The calculator does not derive that yet.
+
+`TDE` is the performance-test source value.
+
+Approved Performance Tests can affect `MCC`. The adjustment starts on the first
+day of the Billing Period after the Billing Period in which the Performance Test
+occurred.
+
+Current MCC behavior:
+
+- If an approved applicable Performance Test exists, use Appendix F Section 3(c):
+  - if `TDE < 0.99 x DDE`, then `MCC = TDE / DDD`
+  - otherwise `MCC = DDE / DDD`
+- If no approved applicable Performance Test exists, use fallback `TR`:
+  - `MCC = min(DDE / DDD, TR)`
+
+
+Run It
+------
+
+```powershell
+python .\main.py
+```
+
+Output is written to:
+
+```text
+output/bess_monthly_results.csv
+```
+
+
+Report Structure Target
+-----------------------
+
+Section 10.1 gives the practical checklist for the future written invoice or
+`report.txt`. Each Billing Period report should include, as applicable:
+
+- Monthly Fixed Payment
+- Other Payment Adjustments
+- Discharge Energy
+- Charge Energy
+- Ancillary Services
+- Green Credits
+- Balance
+- information necessary to determine Facility performance
+- insurance payments
+- credits or payments owing to PREPA
+- itemized statement of all other charges under the Agreement
+
+That means the current result columns should eventually be presented as an
+invoice-style report, not only a calculation table. A useful first structure is:
+
+1. Billing Period and Agreement Year
+2. Monthly Fixed Payment calculation: `CPP`, `MCC`, `FAA`, `PRA`, `MFP`
+3. Other Payment Adjustments and Monthly Payment: `Other_ADJ`, `ALD`, `ELD`, `ADJ_Total`, `MP`
+4. Metered performance data: `CE`, `DE`, `Actual_Efficiency`
+5. Performance guarantee items: `ALD`, `ELD`, and later `CLD`
+6. PREPA credits/payments and itemized charges
+7. Net invoice presentation, once treatment of LDs versus `ADJ` is settled
+
+
+Known Gaps
 ----------
-Before processing begins, the program verifies that all required input files
-exist. If any file is missing, execution stops immediately with a clear error
-message indicating the expected file path.
 
-
-Data Loading
-------------
-Validated input files are parsed into structured objects:
-
-Historical data is loaded in its entirety:
-
-The system dynamically extracts the relevant windows during calculations:
-
-Monthly Payment (MP)
---------------------
-
---------------------------------------------------
-3. OUTPUT PHASE
---------------------------------------------------
-
-
-Reporting
----------
-
-The report is saved to the output directory for review and auditing.
-
---------------------------------------------------
-SUMMARY
---------------------------------------------------
+- `DDE` is not yet derived from degradation factors or qualifying upgrade tests.
+- `TR` remains as a fallback input while performance-test timing is being proven.
+- Performance Test MCC currently uses only `prepa_approved = TRUE` tests. This
+  follows the Section 6.9 approval process, but Appendix F Section 3(c) says the
+  adjustment continues until another Performance Test is completed, so the exact
+  approval-versus-completion trigger should be confirmed.
+- Annual adjustment replacement is modeled by Agreement Year. If an annual
+  adjustment can occur mid-Agreement-Year, that timing is not yet represented.
+- `ALD` and `ELD` are folded into `ADJ_Total` under the current working assumption.
+  Confirm that source `ADJ` data excludes calculated LDs to avoid double-counting.
+- `CLD_per_day` is available, but total CLD allocation across failed-test and
+  cure/retest dates still needs implementation.
+- Ramp-rate failure currently belongs in performance-test data, but its outage
+  consequence is not yet automatically rolled into `UNAVHRS`.

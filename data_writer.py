@@ -13,7 +13,11 @@ BESS_MONTHLY_RESULT_COLUMNS = [
     "FAA",
     "PRA",
     "MFP",
-    "ADJ",
+    "Other_ADJ",
+    "ALD",
+    "Actual_Efficiency",
+    "ELD",
+    "ADJ_Total",
     "MP",
 ]
 
@@ -41,7 +45,13 @@ def write_bess_monthly_results(monthly_results, filename="bess_monthly_results.c
                     "FAA": _format_decimal(result.faa),
                     "PRA": _format_decimal(result.pra),
                     "MFP": _format_decimal(result.mfp),
-                    "ADJ": _format_decimal(result.adj),
+                    "Other_ADJ": _format_decimal(result.other_adj),
+                    "ALD": _format_decimal(result.ald),
+                    "Actual_Efficiency": _format_optional_decimal(
+                        result.actual_efficiency
+                    ),
+                    "ELD": _format_decimal(result.eld),
+                    "ADJ_Total": _format_decimal(result.adj_total),
                     "MP": _format_decimal(result.mp),
                 }
             )
@@ -51,3 +61,10 @@ def write_bess_monthly_results(monthly_results, filename="bess_monthly_results.c
 
 def _format_decimal(value):
     return f"{value:.6f}"
+
+
+def _format_optional_decimal(value):
+    if value is None:
+        return ""
+
+    return _format_decimal(value)
