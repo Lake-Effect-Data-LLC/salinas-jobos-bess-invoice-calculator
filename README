@@ -27,12 +27,12 @@ Performance guarantee reporting:
 - `ALD` Availability Liquidated Damages
 - `Actual_Efficiency`
 - `ELD` Efficiency Liquidated Damages
-- `CLD_per_day` formula exists, but total monthly CLD allocation is not wired yet
+- `CLD` Capability Liquidated Damages, allocated across Billing Periods when a
+  failed test has a cure/retest date
 
-`MP` is currently reduced by `ALD` and `ELD` through `ADJ_Total`, based on the
-working assumption that Appendix F `ADJ` includes other credits or amounts to
-which PREPA has a right under the Agreement. `CLD` is not included yet because
-total CLD allocation across the failed-test/cure period is not implemented.
+`MP` is currently reduced by `ALD`, `CLD`, and `ELD` through `ADJ_Total`, based
+on the working assumption that Appendix F `ADJ` includes other credits or
+amounts to which PREPA has a right under the Agreement.
 
 
 Input Files
@@ -48,7 +48,7 @@ Each project uses the same file names inside its own data folder:
 
 | File | Purpose |
 | --- | --- |
-| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, and design values |
+| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, project-specific LD formula switches, and design reference values |
 | `bess_yearly_inputs_template.csv` | Yearly values: `DDE` and fallback/manual `TR` |
 | `bess_monthly_inputs_template.csv` | Monthly compensation inputs: `ADJ`, availability hours, and PREPA risk hours |
 | `Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
@@ -131,16 +131,26 @@ invoice-style report, not only a calculation table. A useful first structure is:
 
 1. Billing Period and Agreement Year
 2. Monthly Fixed Payment calculation: `CPP`, `MCC`, `FAA`, `PRA`, `MFP`
-3. Other Payment Adjustments and Monthly Payment: `Other_ADJ`, `ALD`, `ELD`, `ADJ_Total`, `MP`
+3. Other Payment Adjustments and Monthly Payment: `Other_ADJ`, `ALD`, `CLD`, `ELD`, `ADJ_Total`, `MP`
 4. Metered performance data: `CE`, `DE`, `Actual_Efficiency`
-5. Performance guarantee items: `ALD`, `ELD`, and later `CLD`
+5. Performance guarantee items: `ALD`, `CLD`, and `ELD`
 6. PREPA credits/payments and itemized charges
 7. Net invoice presentation, once treatment of LDs versus `ADJ` is settled
 
 
 Known Gaps and Assumptions
+--------------------------
 
-----------
+Modeled contract-specific differences:
+
+- `CLD_uses_DDE_multiplier` is a project-specific contract switch in the
+  contract values file. Salinas is `TRUE`; Jobos is `FALSE` based on visual
+  formula review.
+- `ELD_uses_CE_times_GE` is a project-specific contract switch in the contract
+  values file. Salinas is `FALSE`; Jobos is `TRUE` based on visual formula
+  review.
+
+Remaining validation gaps:
 
 - `DDE` is not yet derived from degradation factors or qualifying upgrade tests.
 - `TR` remains as a fallback input while performance-test timing is being proven.
@@ -150,9 +160,23 @@ Known Gaps and Assumptions
   approval-versus-completion trigger should be confirmed.
 - Annual adjustment replacement is modeled by Agreement Year. If an annual
   adjustment can occur mid-Agreement-Year, that timing is not yet represented.
-- `ALD` and `ELD` are folded into `ADJ_Total` under the current working assumption.
-  Confirm that source `ADJ` data excludes calculated LDs to avoid double-counting.
-- `CLD_per_day` is available, but total CLD allocation across failed-test and
-  cure/retest dates still needs implementation.
+- `FAA` at exactly `70%` is interpreted as the last non-zero point, producing
+  `44%`. The contract table has a boundary gap because the middle band is
+  greater than `70%` while the zero band is less than `70%`.
+- `ALD`, `CLD`, and `ELD` are folded into `ADJ_Total` under the current working
+  assumption. Confirm that source `ADJ` data excludes calculated LDs to avoid
+  double-counting.
+- `CLD` uses `DDE` as `GC` under the current interpretation that Guaranteed
+  Capability equals Degraded Duration Energy. Confirm whether `GC` ever needs a
+  separate input.
+- `CLD` is allocated from failed test date up to, but not including, the
+  cure/retest date. Open-ended failed tests are not accrued without an explicit
+  cure/retest date.
+- `CLD` currently accrues from failed tests with a cure/retest date without
+  requiring `prepa_approved = TRUE`; confirm whether the LD clock starts on test
+  date or approval date.
+- Waiting-period and scheduled-maintenance hour allowances are currently
+  hardcoded. Confirm they are identical for Salinas and Jobos and unchanged by
+  amendment before relying on other projects.
 - Ramp-rate failure currently belongs in performance-test data, but its outage
   consequence is not yet automatically rolled into `UNAVHRS`.

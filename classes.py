@@ -13,6 +13,11 @@ class BessContractValues:
     ta: float = 0.70
     rer: float = 170.00
     ge: float = 0.97
+    cld_uses_dde_multiplier: bool = False
+    eld_uses_ce_times_ge: bool = True
+    design_dmax: float = 0.0
+    design_duration_energy: float = 0.0
+    design_charge_energy: float = 0.0
     source_reference: str = ""
     notes: str = ""
 
@@ -96,6 +101,7 @@ class BessMonthlyResult:
     adj_total: float
     mp: float
     ald: float = 0.0
+    cld: float = 0.0
     actual_efficiency: Optional[float] = None
     eld: float = 0.0
 

@@ -17,12 +17,16 @@ def format_percentage(value):
     return f"{value * 100:.2f}%"
 
 
-def generate_bess_invoice_support_report(results_df, output_file):
+def generate_bess_invoice_support_report(results_df, output_file, project_name=None):
     """Generate a Section 10.1-style BESS invoice support report."""
+
+    report_title = "BESS MONTHLY INVOICE SUPPORT REPORT"
+    if project_name:
+        report_title = f"{project_name.upper()} MONTHLY INVOICE SUPPORT REPORT"
 
     lines = []
     lines.append("=" * 88)
-    lines.append("SALINAS AND JOBOS BESS MONTHLY INVOICE SUPPORT REPORT")
+    lines.append(report_title)
     lines.append("=" * 88)
     lines.append("Source: Section 10.1 Payment & Billings invoice-content requirements")
     lines.append(f"Generated: {datetime.now():%Y-%m-%d %H:%M:%S}")
@@ -49,6 +53,7 @@ def generate_bess_invoice_support_report(results_df, output_file):
         lines.append("Other Payment Adjustments / Credits Owing to PREPA")
         lines.append(f"  Other_ADJ: {format_currency(row.Other_ADJ)}")
         lines.append(f"  ALD:       {format_currency(row.ALD)}")
+        lines.append(f"  CLD:       {format_currency(row.CLD)}")
         lines.append(
             f"  Actual Efficiency: "
             f"{format_percentage(getattr(row, 'Actual_Efficiency'))}"
@@ -71,7 +76,10 @@ def generate_bess_invoice_support_report(results_df, output_file):
         lines.append("  Green Credits: not provided in current input files")
         lines.append("  Balance: not provided in current input files")
         lines.append("  Insurance payments: not provided in current input files")
-        lines.append("  CLD total: not allocated across Billing Periods yet")
+        lines.append(
+            "  CLD audit note: allocated only when failed test and "
+            "cure/retest dates are provided"
+        )
         lines.append("")
 
     lines.append("=" * 88)

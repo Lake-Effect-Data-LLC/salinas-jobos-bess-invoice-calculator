@@ -33,6 +33,26 @@ def load_contract_values(csv_file_path):
             ta=_optional_float(row, "TA", 0.70),
             rer=_optional_float(row, "RER", 170.00),
             ge=_optional_float(row, "GE", 0.97),
+            cld_uses_dde_multiplier=_optional_bool(
+                row,
+                "CLD_uses_DDE_multiplier",
+            ),
+            eld_uses_ce_times_ge=_optional_bool(
+                row,
+                "ELD_uses_CE_times_GE",
+                default=True,
+            ),
+            design_dmax=_optional_float(row, "design_dmax", 0.0),
+            design_duration_energy=_optional_float(
+                row,
+                "design_duration_energy",
+                0.0,
+            ),
+            design_charge_energy=_optional_float(
+                row,
+                "design_charge_energy",
+                0.0,
+            ),
             source_reference=_optional_text(row, "source_reference"),
             notes=_optional_text(row, "notes"),
         )
@@ -131,13 +151,13 @@ def _optional_text(row, field_name):
     return str(value)
 
 
-def _optional_bool(row, field_name):
+def _optional_bool(row, field_name, default=False):
     if not hasattr(row, field_name):
-        return False
+        return default
 
     value = getattr(row, field_name)
     if pd.isna(value):
-        return False
+        return default
 
     if isinstance(value, bool):
         return value

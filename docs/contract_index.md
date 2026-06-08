@@ -56,14 +56,13 @@ Current implementation:
 | --- | --- |
 | `calculations.calculate_monthly_payment` | Implemented as `MFP - ADJ` |
 | `compensation_calculator.calculate_monthly_results` | Uses `ADJ_Total` |
-| `classes.BessMonthlyResult` | Stores `other_adj`, `ald`, `eld`, `adj_total`, `mp` |
+| `classes.BessMonthlyResult` | Stores `other_adj`, `ald`, `cld`, `eld`, `adj_total`, `mp` |
 
 Open issue:
 
-- `ALD` and `ELD` are currently included in `ADJ_Total`. Confirm source `ADJ`
+- `ALD`, `CLD`, and `ELD` are currently included in `ADJ_Total`. Confirm source `ADJ`
   inputs exclude calculated liquidated damages so the calculator does not
   double-count PREPA credits.
-- `CLD` is not yet allocated into monthly `ADJ_Total`.
 
 ## Monthly Fixed Payment
 
@@ -87,6 +86,7 @@ Current implementation:
 | --- | --- |
 | `calculations.calculate_capabability_payment_price` | Implemented as `CPPF + CPPPIF` |
 | `calculations.calculate_monthly_fixed_payment` | Implemented as `CPP * MCC * FAA * PRA` |
+| `classes.BessContractValues` | Loads design reference values from the contract CSV |
 
 Open issue:
 
@@ -194,10 +194,14 @@ Current implementation:
 | --- | --- |
 | `calculations.calculate_FA` | Implemented |
 | `calculations.calculate_FAA` | Implemented |
-| `calculations.calculate_FA_with_included_POHRS` | Supports permitted-outage allowance handling |
+| `calculations.calculate_FA_with_included_POHRS` | Supports permitted-outage allowance handling and shifts excess POHRS into unavailable hours |
 
 Open issue:
 
+- The FAA table has a boundary gap at exactly `70%`: middle band is greater than
+  `70%`, zero band is less than `70%`. Current code treats exactly `70%` as the
+  last non-zero point, producing `44%`; confirm contract-owner intent before
+  relying on that boundary month.
 - Ramp-rate failure places the Facility into a Non-Scheduled Outage under
   Appendix P Section 4, but code does not automatically convert failed ramp
   tests into `UNAVHRS`.
@@ -262,10 +266,11 @@ Open issue:
 
 ## Capability Liquidated Damages
 
-Contract rule, subject to visual formula confirmation:
+Current working contract rules:
 
 ```text
-CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))
+Salinas CLD = (GC - TDE) x DDE x (RER - CPP / (30.33 x 24))
+Jobos CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))
 ```
 
 CLD applies for each Day from the failed Performance Test until Resource
@@ -282,16 +287,27 @@ Current implementation:
 
 | Code | Status |
 | --- | --- |
-| `calculations.calculate_capability_liquidated_damages_per_day` | Formula helper exists |
+| `calculations.calculate_capability_liquidated_damages_per_day` | Supports CLD with or without a `DDE` multiplier |
+| `compensation_calculator.calculate_monthly_capability_liquidated_damages` | Allocates CLD across Billing Periods for failed tests with cure/retest dates |
+| `data_writer.write_bess_monthly_results` | Writes `CLD` and includes it in `ADJ_Total` |
+| `bess_contract_values_template.csv` | Uses `CLD_uses_DDE_multiplier` to select the project formula |
 
 Open issues:
 
-- Monthly CLD allocation is not implemented.
-- Inputs need enough event timing to allocate CLD: failed test date, TDE,
-  cure/retest date or deficiency days, and the applicable agreement year values.
-- The Salinas extracted formula appears to include an extra `DDE` multiplier,
-  while Jobos and prior contract text do not. Treat this as an extraction/PDF
-  confirmation item before changing the formula.
+- Salinas visual PDF review confirms the Appendix P Section 2 CLD formula
+  includes a `DDE` multiplier:
+  `CLD = (GC - TDE) x DDE x (RER - CPP / (30.33 x 24))`.
+- Jobos visual PDF review confirms the Appendix P Section 2 CLD formula omits
+  the `DDE` multiplier:
+  `CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))`.
+- Current allocation counts days from the failed test date up to, but not
+  including, the cure/retest date. Confirm whether the cure/retest day itself
+  should be included.
+- Open-ended failed tests are not accrued without a `cure_or_retest_date`.
+  Add an explicit invoice-through date if ongoing CLD accrual is needed.
+- Current CLD allocation does not require `prepa_approved = TRUE`; confirm
+  whether LD accrual starts on the test date regardless of approval or only after
+  approved test results.
 
 ## Efficiency And ELD
 
@@ -300,7 +316,8 @@ Contract rules:
 ```text
 Actual Efficiency = (DE + (AEend - AEbeg)) / CE
 
-ELD = (RER - CPP / (30.33 x 24)) x ((CE x GE) - DE)
+Salinas ELD = (RER - CPP / (30.33 x 24)) x ((CE - GE) - DE)
+Jobos ELD = (RER - CPP / (30.33 x 24)) x ((CE x GE) - DE)
 ```
 
 ELD applies if Actual Efficiency for the Billing Period falls below Guaranteed
@@ -318,15 +335,18 @@ Current implementation:
 | Code | Status |
 | --- | --- |
 | `calculations.calculate_actual_efficiency` | Implemented |
-| `calculations.calculate_efficiency_liquidated_damages` | Implemented |
+| `calculations.calculate_efficiency_liquidated_damages` | Supports ELD with either `CE - GE` or `CE x GE` |
 | `compensation_calculator.calculate_monthly_results` | Includes `ELD` in `ADJ_Total` |
+| `bess_contract_values_template.csv` | Uses `ELD_uses_CE_times_GE` to select the project formula |
 
 Open issue:
 
-- Salinas extracted formula text shows `((CE - GE) - DE)`, which conflicts with
-  the variable definition and Jobos extracted formula `((CE x GE) - DE)`. Treat
-  the multiplication version as the current working interpretation, and confirm
-  Salinas against the original PDF before final delivery.
+- Salinas visual PDF review shows `((CE - GE) - DE)`. This is dimensionally odd
+  because `GE` is a decimal efficiency value, but the current Salinas input flag
+  follows the displayed formula.
+- Jobos visual PDF review shows `((CE x GE) - DE)`.
+- If a worked example, counsel, or official invoice model treats Salinas as a
+  typo, set Salinas `ELD_uses_CE_times_GE` to `TRUE`.
 
 ## Ramp Rate
 
@@ -376,7 +396,7 @@ Current implementation:
 
 | Code | Status |
 | --- | --- |
-| `report.generate_bess_invoice_support_report` | Generates `report.txt` from monthly results |
+| `report.generate_bess_invoice_support_report` | Generates project-specific `report.txt` from monthly results |
 | `main.py` | Writes `output/<project_id>/report.txt` |
 
 Open issue:

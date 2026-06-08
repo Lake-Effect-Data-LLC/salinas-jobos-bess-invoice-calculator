@@ -1,5 +1,4 @@
 import csv
-import sys
 from pathlib import Path
 
 
@@ -9,6 +8,14 @@ BESS_REQUIRED_COLUMNS = {
         "cppf",
         "cpppif",
         "DDD",
+        "TA",
+        "RER",
+        "GE",
+        "CLD_uses_DDE_multiplier",
+        "ELD_uses_CE_times_GE",
+        "design_dmax",
+        "design_duration_energy",
+        "design_charge_energy",
     },
     "bess_yearly_inputs_template.csv": {
         "agreement_year",
@@ -47,12 +54,8 @@ BESS_REQUIRED_COLUMNS = {
     },
 }
 
-
 def input_validation(*csv_paths):
-    try:
-        validate_input_files(csv_paths)
-    except ValueError as exc:
-        sys.exit(str(exc))
+    validate_input_files(csv_paths)
 
 
 def validate_input_files(csv_paths):

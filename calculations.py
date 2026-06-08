@@ -37,7 +37,8 @@ def calculate_included_POHRS(POHRS, prior_POHRS):
 
 def calculate_FA_with_included_POHRS(currentPOHRS, prior_POHRS, BPHRS, UNAVHRS, UNAVPRODHRS):
     included_POHRS = calculate_included_POHRS(currentPOHRS, prior_POHRS)
-    return calculate_FA(BPHRS, included_POHRS, UNAVHRS, UNAVPRODHRS)
+    excess_POHRS = currentPOHRS - included_POHRS
+    return calculate_FA(BPHRS, included_POHRS, UNAVHRS + excess_POHRS, UNAVPRODHRS)
 
 def calculate_FA(BPHRS, POHRS, UNAVHRS, UNAVPRODHRS):
     # FAn = (BPHRSn - (POHRSn + UNAVHRSn + UNAVPRODHRSn))/(BPHRSn - POHRSn)
@@ -62,10 +63,12 @@ def calculate_FA(BPHRS, POHRS, UNAVHRS, UNAVPRODHRS):
 
 
 def calculate_FAA(FA):
-    # FAA = 100% if FA >= 98%; 100% - [(98% - FA) x 2] if 70% < FA < 98%; 0% if FA < 70%.
+    # FAA = 100% if FA >= 98%; 100% - [(98% - FA) x 2] if 70% <= FA < 98%; 0% if FA < 70%.
+    # The contract table leaves exactly 70% between rows; current interpretation
+    # treats it as the last non-zero FAA point because the zero row says FA < 70%.
     if FA >= 0.98:
         return 1.0
-    if FA > 0.70:
+    if FA >= 0.70:
         return 1.0 - ((0.98 - FA) * 2)
     return 0.0
 
@@ -155,7 +158,7 @@ def calculate_capabability_payment_price(cppf: float, cpppif: float) -> float:
 
 def calculate_monthly_fixed_payment(CPP, MCC, FAA, PRA):
     # MFPn = CPP x MCCn x FAAn x PRAn
-        return CPP * MCC * FAA * PRA
+    return CPP * MCC * FAA * PRA
 
 def calculate_monthly_payment(MFP, ADJ):
     # MPn = MFPn - ADJn
@@ -181,18 +184,35 @@ def calculate_availability_liquidated_damages(TA, FA, DDE, RER, CPP):
     return availability_shortfall * DDE * calculate_liquidated_damages_rate(RER, CPP)
 
 
-def calculate_capability_liquidated_damages_per_day(GC, TDE, RER, CPP):
+def calculate_capability_liquidated_damages_per_day(
+    GC,
+    TDE,
+    RER,
+    CPP,
+    DDE=None,
+):
     # Source: Appendix P Section 2(b), Capability Liquidated Damages.
+    # Salinas visual source: docs/screenshots/CLD_06_Amend_(C-2-E)AES_Salinas_2023-0005_pg_230_220.png.
+    # Jobos visual source provided in chat confirms no DDE multiplier in its CLD formula.
     # CLD = Capability Liquidated Damages per Day, expressed in dollars.
     # GC = Guaranteed Capability, expressed in MWh.
     # TDE = Tested Duration Energy, expressed in MWh.
     # RER = Replacement Energy Rate, expressed in $/MWh.
     # CPP = Capability Payment Price for the Agreement Year, expressed in $/MW-Month.
-    if any(value < 0 for value in [GC, TDE, RER, CPP]):
+    # DDE = optional Salinas multiplier, expressed in MWh.
+    inputs = [GC, TDE, RER, CPP]
+    if DDE is not None:
+        inputs.append(DDE)
+
+    if any(value < 0 for value in inputs):
         raise ValueError("CLD inputs must be non-negative.")
 
     capability_shortfall = max(GC - TDE, 0)
-    return capability_shortfall * calculate_liquidated_damages_rate(RER, CPP)
+    dde_multiplier = DDE if DDE is not None else 1.0
+    return capability_shortfall * dde_multiplier * calculate_liquidated_damages_rate(
+        RER,
+        CPP,
+    )
 
 
 def calculate_actual_efficiency(DE, CE, AE_beg, AE_end):
@@ -205,8 +225,18 @@ def calculate_actual_efficiency(DE, CE, AE_beg, AE_end):
     return (DE + (AE_end - AE_beg)) / CE
 
 
-def calculate_efficiency_liquidated_damages(RER, CPP, CE, GE, DE, actual_efficiency):
+def calculate_efficiency_liquidated_damages(
+    RER,
+    CPP,
+    CE,
+    GE,
+    DE,
+    actual_efficiency,
+    uses_ce_times_ge=True,
+):
     # Source: Appendix P Section 3(c), Efficiency Liquidated Damages.
+    # Salinas visual source: docs/screenshots/ELD_AES_Salinas_2023-00053_Pg_231_Pg_221.png.
+    # Jobos visual source provided in chat confirms the CE x GE formula.
     # ELD = Efficiency Liquidated Damages, expressed in dollars.
     # CE = Charge Energy for the Billing Period, expressed in MWh.
     # GE = Guaranteed Efficiency, expressed as its decimal equivalent.
@@ -219,5 +249,10 @@ def calculate_efficiency_liquidated_damages(RER, CPP, CE, GE, DE, actual_efficie
     if actual_efficiency >= GE:
         return 0.0
 
-    energy_shortfall = max((CE * GE) - DE, 0)
+    if uses_ce_times_ge:
+        energy_shortfall = (CE * GE) - DE
+    else:
+        energy_shortfall = (CE - GE) - DE
+
+    energy_shortfall = max(energy_shortfall, 0)
     return calculate_liquidated_damages_rate(RER, CPP) * energy_shortfall

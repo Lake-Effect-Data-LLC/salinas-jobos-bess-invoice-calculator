@@ -15,6 +15,7 @@ BESS_MONTHLY_RESULT_COLUMNS = [
     "MFP",
     "Other_ADJ",
     "ALD",
+    "CLD",
     "Actual_Efficiency",
     "ELD",
     "ADJ_Total",
@@ -52,6 +53,7 @@ def write_bess_monthly_results(
                     "MFP": _format_decimal(result.mfp),
                     "Other_ADJ": _format_decimal(result.other_adj),
                     "ALD": _format_decimal(result.ald),
+                    "CLD": _format_decimal(result.cld),
                     "Actual_Efficiency": _format_optional_decimal(
                         result.actual_efficiency
                     ),

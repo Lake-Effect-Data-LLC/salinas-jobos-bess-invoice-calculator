@@ -4,6 +4,7 @@ from calculations import (
     calculate_actual_efficiency,
     calculate_annual_mcc,
     calculate_availability_liquidated_damages,
+    calculate_capability_liquidated_damages_per_day,
     calculate_capabability_payment_price,
     calculate_efficiency_liquidated_damages,
     calculate_included_POHRS,
@@ -86,6 +87,15 @@ def calculate_monthly_results(
             contract.rer,
             cpp,
         )
+        cld = calculate_monthly_capability_liquidated_damages(
+            monthly_input.timestamp_month,
+            monthly_input.agreement_year,
+            performance_tests,
+            yearly.dde,
+            contract.rer,
+            cpp,
+            contract.cld_uses_dde_multiplier,
+        )
         pra = calculate_risk_adjustment_with_waiting_periods(
             monthly_input.bphrs,
             monthly_input.gse,
@@ -113,8 +123,9 @@ def calculate_monthly_results(
                 contract.ge,
                 monthly_performance_input.de,
                 actual_efficiency,
+                contract.eld_uses_ce_times_ge,
             )
-        adj_total = monthly_input.adj + ald + eld
+        adj_total = monthly_input.adj + ald + cld + eld
         mfp = calculate_monthly_fixed_payment(cpp, mcc, faa, pra)
         mp = calculate_monthly_payment(mfp, adj_total)
 
@@ -136,6 +147,7 @@ def calculate_monthly_results(
                 adj_total=adj_total,
                 mp=mp,
                 ald=ald,
+                cld=cld,
                 actual_efficiency=actual_efficiency,
                 eld=eld,
             )
@@ -177,6 +189,57 @@ def get_applicable_performance_test(
         applicable_tests,
         key=lambda performance_test: _parse_date(performance_test.test_date),
     )
+
+
+def calculate_monthly_capability_liquidated_damages(
+    timestamp_month,
+    agreement_year,
+    performance_tests,
+    dde,
+    rer,
+    cpp,
+    cld_uses_dde_multiplier=False,
+):
+    # Source: Appendix P Section 2(b), Capability Liquidated Damages.
+    # Salinas visual source:
+    # docs/screenshots/CLD_06_Amend_(C-2-E)AES_Salinas_2023-0005_pg_230_220.png.
+    # Jobos visual source provided in chat confirms no DDE multiplier.
+    # Current allocation rule: count failed-test days that overlap the Billing
+    # Period, starting on the test date and ending before cure/retest date.
+    # Open-ended failures are not accrued without an explicit cure/retest date.
+    billing_period_start = _parse_month_start(timestamp_month)
+    billing_period_end = _next_month_start(timestamp_month)
+    monthly_cld = 0.0
+
+    for performance_test in performance_tests:
+        if performance_test.agreement_year != agreement_year:
+            continue
+
+        if performance_test.tde >= dde:
+            continue
+
+        if not performance_test.cure_or_retest_date:
+            continue
+
+        test_date = _parse_date(performance_test.test_date)
+        cure_or_retest_date = _parse_date(performance_test.cure_or_retest_date)
+        overlap_start = max(test_date, billing_period_start)
+        overlap_end = min(cure_or_retest_date, billing_period_end)
+        cld_days = max((overlap_end - overlap_start).days, 0)
+
+        if cld_days == 0:
+            continue
+
+        cld_per_day = calculate_capability_liquidated_damages_per_day(
+            dde,
+            performance_test.tde,
+            rer,
+            cpp,
+            DDE=dde if cld_uses_dde_multiplier else None,
+        )
+        monthly_cld += cld_per_day * cld_days
+
+    return monthly_cld
 
 
 def _get_agreement_year_values(values_by_year, agreement_year, value_name):

@@ -1,5 +1,6 @@
 import argparse
 import csv
+import sys
 from pathlib import Path
 
 from compensation_calculator import calculate_monthly_results
@@ -63,7 +64,11 @@ def main(project_id=None):
     )
     report_path = project_output_dir / "report.txt"
     monthly_results_df = pd.read_csv(output_path)
-    generate_bess_invoice_support_report(monthly_results_df, report_path)
+    generate_bess_invoice_support_report(
+        monthly_results_df,
+        report_path,
+        project_name=project["project_name"],
+    )
 
     print(f"Project: {project['project_name']} ({project['project_id']})")
     print("BESS input files passed validation.")
@@ -109,4 +114,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
-    main(args.project_id)
+    try:
+        main(args.project_id)
+    except ValueError as exc:
+        sys.exit(str(exc))
