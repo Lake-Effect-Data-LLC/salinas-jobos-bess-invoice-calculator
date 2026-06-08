@@ -60,9 +60,12 @@ Current implementation:
 
 Open issue:
 
-- `ALD`, `CLD`, and `ELD` are currently included in `ADJ_Total`. Confirm source `ADJ`
-  inputs exclude calculated liquidated damages so the calculator does not
-  double-count PREPA credits.
+- `ALD`, `CLD`, and `ELD` are currently included in `ADJ_Total`. The monthly
+  input column is named `Other_ADJ` to signal that operator-entered adjustments
+  must exclude calculated LDs; however there is no programmatic check that a
+  user has not entered an LD amount there. Confirm source inputs exclude
+  calculated liquidated damages before submitting any invoice where both an LD
+  was calculated and `Other_ADJ` is non-zero in the same billing period.
 
 ## Monthly Fixed Payment
 
@@ -136,9 +139,19 @@ Open issues:
   approval process, but Appendix F says the adjustment continues until another
   Performance Test is completed. Confirm whether completion date, approval date,
   or approved report date controls the effective test.
-- Annual replacement is modeled by Agreement Year. If annual adjustment timing
-  can occur mid-year, the input model needs an explicit annual-adjustment date.
 - `DDE` is currently an input, not derived.
+- Cross-year MCC carry: `get_applicable_performance_test` filters tests to the
+  current `agreement_year`. Tests from a prior agreement year do not carry
+  forward automatically because the annual formula `MCCy = min(DDE/DDD, TR)`
+  resets MCC at the year boundary. `TR` in `bess_yearly_inputs_template.csv`
+  is the intended carry-forward mechanism. Data entry rule for `TR`:
+  - Agreement Year 1 at COD, no prior tests: `TR = design_dmax` (MW).
+  - Last Year N-1 test had `TDE < 0.99 × DDE_last`: `TR = TDE_last / DDD`.
+  - Last Year N-1 test had `TDE >= 0.99 × DDE_last`: `TR = DDE_last / DDD`.
+  - No approved tests in Year N-1: carry Year N-1 `TR` forward unchanged.
+  Failing to update `TR` after a below-threshold year-end test will overstate
+  MCC in the new agreement year. See also the comment in
+  `compensation_calculator.get_applicable_performance_test`.
 
 ## Degraded Duration Energy
 
@@ -195,6 +208,7 @@ Current implementation:
 | `calculations.calculate_FA` | Implemented |
 | `calculations.calculate_FAA` | Implemented |
 | `calculations.calculate_FA_with_included_POHRS` | Supports permitted-outage allowance handling and shifts excess POHRS into unavailable hours |
+| `bess_contract_values_template.csv` | Provides `scheduled_maintenance_allowance_hours` |
 
 Open issue:
 
@@ -225,7 +239,8 @@ Current implementation:
 
 | Code | Status |
 | --- | --- |
-| `calculations.calculate_risk_adjustment_with_waiting_periods` | Implemented with annual waiting-period caps |
+| `calculations.calculate_risk_adjustment_with_waiting_periods` | Implemented with contract-specific annual waiting-period caps |
+| `bess_contract_values_template.csv` | Provides `grid_system_waiting_period_hours` and `force_majeure_waiting_period_hours` |
 
 Open issue:
 
@@ -288,26 +303,35 @@ Current implementation:
 | Code | Status |
 | --- | --- |
 | `calculations.calculate_capability_liquidated_damages_per_day` | Supports CLD with or without a `DDE` multiplier |
-| `compensation_calculator.calculate_monthly_capability_liquidated_damages` | Allocates CLD across Billing Periods for failed tests with cure/retest dates |
+| `compensation_calculator.calculate_monthly_capability_liquidated_damages` | Allocates CLD across Billing Periods for approved failed tests with cure/retest dates |
 | `data_writer.write_bess_monthly_results` | Writes `CLD` and includes it in `ADJ_Total` |
 | `bess_contract_values_template.csv` | Uses `CLD_uses_DDE_multiplier` to select the project formula |
+| `bess_yearly_inputs_template.csv` | Optional `GC` column can override the default `GC = DDE` assumption |
 
 Open issues:
 
-- Salinas visual PDF review confirms the Appendix P Section 2 CLD formula
-  includes a `DDE` multiplier:
+- Salinas contract text (06 Amendment Appendix P Section 2(b)) confirms the
+  CLD formula includes a `DDE` multiplier:
   `CLD = (GC - TDE) x DDE x (RER - CPP / (30.33 x 24))`.
-- Jobos visual PDF review confirms the Appendix P Section 2 CLD formula omits
-  the `DDE` multiplier:
+  Code path: `CLD_uses_DDE_multiplier = TRUE`.
+- Jobos contract text (05 Amendment Appendix P Section 2(b)) confirms the CLD
+  formula omits the `DDE` multiplier:
   `CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))`.
-- Current allocation counts days from the failed test date up to, but not
-  including, the cure/retest date. Confirm whether the cure/retest day itself
-  should be included.
+  Code path: `CLD_uses_DDE_multiplier = FALSE`.
+- Day-boundary interpretation: the contract says "for each Day from the failed
+  Performance Test until Resource Provider demonstrates TDE at or above DDE."
+  Current code treats the test date as the first accrual day (included) and the
+  cure/retest date as the day the shortfall is resolved (excluded). A test on
+  Dec 28 with cure on Jan 5 accrues 8 days: Dec 28–31 and Jan 1–4. Confirm
+  against a worked invoice example or counsel opinion before disputing an invoice
+  where the cure-day boundary is contested.
 - Open-ended failed tests are not accrued without a `cure_or_retest_date`.
   Add an explicit invoice-through date if ongoing CLD accrual is needed.
-- Current CLD allocation does not require `prepa_approved = TRUE`; confirm
-  whether LD accrual starts on the test date regardless of approval or only after
-  approved test results.
+- Current CLD allocation requires `prepa_approved = TRUE`, then accrues from the
+  test date. Confirm whether LD accrual should instead begin on approval date.
+- Current Salinas and Jobos inputs omit `GC`, so the calculator defaults
+  Guaranteed Capability to `DDE`. Add yearly `GC` if a future contract defines
+  Guaranteed Capability separately.
 
 ## Efficiency And ELD
 
@@ -341,12 +365,15 @@ Current implementation:
 
 Open issue:
 
-- Salinas visual PDF review shows `((CE - GE) - DE)`. This is dimensionally odd
-  because `GE` is a decimal efficiency value, but the current Salinas input flag
-  follows the displayed formula.
-- Jobos visual PDF review shows `((CE x GE) - DE)`.
-- If a worked example, counsel, or official invoice model treats Salinas as a
-  typo, set Salinas `ELD_uses_CE_times_GE` to `TRUE`.
+- Salinas contract text (06 Amendment Appendix P Section 3(c)) shows
+  `((CE - GE) - DE)`. This is dimensionally inconsistent: `CE` and `DE` are
+  in MWh but `GE` is a unitless decimal fraction. Current code follows the
+  literal text with `ELD_uses_CE_times_GE = FALSE`.
+- Jobos contract text (05 Amendment Appendix P Section 3(c)) shows
+  `((CE x GE) - DE)`. Dimensionally consistent. Code: `ELD_uses_CE_times_GE = TRUE`.
+- If counsel, a worked invoice example, or an official PREPA model treats the
+  Salinas formula as a drafting error, change Salinas `ELD_uses_CE_times_GE`
+  to `TRUE`.
 
 ## Ramp Rate
 

@@ -16,6 +16,9 @@ BESS_REQUIRED_COLUMNS = {
         "design_dmax",
         "design_duration_energy",
         "design_charge_energy",
+        "grid_system_waiting_period_hours",
+        "force_majeure_waiting_period_hours",
+        "scheduled_maintenance_allowance_hours",
     },
     "bess_yearly_inputs_template.csv": {
         "agreement_year",
@@ -25,7 +28,7 @@ BESS_REQUIRED_COLUMNS = {
     "bess_monthly_inputs_template.csv": {
         "timestamp_month",
         "agreement_year",
-        "ADJ",
+        "Other_ADJ",
         "BPHRS",
         "POHRS",
         "UNAVHRS",

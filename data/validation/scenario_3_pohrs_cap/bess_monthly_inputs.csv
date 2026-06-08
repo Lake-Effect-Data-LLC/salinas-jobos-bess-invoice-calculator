@@ -1,0 +1,3 @@
+timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,UNAVHRS,UNAVPRODHRS,GSE,PFM,IP,notes
+2026-01,1,0.00,744,160,0,0,0,0,0,Month 1: prior_POHRS=0 included=160 excess=0. FA=(744-160)/(744-160)=1.0 FAA=1.0 MFP=2489600.00
+2026-02,1,0.00,720,60,0,0,0,0,0,Month 2: prior_POHRS=160 included=0 excess=60 shifts to UNAVHRS. FA=(720-60)/720=0.9167 FAA=1-(0.98-0.9167)x2=0.8733 MFP=24896x100x0.8733=2174250.67

@@ -10,33 +10,56 @@ def calculate_included_hours(current_hours, prior_hours, annual_allowance_hours)
     return min(current_hours, max(annual_allowance_hours - prior_hours, 0))
 
 
-def calculate_included_GSEHRS(GSEHRS, prior_GSEHRS):
+def calculate_included_GSEHRS(
+    GSEHRS,
+    prior_GSEHRS,
+    annual_allowance_hours=GRID_SYSTEM_WAITING_PERIOD_HOURS,
+):
     return calculate_included_hours(
         GSEHRS,
         prior_GSEHRS,
-        GRID_SYSTEM_WAITING_PERIOD_HOURS,
+        annual_allowance_hours,
     )
 
 
-def calculate_included_PFMHRS(PFMHRS, prior_PFMHRS):
+def calculate_included_PFMHRS(
+    PFMHRS,
+    prior_PFMHRS,
+    annual_allowance_hours=FORCE_MAJEURE_WAITING_PERIOD_HOURS,
+):
     return calculate_included_hours(
         PFMHRS,
         prior_PFMHRS,
-        FORCE_MAJEURE_WAITING_PERIOD_HOURS,
+        annual_allowance_hours,
     )
 
 
-def calculate_included_POHRS(POHRS, prior_POHRS):
+def calculate_included_POHRS(
+    POHRS,
+    prior_POHRS,
+    annual_allowance_hours=SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS,
+):
     return calculate_included_hours(
         POHRS,
         prior_POHRS,
-        SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS,
+        annual_allowance_hours,
     )
 
 
 
-def calculate_FA_with_included_POHRS(currentPOHRS, prior_POHRS, BPHRS, UNAVHRS, UNAVPRODHRS):
-    included_POHRS = calculate_included_POHRS(currentPOHRS, prior_POHRS)
+def calculate_FA_with_included_POHRS(
+    currentPOHRS,
+    prior_POHRS,
+    BPHRS,
+    UNAVHRS,
+    UNAVPRODHRS,
+    scheduled_maintenance_allowance_hours=SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS,
+):
+    included_POHRS = calculate_included_POHRS(
+        currentPOHRS,
+        prior_POHRS,
+        scheduled_maintenance_allowance_hours,
+    )
     excess_POHRS = currentPOHRS - included_POHRS
     return calculate_FA(BPHRS, included_POHRS, UNAVHRS + excess_POHRS, UNAVPRODHRS)
 
@@ -73,7 +96,16 @@ def calculate_FAA(FA):
     return 0.0
 
 
-def calculate_risk_adjustment_with_waiting_periods(BPHRS, GSEHRS, PFMHRS, IPHRS, prior_GSEHRS, prior_PFMHRS):
+def calculate_risk_adjustment_with_waiting_periods(
+    BPHRS,
+    GSEHRS,
+    PFMHRS,
+    IPHRS,
+    prior_GSEHRS,
+    prior_PFMHRS,
+    grid_system_waiting_period_hours=GRID_SYSTEM_WAITING_PERIOD_HOURS,
+    force_majeure_waiting_period_hours=FORCE_MAJEURE_WAITING_PERIOD_HOURS,
+):
     
     # This function will calculate PRAi for billing period n based on the total number of hours for the Billing Period BPHRSn,the duration 
     # of a Grid System Event occurring in the Billing Period, provided that the number of GSEHRS in teh Billing Period when added to the number of GSEHRS in the preceding Billing Periods
@@ -113,14 +145,21 @@ def calculate_risk_adjustment_with_waiting_periods(BPHRS, GSEHRS, PFMHRS, IPHRS,
     if any(value < 0 for value in inputs):
         raise ValueError("Hour values and waiting periods must be non-negative.")
 
-    included_GSEHRS = calculate_included_GSEHRS(GSEHRS, prior_GSEHRS)
-    included_PFMHRS = calculate_included_PFMHRS(PFMHRS, prior_PFMHRS)
+    included_GSEHRS = calculate_included_GSEHRS(
+        GSEHRS,
+        prior_GSEHRS,
+        grid_system_waiting_period_hours,
+    )
+    included_PFMHRS = calculate_included_PFMHRS(
+        PFMHRS,
+        prior_PFMHRS,
+        force_majeure_waiting_period_hours,
+    )
 
     adjustment = (BPHRS - (included_GSEHRS + included_PFMHRS + IPHRS)) / BPHRS
 
     return max(adjustment, 0)
 
-# The function assumes prior_GSEHRS and prior_PFMHRS are year-to-date counted hours before this billing period. If those are raw prior event hours rather than prior included/capped hours, the result could be wrong.
 
 
 

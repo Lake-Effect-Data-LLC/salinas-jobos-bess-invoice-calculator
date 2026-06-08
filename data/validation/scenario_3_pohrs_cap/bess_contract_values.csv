@@ -1,0 +1,2 @@
+"agreement_year","cppf","cpppif","DDD","TA","RER","GE","CLD_uses_DDE_multiplier","ELD_uses_CE_times_GE","design_dmax","design_duration_energy","design_charge_energy","grid_system_waiting_period_hours","force_majeure_waiting_period_hours","scheduled_maintenance_allowance_hours","notes"
+"1","23696.00","1200.00","4","0.70","170.00","0.97","TRUE","FALSE","100.00","400.00","482.00","80","720","160","Salinas Year 1 values. CPP = 23696 + 1200 = 24896. MCC = min(400/4,100) = 100 MW."

@@ -18,17 +18,21 @@ class BessContractValues:
     design_dmax: float = 0.0
     design_duration_energy: float = 0.0
     design_charge_energy: float = 0.0
+    grid_system_waiting_period_hours: float = 80.0
+    force_majeure_waiting_period_hours: float = 720.0
+    scheduled_maintenance_allowance_hours: float = 160.0
     source_reference: str = ""
     notes: str = ""
 
 
 @dataclass(frozen=True)
 class BessYearlyInputs:
-    """Yearly inputs needed for Monthly Contract Capability."""
+    """Yearly inputs needed for Monthly Contract Capability and capability LDs."""
 
     agreement_year: int
     dde: float
     tr: float
+    gc: Optional[float] = None
     source_reference: str = ""
     notes: str = ""
 
@@ -105,8 +109,3 @@ class BessMonthlyResult:
     actual_efficiency: Optional[float] = None
     eld: float = 0.0
 
-    @property
-    def adj(self) -> float:
-        """Backward-compatible alias for total adjustments."""
-
-        return self.adj_total

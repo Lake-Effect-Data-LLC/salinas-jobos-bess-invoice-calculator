@@ -30,28 +30,28 @@ def load_contract_values(csv_file_path):
             cppf=float(row.cppf),
             cpppif=float(row.cpppif),
             ddd=float(row.DDD),
-            ta=_optional_float(row, "TA", 0.70),
-            rer=_optional_float(row, "RER", 170.00),
-            ge=_optional_float(row, "GE", 0.97),
-            cld_uses_dde_multiplier=_optional_bool(
+            ta=_required_float(row, "TA"),
+            rer=_required_float(row, "RER"),
+            ge=_required_float(row, "GE"),
+            cld_uses_dde_multiplier=_required_bool(row, "CLD_uses_DDE_multiplier"),
+            eld_uses_ce_times_ge=_required_bool(row, "ELD_uses_CE_times_GE"),
+            design_dmax=_required_float(row, "design_dmax"),
+            design_duration_energy=_required_float(row, "design_duration_energy"),
+            design_charge_energy=_required_float(row, "design_charge_energy"),
+            grid_system_waiting_period_hours=_optional_float(
                 row,
-                "CLD_uses_DDE_multiplier",
+                "grid_system_waiting_period_hours",
+                80.0,
             ),
-            eld_uses_ce_times_ge=_optional_bool(
+            force_majeure_waiting_period_hours=_optional_float(
                 row,
-                "ELD_uses_CE_times_GE",
-                default=True,
+                "force_majeure_waiting_period_hours",
+                720.0,
             ),
-            design_dmax=_optional_float(row, "design_dmax", 0.0),
-            design_duration_energy=_optional_float(
+            scheduled_maintenance_allowance_hours=_optional_float(
                 row,
-                "design_duration_energy",
-                0.0,
-            ),
-            design_charge_energy=_optional_float(
-                row,
-                "design_charge_energy",
-                0.0,
+                "scheduled_maintenance_allowance_hours",
+                160.0,
             ),
             source_reference=_optional_text(row, "source_reference"),
             notes=_optional_text(row, "notes"),
@@ -68,6 +68,7 @@ def load_yearly_inputs(csv_file_path):
             agreement_year=int(row.agreement_year),
             dde=float(row.DDE),
             tr=float(row.TR),
+            gc=_optional_float(row, "GC", None),
             source_reference=_optional_text(row, "source_reference"),
             notes=_optional_text(row, "notes"),
         )
@@ -82,7 +83,7 @@ def load_monthly_inputs(csv_file_path):
         BessMonthlyInputs(
             timestamp_month=str(row.timestamp_month),
             agreement_year=int(row.agreement_year),
-            adj=float(row.ADJ),
+            adj=float(row.Other_ADJ),
             bphrs=float(row.BPHRS),
             pohrs=float(row.POHRS),
             unavhrs=float(row.UNAVHRS),
@@ -138,6 +139,35 @@ def load_performance_tests(csv_file_path):
         )
         for row in df.itertuples(index=False)
     ]
+
+
+def _required_float(row, field_name):
+    if not hasattr(row, field_name):
+        raise ValueError(f"Required column '{field_name}' is missing from the CSV.")
+
+    value = getattr(row, field_name)
+    if pd.isna(value) or str(value).strip() == "":
+        raise ValueError(
+            f"Required field '{field_name}' is blank; a value must be provided."
+        )
+
+    return float(value)
+
+
+def _required_bool(row, field_name):
+    if not hasattr(row, field_name):
+        raise ValueError(f"Required column '{field_name}' is missing from the CSV.")
+
+    value = getattr(row, field_name)
+    if pd.isna(value) or str(value).strip() == "":
+        raise ValueError(
+            f"Required field '{field_name}' is blank; a value must be provided."
+        )
+
+    if isinstance(value, bool):
+        return value
+
+    return str(value).strip().lower() in {"true", "t", "yes", "y", "1"}
 
 
 def _optional_text(row, field_name):

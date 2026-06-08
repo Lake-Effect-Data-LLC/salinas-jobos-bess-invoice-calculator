@@ -1,0 +1,2 @@
+timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,UNAVHRS,UNAVPRODHRS,GSE,PFM,IP,notes
+2026-01,1,0.00,744,0,0,0,0,0,0,Baseline: all zeros. Expected FA=1.0 FAA=1.0 PRA=1.0 MFP=24896x100x1x1=2489600.00

@@ -48,9 +48,9 @@ Each project uses the same file names inside its own data folder:
 
 | File | Purpose |
 | --- | --- |
-| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, project-specific LD formula switches, and design reference values |
-| `bess_yearly_inputs_template.csv` | Yearly values: `DDE` and fallback/manual `TR` |
-| `bess_monthly_inputs_template.csv` | Monthly compensation inputs: `ADJ`, availability hours, and PREPA risk hours |
+| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, project-specific LD formula switches, outage/waiting-period allowances, and design reference values |
+| `bess_yearly_inputs_template.csv` | Yearly values: `DDE`, fallback/manual `TR`, and optional `GC` |
+| `bess_monthly_inputs_template.csv` | Monthly compensation inputs: `Other_ADJ`, availability hours, and PREPA risk hours |
 | `Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
 | `Performance_Tests.csv` | Event-based performance tests: `TDE`, ramp rate, test date, approval status, and cure/retest fields |
 
@@ -144,11 +144,21 @@ Known Gaps and Assumptions
 Modeled contract-specific differences:
 
 - `CLD_uses_DDE_multiplier` is a project-specific contract switch in the
-  contract values file. Salinas is `TRUE`; Jobos is `FALSE` based on visual
-  formula review.
+  contract values file. Salinas is `TRUE`; Jobos is `FALSE`. Both confirmed
+  against the extracted contract text (Salinas 06 Amendment Appendix P Section
+  2(b); Jobos 05 Amendment Appendix P Section 2(b)).
 - `ELD_uses_CE_times_GE` is a project-specific contract switch in the contract
-  values file. Salinas is `FALSE`; Jobos is `TRUE` based on visual formula
-  review.
+  values file. Salinas is `FALSE`; Jobos is `TRUE`. Both confirmed against the
+  extracted contract text (Salinas 06 Amendment Appendix P Section 3(c); Jobos
+  05 Amendment Appendix P Section 3(c)). Note: the Salinas formula as written,
+  `(CE - GE) - DE`, is dimensionally inconsistent because `GE` is a unitless
+  decimal while `CE` and `DE` are in MWh. Current code follows the literal
+  contract text. If counsel or a worked invoice example treats it as a drafting
+  error, set Salinas `ELD_uses_CE_times_GE` to `TRUE`.
+- `grid_system_waiting_period_hours`, `force_majeure_waiting_period_hours`, and
+  `scheduled_maintenance_allowance_hours` are project-specific contract values.
+  Current Salinas and Jobos inputs both use `80`, `720`, and `160`,
+  respectively.
 
 Remaining validation gaps:
 
@@ -164,19 +174,20 @@ Remaining validation gaps:
   `44%`. The contract table has a boundary gap because the middle band is
   greater than `70%` while the zero band is less than `70%`.
 - `ALD`, `CLD`, and `ELD` are folded into `ADJ_Total` under the current working
-  assumption. Confirm that source `ADJ` data excludes calculated LDs to avoid
-  double-counting.
-- `CLD` uses `DDE` as `GC` under the current interpretation that Guaranteed
-  Capability equals Degraded Duration Energy. Confirm whether `GC` ever needs a
-  separate input.
+  assumption. The monthly input column is named `Other_ADJ` as a naming guard
+  against entering a calculated LD there, but no programmatic check enforces
+  this. Confirm that `Other_ADJ` entries exclude calculated LDs before
+  submitting any invoice where both an LD was calculated and `Other_ADJ` is
+  non-zero in the same billing period.
+- `CLD` defaults `GC` to `DDE` under the working interpretation that Guaranteed
+  Capability equals Degraded Duration Energy. An optional `GC` column has been
+  added to `bess_yearly_inputs_template.csv` for use if a future contract defines
+  Guaranteed Capability separately from `DDE`.
 - `CLD` is allocated from failed test date up to, but not including, the
   cure/retest date. Open-ended failed tests are not accrued without an explicit
   cure/retest date.
-- `CLD` currently accrues from failed tests with a cure/retest date without
-  requiring `prepa_approved = TRUE`; confirm whether the LD clock starts on test
-  date or approval date.
-- Waiting-period and scheduled-maintenance hour allowances are currently
-  hardcoded. Confirm they are identical for Salinas and Jobos and unchanged by
-  amendment before relying on other projects.
+- `CLD` currently requires `prepa_approved = TRUE`, but approved failed tests
+  still accrue from the test date. Confirm whether the LD clock should instead
+  start on approval date.
 - Ramp-rate failure currently belongs in performance-test data, but its outage
   consequence is not yet automatically rolled into `UNAVHRS`.

@@ -1,0 +1,4 @@
+timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,UNAVHRS,UNAVPRODHRS,GSE,PFM,IP,notes
+2026-01,1,0.00,744,0,0,0,50,0,0,Month 1: prior_GSE=0 included=50 PRA=(744-50)/744=0.9328 MFP=24896x100x1.0x0.9328=2322288.17
+2026-02,1,0.00,720,0,0,0,50,0,0,Month 2: prior_GSE=50 included=30 (cap=80) PRA=(720-30)/720=0.9583 MFP=24896x100x1.0x0.9583=2385866.67
+2026-03,1,0.00,744,0,0,0,50,0,0,Month 3: prior_GSE=80 included=0 (fully capped) PRA=1.0 MFP=2489600.00 — GSE in CSV ignored

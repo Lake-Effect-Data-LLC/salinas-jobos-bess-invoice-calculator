@@ -6,6 +6,8 @@ from calculations import (
     calculate_FA,
     calculate_FA_with_included_POHRS,
     calculate_FAA,
+    calculate_included_GSEHRS,
+    calculate_risk_adjustment_with_waiting_periods,
     calculate_capability_liquidated_damages_per_day,
     calculate_efficiency_liquidated_damages,
     calculate_liquidated_damages_rate,
@@ -16,6 +18,9 @@ from error_checks import validate_input_files
 from report import generate_bess_invoice_support_report
 
 import pandas as pd
+
+from classes import BessMonthlyResult
+from data_reader import load_contract_values
 
 
 class PerformanceGuaranteeTest(unittest.TestCase):
@@ -51,6 +56,7 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             requested_by="PREPA",
             tde=390.0,
             measured_ramp_rate=6000.0,
+            prepa_approved=True,
             cure_or_retest_date="2026-01-20",
         )
 
@@ -96,6 +102,67 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 cpp=25096.0,
             ),
             0.0,
+        )
+
+    def test_unapproved_failed_test_does_not_accrue_cld(self):
+        failed_test = BessPerformanceTest(
+            test_id="FAIL-DRAFT",
+            agreement_year=1,
+            test_type="PREPA Performance Test",
+            test_date="2026-01-15",
+            requested_by="PREPA",
+            tde=390.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=False,
+            cure_or_retest_date="2026-01-20",
+        )
+
+        self.assertEqual(
+            calculate_monthly_capability_liquidated_damages(
+                timestamp_month="2026-01",
+                agreement_year=1,
+                performance_tests=[failed_test],
+                dde=400.0,
+                rer=170.0,
+                cpp=25096.0,
+                cld_uses_dde_multiplier=True,
+            ),
+            0.0,
+        )
+
+    def test_cld_can_use_gc_separate_from_dde(self):
+        failed_test = BessPerformanceTest(
+            test_id="FAIL-GC",
+            agreement_year=1,
+            test_type="PREPA Performance Test",
+            test_date="2026-01-15",
+            requested_by="PREPA",
+            tde=390.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=True,
+            cure_or_retest_date="2026-01-20",
+        )
+
+        cld_per_day = calculate_capability_liquidated_damages_per_day(
+            GC=395.0,
+            TDE=390.0,
+            RER=170.0,
+            CPP=25096.0,
+            DDE=400.0,
+        )
+
+        self.assertAlmostEqual(
+            calculate_monthly_capability_liquidated_damages(
+                timestamp_month="2026-01",
+                agreement_year=1,
+                performance_tests=[failed_test],
+                dde=400.0,
+                rer=170.0,
+                cpp=25096.0,
+                cld_uses_dde_multiplier=True,
+                gc=395.0,
+            ),
+            cld_per_day * 5,
         )
 
     def test_eld_uses_jobos_ce_times_ge_formula(self):
@@ -146,6 +213,52 @@ class PerformanceGuaranteeTest(unittest.TestCase):
     def test_faa_at_exactly_70_percent_uses_last_nonzero_point(self):
         self.assertAlmostEqual(calculate_FAA(0.70), 0.44)
 
+    def test_waiting_period_allowance_can_be_contract_specific(self):
+        self.assertEqual(
+            calculate_included_GSEHRS(
+                GSEHRS=90.0,
+                prior_GSEHRS=0.0,
+                annual_allowance_hours=80.0,
+            ),
+            80.0,
+        )
+        self.assertEqual(
+            calculate_included_GSEHRS(
+                GSEHRS=90.0,
+                prior_GSEHRS=0.0,
+                annual_allowance_hours=100.0,
+            ),
+            90.0,
+        )
+
+    def test_pra_uses_contract_specific_waiting_periods(self):
+        self.assertAlmostEqual(
+            calculate_risk_adjustment_with_waiting_periods(
+                BPHRS=100.0,
+                GSEHRS=90.0,
+                PFMHRS=0.0,
+                IPHRS=0.0,
+                prior_GSEHRS=0.0,
+                prior_PFMHRS=0.0,
+                grid_system_waiting_period_hours=80.0,
+                force_majeure_waiting_period_hours=720.0,
+            ),
+            0.2,
+        )
+        self.assertAlmostEqual(
+            calculate_risk_adjustment_with_waiting_periods(
+                BPHRS=100.0,
+                GSEHRS=90.0,
+                PFMHRS=0.0,
+                IPHRS=0.0,
+                prior_GSEHRS=0.0,
+                prior_PFMHRS=0.0,
+                grid_system_waiting_period_hours=100.0,
+                force_majeure_waiting_period_hours=720.0,
+            ),
+            0.1,
+        )
+
     def test_contract_values_validation_requires_ld_formula_columns(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "bess_contract_values_template.csv"
@@ -156,6 +269,28 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 "CLD_uses_DDE_multiplier",
             ):
                 validate_input_files([path])
+
+    def test_blank_required_contract_field_raises(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bess_contract_values_template.csv"
+            # TA cell is intentionally blank
+            path.write_text(
+                "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
+                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
+                "design_dmax,design_duration_energy,design_charge_energy,"
+                "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
+                "scheduled_maintenance_allowance_hours\n"
+                "1,25000,1200,4,,170,0.97,FALSE,TRUE,100,400,400,80,720,160\n"
+            )
+
+            with self.assertRaisesRegex(ValueError, "TA"):
+                load_contract_values(path)
+
+    def test_monthly_result_has_no_adj_alias(self):
+        self.assertFalse(
+            hasattr(BessMonthlyResult, "adj"),
+            "BessMonthlyResult.adj alias should have been removed (QUALITY-6)",
+        )
 
     def test_report_header_uses_project_name(self):
         with TemporaryDirectory() as temp_dir:

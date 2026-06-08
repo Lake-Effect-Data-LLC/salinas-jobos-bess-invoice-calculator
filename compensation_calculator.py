@@ -70,7 +70,11 @@ def calculate_monthly_results(
                 contract.ddd,
                 applicable_test.tde,
             )
-        included_pohrs = calculate_included_POHRS(monthly_input.pohrs, prior_pohrs)
+        included_pohrs = calculate_included_POHRS(
+            monthly_input.pohrs,
+            prior_pohrs,
+            contract.scheduled_maintenance_allowance_hours,
+        )
         excess_pohrs = monthly_input.pohrs - included_pohrs
         unavhrs = monthly_input.unavhrs + excess_pohrs
         fa = calculate_FA(
@@ -95,6 +99,7 @@ def calculate_monthly_results(
             contract.rer,
             cpp,
             contract.cld_uses_dde_multiplier,
+            yearly.gc,
         )
         pra = calculate_risk_adjustment_with_waiting_periods(
             monthly_input.bphrs,
@@ -103,6 +108,8 @@ def calculate_monthly_results(
             monthly_input.ip,
             prior_gsehrs,
             prior_pfmhrs,
+            contract.grid_system_waiting_period_hours,
+            contract.force_majeure_waiting_period_hours,
         )
         monthly_performance_input = performance_inputs_by_month.get(
             (monthly_input.agreement_year, monthly_input.timestamp_month)
@@ -173,6 +180,18 @@ def get_applicable_performance_test(
 ):
     # Source: Appendix F Section 3(c). MCC test adjustments take effect on the
     # first day of the Billing Period after the Billing Period containing the test.
+    #
+    # Cross-year design: tests are filtered to the current agreement_year because
+    # the annual adjustment formula (MCCy = min(DDE/DDD, TR)) resets MCC at the
+    # start of each agreement year. TR in bess_yearly_inputs_template.csv is the
+    # mechanism for carrying any prior-year test result forward. Data entry rule:
+    #   Year 1 at COD: TR = design_dmax (MW).
+    #   Year N > 1: derive from the last approved test of Year N-1:
+    #     TDE_last < 0.99 x DDE_last  →  TR = TDE_last / DDD
+    #     TDE_last >= 0.99 x DDE_last →  TR = DDE_last / DDD
+    #   No Year N-1 tests: carry forward Year N-1 TR unchanged.
+    # Failing to update TR after a below-threshold year-end test will overstate
+    # MCC for the new agreement year.
     billing_period_start = _parse_month_start(timestamp_month)
     applicable_tests = [
         performance_test
@@ -199,23 +218,28 @@ def calculate_monthly_capability_liquidated_damages(
     rer,
     cpp,
     cld_uses_dde_multiplier=False,
+    gc=None,
 ):
     # Source: Appendix P Section 2(b), Capability Liquidated Damages.
     # Salinas visual source:
     # docs/screenshots/CLD_06_Amend_(C-2-E)AES_Salinas_2023-0005_pg_230_220.png.
     # Jobos visual source provided in chat confirms no DDE multiplier.
     # Current allocation rule: count failed-test days that overlap the Billing
-    # Period, starting on the test date and ending before cure/retest date.
+    # Period for approved tests, starting on the test date and ending before cure/retest date.
     # Open-ended failures are not accrued without an explicit cure/retest date.
     billing_period_start = _parse_month_start(timestamp_month)
     billing_period_end = _next_month_start(timestamp_month)
+    guaranteed_capability = dde if gc is None else gc
     monthly_cld = 0.0
 
     for performance_test in performance_tests:
         if performance_test.agreement_year != agreement_year:
             continue
 
-        if performance_test.tde >= dde:
+        if not performance_test.prepa_approved:
+            continue
+
+        if performance_test.tde >= guaranteed_capability:
             continue
 
         if not performance_test.cure_or_retest_date:
@@ -223,6 +247,16 @@ def calculate_monthly_capability_liquidated_damages(
 
         test_date = _parse_date(performance_test.test_date)
         cure_or_retest_date = _parse_date(performance_test.cure_or_retest_date)
+        # Day-boundary interpretation (Appendix P Section 2(b)):
+        # "for each Day from the failed Performance Test until Resource Provider
+        #  demonstrates TDE at or above DDE."
+        # "From the failed Performance Test" → test date is the first accrual day
+        #   (overlap_start includes test_date).
+        # "Until ... demonstrates" → the cure/retest date is the day the shortfall
+        #   is resolved, so it is not itself a CLD day
+        #   (overlap_end uses cure_or_retest_date exclusively).
+        # Example: test 2025-12-28, cure 2026-01-05 → 8 days total
+        #   (Dec 28–31 = 4, Jan 1–4 = 4; cure day Jan 5 not charged).
         overlap_start = max(test_date, billing_period_start)
         overlap_end = min(cure_or_retest_date, billing_period_end)
         cld_days = max((overlap_end - overlap_start).days, 0)
@@ -231,7 +265,7 @@ def calculate_monthly_capability_liquidated_damages(
             continue
 
         cld_per_day = calculate_capability_liquidated_damages_per_day(
-            dde,
+            guaranteed_capability,
             performance_test.tde,
             rer,
             cpp,
