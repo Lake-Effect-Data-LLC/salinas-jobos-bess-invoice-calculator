@@ -1,0 +1,3 @@
+project_id,project_name,data_folder,output_folder
+salinas,Salinas BESS,data/salinas,output/salinas
+jobos,Jobos BESS,data/jobos,output/jobos

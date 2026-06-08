@@ -1,0 +1,939 @@
+--- Page 1 ---
+2023-P00053D
+AMENDMENT NO.4
+TO THE
+ENERGY STORAGE SERVICES AGREEMENT
+BETWEEN
+CLEAN FLEXIBLE ENERGY LLC
+AND
+THE PUERTO RICO ELECTRIC POWER AUTHORITY
+Confidential
+This Amendment No. 4 to the Energy Storage Services Agreement for Salinas (this "Amendment") is
+entered into as of July 10, 2023 (the "Fourth Amendment Effective Date"), by and between the Puerto
+Rico Electric Power Authority ("PREPA") and Clean Flexible Energy LLC (the "Resource Provider").
+PREPA and Resource Provider are herein individually referred to as a "Party" and collectively referred to
+as "Parties?' All capitalized terms used in this Amendment and not otherwise defined shall have the
+meaning given to them in the Agreement (defined below).
+RECITALS
+WHEREAS, the Parties entered into that certain Energy Storage Services Agreement, dated August 26,
+2022 (the "Agreement"), which provided two hundred forty (240) Days to reach the Closing Date;
+WHEREAS, the Parties entered into that certain Amendment No. 1 to the ESSA, dated March 17, 2023
+(the "First Amendment"), which provided for an additional sixty (60) Days to reach the Closing Date;
+WHEREAS, the Parties entered into that certain Amendment No. 2 to the ESSA, dated June 15, 2023 (the
+"Second Amendment"), which extended the Closing Date to June 30, 2023;
+WHEREAS, the Parties entered into that certain Amendment No. 3 to the ESSA, dated June 30, 2023 (the
+"Third Amendment"), which extended the Closing Date to July 10, 2023; and
+WHEREAS, the Parties now desire to amend certain provisions of the Agreement in accordance with the
+terms of this Amendment,
+NOW, THEREFORE, in consideration of the mutual promises, covenants and agreements set forth herein
+and for other good and valuable consideration the receipt and sufficiency of which are hereby.
+acknowledged, the Parties hereto, intending to be legally bound, hereby agree as follows:
+SECTION A. Amendments
+1.In Section 1.1 (Definitions), the following defined terms and their corresponding definitions are
+hereby deleted from such section: "Best and Final Offer", "Best Interests Determination",
+"Conditions Precedent", "ITC Period", "ITC -Related Net Losses", "ITC Renewable Energy
+Charging Requirement", "Opt -Out Date", "PPOA Closing Date", "PPOA Excused Event",
+"PPOA Outage" and "Revitalization Coordinator".
+2.In Section 1.1 (Definitions), the following defined terms and their corresponding definitions are
+hereby added in alphabetical order within such section:
+"Conditions Subsequent" has the meaning set forth in paragraph (b) of Section 2.3 (Initial
+Effectiveness, Closing Date & Conditions Subsequent).
+1
+
+--- Page 2 ---
+Confidential
+"Conditions Subsequent Deadline" has the meaning set forth in paragraph (b) of Section
+2.3 (Initial Effectiveness, Closing Date & Conditions Subsequent).
+"DSM" has the meaning set forth in Section 2 of Appendix L (Operating Procedures).
+"Satisfaction of Conditions Subsequent" has the meaning set forth in paragraph (b) of
+Section 2.3 (Initial Effectiveness, Closing Date & Conditions Subsequent).
+"V" means volts.
+3.In Section 1.1 (Definitions), the following defined terms and corresponding definitions are hereby
+amended and restated in their entirety:
+"Agreement Year" means each period of twelve (12) consecutive Months, provided that
+(i) the first such period shall begin on the Commercial Operation Date, (ii) each such
+subsequent year shall begin on the corresponding anniversary of the Commercial Operation
+Date, and (iii) the last such period shall expire at the end of the Supply Period.
+"Charge Source" means, for each Charge Notice, either (i) a Co -Located Renewable
+Energy Resource, or (ii) the Grid System, as PREPA may elect in such Charge Notice at
+its sole discretion.
+"Expedited Permitting Process" means either (i) the permitting process for Critical
+Projects set forth in Title V of PROMESA or (ii) the expedited permitting process
+established under Act 76-2000.
+"Grid System Event" means any condition in the Grid System or act or omission of
+PREPA that prevents or impairs PREPA from (i) making Charge Energy available at the
+Interconnection Point while the Facility operates in Charge Mode, or (ii) taking delivery of
+Discharge Energy or Ancillary Services made available by Resource Provider at the
+Interconnection Point while the Facility operates in Discharge Mode, including (a) any
+curtailment, reduction, or disconnection instructions issued by PREPA in a Dispatch
+Notice or Charge Notice issued by PREPA (or otherwise) for any reason, including as a
+result of low demand for electricity in the Commonwealth of Puerto Rico and including
+any instruction from T&D Operator preventing Resource Provider from reconnecting, or
+(b) any condition in the Grid System (including an Emergency affecting such system) that
+causes or may cause physical damage to the Facility or life endangerment, and any damage
+to or the tripping of protection relays installed in the Facility with settings as instructed by
+PREPA, but in each case excluding any such event resulting from Force Majeure affecting
+Resource Provider or a PREPA Risk Event pursuant to paragraphs (a), (c), (d) and (e) of
+such definition.
+"Guaranteed Commercial Operation Date" means the second (2nd) anniversary of the
+Satisfaction of Conditions Subsequent, as adjusted in accordance with Section 3.4
+(Extensions of Time).
+"Interest" means the compensation for the accrual of monetary obligations under this
+Agreement computed Monthly and prorated daily from the time each such obligation
+becomes past due based on an annual interest rate equal to the lesser of: (i) (a) for payments
+made during the first five (5) Days after such a payment becomes due, in each case, the
+Prime Commercial Lending Rate as set by Citibank NA., New York, New York or any
+9
+
+--- Page 3 ---
+Confidential
+other bank as mutually agreed by the Parties or any other equivalent rate as mutually agreed
+by the Parties (for the purposes of this definition, the "Prime Rate"), and (b) for payments
+made beginning on the sixth (6th) Day after such a payment is due, the Prime Rate plus
+five percent (5%); and (ii) the maximum rate allowable under Article 1169 of the Puerto
+Rico Civil Code or successor statute applicable to past due amounts. The provisions of this
+definition shall not be construed to limit the applicable rate of interest on the project debt.
+"Non -Refundable Fee" means a non-refundable fee of four hundred ninety three thousand
+three hundred fifty six dollars and fifty one cents ($493,356.51), which (i) partially offsets
+PREPA's cost to conduct a System Impact Study and a Facility Study of all proposals in
+the RFP process, including the proposal submitted by Resource Provider in response to the
+RFP, and (ii) has been determined by dividing the total cost of such studies proportionally
+among the proposals expected at the time of this Agreement to result in a fully effective
+agreement with PREPA based on the installed kW capacity of such proposals.
+"PREPA Interconnection and System Upgrade Cost" means PREPA's estimate of the
+cost of the PREPA Interconnection Facilities Works, as notified by PREPA to Resource
+Provider in accordance with the Facility Study and the System Impact Study.
+"Resource Provider Execution Date" means August 26, 2022.
+4.Section 2.3 (Initial Effectiveness & Closing Date) of the Agreement is hereby amended and restated
+in its entirety to read as follows:
+2.3Initial Effectiveness, Closing Date & Conditions Subsequent
+a.The rights and obligations of the Parties under Article1(Definitions &
+Interpretation), this Article 2, Section 3.6 (Exchange of Information), Section 3.7
+(Cooperation), Article 11 (Liability), Article 12 (Representations, Warranties, &
+Covenants), Article 14 (Force Majeure), Article 15 (Termination), Article 19
+(Assignment & Transfer), Article 20 (Notices), Article 21 (Dispute Resolution) and
+Article 22 (Miscellaneous Provisions), shall enter into full force and effect on the
+Agreement Date (collectively, the "Agreement Date Obligations"). Subject to the
+Agreement Date Obligations, the remaining provisions of this Agreement shall
+become effective on July 10, 2023 (the "Closing Date").
+b.Each Party shall satisfy their respective conditions subsequent set out in Part 1 and
+Part 2 of Appendix C (Conditions Subsequent) (collectively with the conditions set
+out in Part 3 of such Appendix C, the "Conditions Subsequent"), and Resource
+Provider shall use commercially reasonable efforts to satisfy limb (b) of Part 3 of
+Appendix C, promptly after the Closing Date, and in any event shall satisfy such
+conditions no later than the date (the "Conditions Subsequent Deadline") of the
+earlier to occur of (i) ten (10) Business Days after satisfaction of the Conditions
+Subsequent set out in Part 3 of Appendix C and (ii) November 30, 2023. The
+Parties shall jointly sign a certificate, in the form set forth in Appendix S (Form of
+Conditions Subsequent Certificate), within five (5) Business Days after the
+occurrence of the satisfaction and/or waiver of all Conditions Subsequent (the
+"Satisfaction of Conditions Subsequent"). Resource Provider shall maintain the
+Bid Security in full force and effect, and otherwise in accordance with the
+requirements of the RFP until the date of the Satisfact. n of Conditions
+Subsequent.'1)_I
+3
+
+--- Page 4 ---
+Confidential
+c.If the Satisfaction of Conditions Subsequent fails to occur by November 30, 2023,
+then (i) this Agreement shall automatically terminate at midnight on such Day
+without either Party incurring liability to the other Party, and (ii) PREPA shall
+return the Bid Security to Resource Provider, provided that in the event that either
+Resource Provider (1) has breached any obligations or incurred any other liability
+to PREPA in accordance with this Agreement, or (2) has not satisfied the
+Conditions Subsequent set out in Part 1 of Appendix C (Conditions Subsequent)
+but the satisfaction of the Conditions Subsequent set out in Part 2 and Part 3 of
+Appendix C has occurred: (A) this Agreement shallinstead terminate in
+accordance with paragraph (c) of Section 15.1 (Termination Date), and (B) PREPA
+shall have the right to retain, and draw on the full face amount of, the Bid Security
+upon the occurrence of such termination.
+5.In paragraph (a) of Section 2.5 (Performance Security) of the Agreement, the phrase "condition
+precedent" is hereby replaced with "Condition Subsequent".
+6.Section 3.1 (Consulting Technical Expert) of the Agreement is hereby amended and restated in its
+entirety to read as follows:
+No later than thirty (30) days after the Satisfaction of Conditions Subsequent, PREPA (or
+T&D Operator acting as PREPA's agent) shall consult with Resource Provider and appoint
+an engineer (the "Consulting Technical Expert") to review technical matters, issue non-
+binding technical recommendations, assist in the resolution of technical issues, and monitor
+the works undertaken by, or on behalf of, Resource Provider (i) for the design, construction
+and commissioning of the Facility, and (ii) the operation of the Facility during the Supply
+Period. PREPA may designate different Consulting Technical Experts for different
+purposes under this Agreement. Any Consulting Technical Expert's staff shall include
+suitably qualified engineers and other professionals who possess the competence to carry
+out such duty. The Consulting Technical Expert shall verify that Resource Provider
+complies with this Agreement and conduct reviews of works performed by, or on behalf
+of, Resource Provider in accordance with Appendix I (Progress Review). Resource
+Provider shall consider all non -binding technical recommendations issued by the
+Consulting Technical Expert in order to comply with the requirements of this Agreement
+during the Pre -Operation Period. Whenever carrying out its duties in accordance with this
+Agreement, the Consulting Technical Expert shall act independently.
+7.Paragraph (d) of Section 12 (Resource Provider's Development Obligations) of the Agreement is
+hereby amended and restated in its entirety to read as follows:
+d.Resource Provider shall duly and properly apply for any required Permits for the
+siting and construction of the Facility using an Expedited Permitting Process or
+other permitting processes as may be available as soon as practicable following the
+occurrence of the Closing Date. Resource Provider shall exercise, and continue to
+exercise, diligent efforts to pursue and obtain such Permits. Resource Provider
+shall inform PREPA if it becomes aware or reasonably expects that it will not
+obtain a material Permit by the date or timeline required under this Agreement.
+4
+
+--- Page 5 ---
+Confidential
+8.In Section 3.7 (Cooperation) of the Agreement:
+a.Clause (i) is hereby replaced with "control of, or other required access and rights to, the
+real property upon which the Facility will be located, including rights -of -way, easements,
+and similar access rights for the interconnection of the Facility,"; and
+b.the final sentence is hereby replaced with "Notwithstanding anything in this Agreement to
+the contrary, Resource Provider shall remain solely responsible for obtaining the items set
+out in clauses (i) to (iii) of this Section 3.7 in connection with the Facility (and excluding,
+for clarity, any items in connection with the PREPA Interconnection Facilities Work)."
+9.Paragraph (f) of Section 4.1 (Proposed Design) of the Agreement is hereby amended and restated
+in its entirety to read as follows:
+f.Resource Provider shall not, without PREPA's written consent, commence
+construction of the Facility until the Parties have agreed on an Approved Design;
+provided that Resource Provider may, at its risk, order long -lead equipment for the
+Facility prior to the Parties agreeing on the Approved Design.
+10.Section 9.6 (Improvement in PREPA 's Financial Condition) of the Agreement is hereby amended
+and restated in its entirety to read as follows:
+9.6Improvement in Financial Conditions
+a.Following PREPA's emergence from the PREPA Bankruptcy, if Resource
+Provider enters into any refinancing, or obtains financing on more favorable terms
+than anticipated prior to the signing of this Agreement, the Parties shall cooperate
+and discuss in good faith an adjustment to the Capability Payment Price to share
+the benefit of any savings accruing to Resource Provider from such refinancing.
+b.If Resource Provider would qualify for and obtain loans, credit support, guarantees
+or other support from the United States Department of Energy (collectively, "DOE
+Funding") but for specific provisions of this Agreement that may be amended to
+enable Resource Provider to qualify for DOE Funding, and such amendments are
+consistent with those that have been approved and agreed by the United States
+Department of Energy and a Governmental Authority of Puerto Rico, then PREPA
+shall cooperate with Resource Provider to negotiate and agree on amendments to
+this Agreement reasonably required to enable Resource Provider to qualify for
+DOE Funding, which amendments would come into effect if DOE Funding is
+actually obtained. If such DOE Funding would result in more favorable debt or
+equity financing terms than were anticipated prior to the signing of this Agreement
+(assuming no such DOE Funding would have been achieved in the absence of
+amendments agreed upon pursuant to this subparagraph) and if DOE Funding is
+actually obtained, then Resource Provider shall cooperate in good faith with
+PREPA to negotiate and agree on amendments reasonably required to reflect an
+adjustment to the Capability Payment Price to share the benefit of any savings
+accruing to Resource Provider as a consequence of its qualification for and
+obtaining such DOE Funding.
+5
+
+--- Page 6 ---
+Confidential
+c.For the avoidance of doubt, the Parties shall only amend this Agreement in
+accordance with this Section 9.6 (Improvement in Financial Conditions) if
+mutually agreed by the Parties in their sole discretion.
+11.Paragraph (a) of Section 12.4 (PREPA Representations and Warranties) of the Agreement is hereby
+amended to end with ", other than as regards the Conditions Subsequent set out in Part 3 of
+Appendix C (Conditions Subsequent);"
+12.The phrase "(including Change of Law)" is hereby inserted after the words "act of any
+Governmental Authority" in clause (i) of Section 14.2 (Instances of Force Majeure).
+13.Paragraph (d) of Section 15.1 (Termination Date) of the Agreement is hereby amended and restated
+in its entirety to read as follows:
+d.the inability of the Parties to satisfy Part 2 or Part 3 of Appendix C (Conditions
+Subsequent) by the date required under paragraph (c) of Section 2.3 (Initial
+Effectiveness, Closing Date & Conditions Subsequent);
+14.Paragraph (c) of Section 16.1 (Definition) of the Agreement is hereby amended and restated in its
+entirety to read as follows:
+c.for Resource Provider as the defaulting Party only, (i) default by Resource Provider
+in the observance or performance of any covenant contained in Section 2.5
+(Performance Security), or (ii) if the Conditions Subsequent set out in Part 2 and
+Part 3 of Appendix C (Conditions Subsequent) have occurred, then default by
+Resource Provider in satisfying its Conditions Subsequent in Part 1 of Appendix
+C by the Conditions Subsequent Deadline, in each case where such default
+continues uncured for a period of at least thirty (30) Days after the date on which
+Resource Provider receives written notice from PREPA of such failure;
+15.In the first sentence of paragraph (f) of Section 18.3 (Contractor Requirements) of the Agreement,
+the phrase "prime contractors" is hereby replaced with "prime contractors for the Facility".
+16.Section 18.6 (General Provision) of the Agreement is hereby amended and restated in its entirety
+to read as follows:
+18.6General Provision
+a.Subject to paragraph (b) below, PREPA shall review the requirements of this
+Article 18 prior to the Construction Start Date to confirm that an insurance
+company meeting the requirements of this Article 18 continues to make available
+policies satisfying the foregoing requirements. Each of Resource Provider, its
+contractors and subcontractors shall cause its insurers or agents to provide, not
+later than ten (10) Business Days prior to the Construction Start Date, with
+originals or certified true and correct copies of insurance certificates for such
+policies (which have entered into full force and effect), in a form of certificate
+approved by PREPA, which approval PREPA shall not unreasonably withhold or
+delay. Any deductible applicable on required insurance policies under this Article
+18 shall be paid by the Resource Provider, its contractors, or subcontractors.
+Failure of a party to obtain certificates of insurance does not relieve the Resource
+Provider, contractor or subcontractor of the insurance requirements set forth
+6
+
+--- Page 7 ---
+Confidential
+herein. Failure to obtain the insurance coverage required by this Article 18 shall in
+no way relieve or limit the obligations or liabilities of Resource Provider,
+contractor or subcontractor under this Agreement.
+b.Notwithstanding the foregoing, in the event any insurance (including the limits or
+deductibles thereof) required to be maintained by this Article 18, other than
+insurance required to be maintained by Law, is not available on commercially
+reasonable terms in the commercial insurance market, PREPA (acting upon
+consultation with an independent insurance consultant), shall not unreasonably
+withhold or delay its agreement to waive (or modify) such requirement to the
+extent the required insurance is not so available and/or, to the extent feasible, may
+allow Resource Provider (or the Project, as applicable) to obtain the best available
+insurance comparable to insurance meeting the requirements of this Article 18 on
+commercially reasonable terms then available in the commercial insurance market
+(as determined by an independent insurance consultant); provided that (i) Resource
+Provider shall first request any such waiver (or modification) in writing, which
+request shall be accompanied by written reports prepared by Resource Provider
+and an independent insurance consultant, reasonably satisfactory to PREPA,
+certifying that such insurance is not available on commercially reasonable terms
+in the commercial insurance market for solar energy generation projects of similar
+type and capacity (and, in any case where the required amount is not so available,
+certifying as to the maximum amount which is so available) and explaining in
+detail the basis for such conclusions, with the form and substance of such reports
+to be reasonably satisfactory to PREPA; (ii) at any time after the granting of any
+such waiver (or modification), but not more often than once annually, PREPA may
+request, and Resource Provider shall furnish to PREPA within fifteen (15) days
+after such request, supplemental reports satisfactory to PREPA updating the prior
+reports and reaffirming such conclusion; and(iii)any such waiver (or
+modification) shall be effective only for so long as such insurance shall not be
+available on commercially reasonable terms in the commercial insurance market
+(as determined by an independent insurance consultant), it being understood that
+the failure of Resource Provider to timely furnish any such supplemental report
+shall be conclusive evidence that such waiver (or modification) is no longer
+required because such condition no longer exists.
+17.Section 19.2 (PREPA's Right to Assign) of the Agreement is hereby amended and restated in its
+entirety to read as follows:
+Notwithstanding the provisions of Section 19.1 (Restriction on Assignment), the Parties
+acknowledge that PREPA is undergoing a transformation process, and therefore agree that,
+after the front-end transition period of a Partnership Contract, Sale Contract, or any other
+PREPA Transaction (as these terms are defined in Act 120-2018), PREPA may sell, assign,
+convey, transfer, pledge, mortgage, sublease, delegate, hypothecate, or otherwise dispose
+of (each, a "Transfer") any of its rights, title, or interest in this Agreement as permitted by
+Applicable Law and at any time, without Resource Provider's consent, and without cost,
+expense, or incremental liability to PREPA, to an Affiliate of PREPA or any Governmental
+Authority of Puerto Rico fmancially, legally and operationally capable of performing all
+of PREPA's payment and performance obligations under this Agreement; provided that
+PREPA shall notify Resource Provider no later than thirty (30) Days before the effective
+date of any such Transfer. Unless otherwise agreed by PREPA, following a Transfer to one
+of the entities described in the previous sentence, PREPA shall be released from all
+7
+
+--- Page 8 ---
+Confidential
+obligations under this Agreement to the extent such transferee assumes such obligations in
+writing, provided that, for any Transfer to an Affiliate of PREPA, PREPA shall guarantee
+the payment obligations of such Affiliate arising out of this Agreement following such
+assignment.
+18.Appendix C (Conditions Precedent) of the Agreement is hereby amended and restated in its entirety
+as shown by Annex B attached hereto.
+19.Appendix D (Milestone Schedule) of the Agreement is hereby amended and restated in its entirety
+as shown by Annex C attached hereto.
+20.Section 2 (Monthly Fixed Payment) of Appendix F (Compensation) of the Agreement is hereby
+amended and restated in its entirety to read as follows:
+2.Monthly Fixed Payment
+For each Billing Period "n", the Parties shall calculate the monthly fixed payment for such Billing
+Period (the "Monthly Fixed Payment" or "MFP") as follows:
+where:
+CPP
+MFP. = CPP x MCC. x FAA. x PRA
+the Capability Payment Price for such Billing Period, which the Parties shall
+calculate as follows:
+where:
+CPPF
+CPP = CPPF + CPPPIF
+=an amount to compensate Resource Provider for the cost of
+the Project, other than the cost of the PREPA Interconnection
+Facilities Work, and subject to any adjustment in accordance
+with Section 9.6 (Improvement in Financial Conditions) or
+paragraph (b) of Section 17.1 (Change of Law), being the
+amount set out in the column captioned "CPPF (S/MW-
+Month of MCC)" thatcorrespondstotheapplicable
+Agreement Year:
+Agreement YearCPPF ($/MW -Month
+of MCC)
+1 524,396.00
+2 $24,883.92
+3 $25,381.60
+4 $25,889.23
+5 $26,407.01
+6 $26,935.16
+7 $27,473.86
+8 $28,023.34
+9 $28,583.80
+10$29,155.48
+8
+
+--- Page 9 ---
+Confidential
+Agreement YearCPPF ($/MW -Month
+of MCC)
+11$29,738.59
+12$30,333.36
+13$30,940.03
+14$31,558.83
+15$32,190.00
+16$32,833.80
+17$33,490.48
+18$34,160.29
+19$34,843.50
+20$35,540.37
+21$36,251.17
+22$36,976.20
+23$37,715.72
+24$38,470.03
+25$39,239.44
+CPPPIF=an amount to compensate Resource Provider for the cost of
+the PREPA Interconnection Facilities Work, being the
+amount set out in the column captioned "CPPPIF ($/MW -
+Month of MCC)" thatcorrespondstotheapplicable
+Agreement Year:
+Agreement YearCPPPIF (S/MW-
+Month of MCC)
+1 $1,200.00
+2 $1,224.00
+3 $1,248.48
+4 $1,273.45
+5 $1,298.92
+6 $1,324.90
+7 $1,351.39
+8 51,378.42
+9 $1,405.99
+10$1,434.11
+11$1,462.79
+12$1,492.05
+13$1,521.89
+14$1,552.33
+15$1,583.37
+16$1,615.04
+17$1,647.34
+18$1,680.29
+19$1,713.90
+20$1,748.17
+21$1,783.14
+22$1,818.80
+
+--- Page 10 ---
+Confidential
+Agreement YearCPPPIF ($/MW -
+Month of MCC)
+23$1,855.18
+24$1,892.28
+25$1,930.12
+provided that, if the Estimated Cost exceeds the Contracted
+Cost (each, as defined in the PPOA), the CPPPIF shall be
+downwardly adjusted by the ratio that the Contracted Cost
+bears to the Estimated Cost;
+MCC =Monthly Contract Capability for such Billing Period as adjusted in accordance
+with Section 3 (Monthly Contract Capability) of this Appendix F;
+FAA =Facility Availability Adjustment for such Billing Period, determined pursuant to
+Section 4 (Facility Availability) of this Appendix F; and
+PRA =PREPA Risk Adjustment for such Billing Period, determined pursuant to Section
+5 (PREPA Risk Adjustment) of this Appendix F.
+21.In Section 2 (Interconnection Point Specifications) of Appendix H (Interconnection Description
+and Specifications):
+a.the third sentence of the first paragraph is hereby replaced with "The Facility Study and
+System Impact Study shall determine the design as described in Article 3 (Pre -Operation
+Period) and may modify the single line set out in Appendix H-1 (Electrical Interconnection
+Single Line)"; and
+b.the phrase "the following design criteria documents" in paragraph (a)(1) is hereby replaced
+with "the following PREPA design criteria documents or T&D Operator's equivalent
+documents".
+22.Appendix J (Operating Characteristics) of the Agreement is hereby amended and restated in its
+entirety as shown by Annex D attached hereto.
+23.Appendix S (Form of Conditions Precedent Certificate) of the Agreement is hereby amended and
+restated in its entirety as shown by Annex E attached hereto.
+24.In paragraph 3 of Annex A (Form of Drawing Certificate) of Appendix V (Form of Performance
+Security) of the Agreement, the phrase "twenty-one (21) calendar days" is hereby replaced with
+"twenty-eight (28) calendar days" to comply with Section 2.5 (Performance Security) of the
+Agreement.
+25.In Appendix AA (Form of Payment Guarantee) of the Agreement,
+a.the phrase "conditions precedent for its effectiveness" in Recital B is hereby replaced with
+"conditions subsequent"; and
+b.the phrase "Closing Date" in Sections 1.2, 3.1, and 4.7 is hereby replaced with "Satisfaction
+of Conditions Subsequent".
+26.Throughout the Agreement:
+a.references to "Change -of -Law" are hereby replaced with "Change of Law";
+10
+
+--- Page 11 ---
+Confidential
+b.references to "Conditions Precedent" are hereby replaced with "Conditions Subsequent";
+c.the phrases "including but not limited to", "including without limitation" and similar
+grammatical variants are hereby replaced with "including", consistent with paragraph (e)
+of Section 1.2 (Rules of Interpretation);
+d.the phrase "responsible of' is hereby replaced with "responsible for";
+e.references to "the Resource Provider" or "the Resource Provider's" as a Party are hereby
+replaced with "Resource Provider", and reference to "Resource Provider's Interconnection
+Facilities" is replaced with "Resource Provider Interconnection Facilities"; and
+f.references to "Closing Date" are hereby replaced with "Satisfaction of Conditions
+Subsequent"inparagraph(e)of Section 3.2 (Resource Provider's Development
+Obligations), Section 3.9 (Protocols & Procedures), paragraph (a) of Section 4.1
+(Proposed Design) and Section 10.5 (Payment Method).
+27.To address changes in the ITC regulatory regime following the enactment of the Inflation
+Reduction Act of 2022:
+a.the parenthetical "(which, for the ITC Period, shall only include the Co -Located Renewable
+Energy Resource, and after the ITC Period, may include either such resource or the Grid
+System)" in paragraph (a) of Section 7.3 (Charging) is hereby deleted;
+b.the parenthetical "(other than the ITC Period)" in paragraph (a) of Section 7.4 (Charge
+Energy Obligations) is hereby deleted;
+c.the entirety of Section 7.8 (Termination of the PPOA for PREPA's Default during the ITC
+Period) is hereby deleted;
+d.the table set out in paragraph (a) of Section 4 of Appendix F (Compensation) is hereby
+amended and restated in its entirety to read as follows:
+FA (%)FAA
+Greater than or equal to ninety-eight percent
+(98%)One hundred percent (100%)
+Less than ninety-eight percent (98%) but
+greater than seventy percent (70%)
+One hundred percent (100%) - [(ninety -
+eight percent (98%) - FA)] x two (2)
+Less than seventy percent (70%)Zero percent (0%)
+e.the definition of UNAVHRSn of paragraph (b) of Section 4 of Appendix F (Compensation)
+is hereby amended and restated in its entirety to read as follows:
+UNAVHRSn =total number of hours in which the Facility was unavailable to
+deliver Adjusted Duration Energy or unable to accept Charge
+Energy during the Billing Period due to (A) a Non -Scheduled
+Outage or Non -Scheduled Derating; (B) an extension of a
+Scheduled Outage or Scheduled Derating fromitsoriginal
+schedule that was not notified to and approved by PREPA in
+accordance with Section 6.3 (Scheduled Maintenance); or (C)
+11
+
+--- Page 12 ---
+Confidential
+Resource Provider declaring the Facility unavailable, in whole or
+in part, for any hour or part of an hour, for any reason other than
+an event that counts toward POHRSn, provided that (i) an event
+described in (A) through (C) above that involves a Non -Scheduled
+Derating of the Facility shall result in unavailability of the Facility
+only to the extent that the Facility is unavailable to deliver
+Adjusted Duration Energy or unable to accept Charge Energy, as
+applicable,asaresult of such event,with suchFacility
+unavailability determined based on the difference between the
+standard of performance for the Facility required in accordance
+with the Agreement and the actual performance of the Facility
+during such event; and (ii) if the Facility is unavailable for less
+than a full hour, the unavailability will count as an equivalent
+percentage of the applicable hour;
+SECTION B. Representations and Warranties
+1.PREPA hereby represents and warrants to Resource Provider that: (a) the execution and delivery
+by PREPA of this Amendment has been duly authorized by PREPA's Governing Board; and
+(b) this Amendment is a legal, valid, and binding obligation of PREPA, enforceable against PREPA
+in accordance with its terms, except as may be limited by applicable bankruptcy, insolvency or
+similar laws affecting the enforcement of rights generally, and subject to the approvals required by
+the Conditions Subsequent as defined therein.
+2.Resource Provider hereby represents and warrants to PREPA that: (a) the execution, delivery, and
+performance by Resource Provider of this Amendment (i) have been duly authorized, (ii) do not
+and will not require any additional internal consent or approval of Resource Provider and (iii) do
+not and will not violate any provision of Resource Provider's certificate of formation or operating
+agreement, or any material indenture, contract or agreement to which it is a party or by which it or
+its properties may be bound, or any law, ordinance, rule, regulation, order, writ, judgment,
+injunction, decree, determination or award presently in effect; and (b) this Amendment is a legal,
+valid and binding obligation of Resource Provider, enforceable against Resource Provider in
+accordance with its terms, except as may be limited by applicable bankruptcy, insolvency or similar
+laws affecting the enforcement of rights generally.
+SECTION C. Miscellaneous
+1.Signing Conditions. Resource Provider shall deliver the documents set out in Annex A attached
+hereto no later than ten (10) Business Days after the Fourth Amendment Effective Date.
+2.Information for Controller's Office. PREPA will charge all payments that it owes under the
+Agreement, as amended by this Amendment, to PREPA's budget account number 01-4042-54710-
+050-668-0000 and estimates that its costs under the Agreement will not exceed two billion four
+hundred fifty nine million five hundred forty two thousand six hundred fifty five dollars and fifteen
+cents ($2,459,542,655.15). For the avoidance of doubt, the Parties have set out the expected account
+number and estimate of costs for informational purposes to satisfy the requirements of the Puerto
+Rico Controller. This paragraph does not bind the Parties or modify any other provision of the
+Agreement.
+3.Headings. The headings in this Amendment are for reference only and do not affect the
+interpretation of this Amendment.4)
+12
+
+--- Page 13 ---
+Confidential
+4.No Implied Waiver. This Amendment shall be limited precisely as written and does not modify any
+provisions of the Agreement except as specifically amended above. This Amendment shall not be
+deemed to be a consent granted pursuant to, or a waiver or modification of, any other term or
+condition of the Agreement, whether or not known to the Parties, or to prejudice any other right or
+rights which the Agreement may now have or have in the future.
+5.Counterparts. This Amendment may be executed in any number of counterparts with the same
+effect as if both Parties had signed the same document. All counterparts shall be construed together
+and shall constitute one instrument.
+6.Entire Agreement. The Parties intend the Agreement, as amended by this Amendment, as the final
+expression of their agreement and also as a complete and exclusive statement of the terms of their
+agreement with respect to the subject matter thereof that supersedes all prior written and oral
+understandings between the Parties with respect thereto.
+7.Governing Law. This Amendment shall be governed by, construed, and enforced in accordance
+with the Laws of the Commonwealth of Puerto Rico without regard to any contrary result required
+under applicable conflicts of laws rules. The Parties herein agree that all Disputes arising hereunder
+shall be resolved pursuant to Article 21 (Dispute Resolution) of the Agreement.
+[Signatures appear on the following page.]
+13
+
+--- Page 14 ---
+Confidential
+IN WITNESS WHEREOF, the Parties hereto have caused this Amendment to be duly executed by
+their respective officers as of the date first above written.
+LECTRIC POWER AUTHORITY
+Q r\
+By:
+Name:Jos. é A. Colón Ortiz
+Title:Execu ive Director
+Tax ID:
+CLEAN FLE
+By:
+Name:Jesus Bolinaga
+Title:President
+TaxID:
+
+--- Page 15 ---
+ANNEX A
+PREPA SIGNING CONDITIONS
+Resource Provider shall provide:
+Confidential
+a.an original certificate of tax status and compliance from the Commonwealth of Puerto Rico
+for the five (5) previous years, confirming that it does not owe Taxes to the Commonwealth
+of Puerto Rico or is paying such Taxes by an installment plan in full compliance with its
+terms;
+b.an income tax return filing certificate issued by the Treasury Department of Puerto Rico,
+Area of Internal Revenues assuring that Resource Provider has filed its Income Tax Return
+for the last five (5) years (obtained by using the Request for Copy and/or Certification of
+Income Tax Returns Form issued by the Treasury Department of Puerto Rico);
+c.a certificate of debt issued by the Treasury Department of Puerto Rico, Area of Internal
+Revenues;
+d.a certificate issued by the Municipal Revenues Collection Center assuring that Resource
+Provider does not owe any Taxes to such governmental agency;
+e.a certificate issued by the Department of Labor and Human Resources of Puerto Rico,
+evidencing that Resource Provider has paid to the Deparlizient of Labor and Human
+Resources of Puerto Rico, if applicable, its employees' contributions, in accordance with
+the Puerto Rico Employment Security Act (unemployment, temporary disability or
+sickness or social security for chauffeurs) or is paying such contributions by an installment
+plan in full compliance with its terms;
+f.a certificate issued by the Child Support Administration (ASUME) evidencing that
+Resource Provider has complied with the retention, if applicable, that an employer must
+do;
+g.a sworn and notarized statement, as of the Agreement Date, evidencing compliance with
+Article 3.3 Act 2-2018, as amended, known as the Anti -Corruption Code for a New Puerto
+Rico of the Commonwealth of Puerto Rico, as amended, in the form set forth in Appendix
+Q (Form of Sworn Statement);
+h.a certification, as of the Agreement Date, that, to its actual knowledge, no public employee
+has any personal or economic interest in this Agreement, under Section 22.11 (No
+Economic Interest);
+a certification, as of the Agreement Date, that, to its actual knowledge, it does not receive
+payment or benefit of any nature for services rendered regularly through an appointment
+to a Governmental Authority of Puerto Rico, under Section 22.10 (Anticorruption &
+Antibribery);z if1
+15
+
+--- Page 16 ---
+J
+Confidential
+if any of the previously required certifications show a debt, and Resource Provider has
+requested a review or adjustment of this debt, a certification that Resource Provider has
+made such request at the Agreement Date; and if PREPA denies the requested review or
+adjustment and such determination is final, proof of payment of this debt to PREPA or
+confirmation that Resource Provider accepts that PREPA shall offset the owed amount
+from the corresponding payments;
+k.evidence of Resource Provider's ability to provide Equity at least equal to the sum of (i)
+thirty percent (30%) of the forecasted costs to develop the Facility and (ii) the PREPA
+Interconnection Cost by the forecasted date on which Resource Provider will first draw
+down on funds for such development under the Financing Documents with the Project
+Lenders;
+1.documents evidencing Resource Provider's ownership and/or control of the Site for the
+purposes of implementing the Project;
+m.the certification set forth in Appendix R (Form of FOMB Certification); and
+n.a certificate, signed by a duly -authorized representative of Resource Provider, in the form
+set forth in Appendix Z (Form of Warranty Compliance).
+16
+
+--- Page 17 ---
+Confidential
+ANNEX B
+APPENDIX C
+CONDITIONS SUBSEQUENT
+PART 1- RESOURCE PROVIDER CONDITIONS
+As conditions subsequent to the Closing Date, Resource Provider shall deliver the following documents to
+PREPA in form and substance satisfactory to PREPA:
+a.the Performance Security;
+b.the Payment Guarantee;
+c.appointment of Service of Process Agent;
+d.certified true and correct copy, signed by a duly -authorized representative of Resource
+Provider, of a wire transfer confirming that Resource Provider has remitted the Non -
+Refundable Fee to the following account:
+Receiving Bank Address:Banco Popular of Puerto Rico
+ABA No.:
+Beneficiary Name:Puerto Rico Electric Power Authority
+Account Number:
+Payment Details:Tranche 1 RFP - Non -Refundable Fee
+e.a legal opinion prepared by Resource Provider's external counsel, confirming the warranty
+made by Resource Provider in item (4), paragraph (a) of Section 12.3 (Resource Provider
+Representations & Warranties); and
+f.the following technical documents:
+i.a preliminary engineering design of the Facility, consistent with Prudent Utility
+Practices, the Interconnection Agreement, the Facility Study and System Impact
+Study, and the MTRs;
+ii.a proposed relay protection scheme (to include the PREPA Interconnection
+Facilities and the Resource Provider Interconnection Facilities); and
+iii.a certified PSS/E mathematical model of the specific facility, the manufacturer's
+performance data and expected output curve.,4
+17
+
+--- Page 18 ---
+Confidential
+PART 2 - PREPA CONDITIONS
+PREPA shall satisfy the following as conditions subsequent to the Closing Date:
+a.evidence of filing of this Agreement with the Puerto Rico Controller; and
+b.delivery of a legal opinion prepared by its external counsel in a form reasonably acceptable
+to Resource Provider, confirming the warranty made by PREPA in paragraph (b) of Section
+12.4 (PREPA Representations & Warranties).
+PART 3 - MUTUAL CONDITIONS
+As conditions subsequent to the Closing Date:
+a.the FOMB shall have approved the execution of this Agreement; and
+b.an executed copy of the Interconnection Agreement (substantially in the form circulated
+by T&D Operator in February 2023), signed by the parties thereto, provided that such copy
+will(i)tothe extent LUMA's Contracted Cost exceeds the Estimated Cost for
+interconnection at a PREPA transmission center, not require Resource Provider to pay for
+such excess and (ii) reflect the final interconnection design and arrangements for the
+Project agreed by the Resource Provider, PREPA, and T&D Operator.
+18
+
+--- Page 19 ---
+ANNEX C
+APPENDIX D
+MILESTONE SCHEDULE
+Confidential
+MilestonesTime for Completion /
+Occurrence
+Resource Provider Delay
+Liquidated Damages
+(USD Per Day of Delay)
+Construction Start240 Days after Satisfaction of
+Conditions Subsequent
+N/A
+Initial Synchronization540 Days after Satisfaction of
+Conditions Subsequent
+N/A
+Commercial OperationGuaranteed Commercial
+Operation Date
+$58,603
+19
+
+--- Page 20 ---
+Confidential
+ANNEX D
+APPENDIX J
+OPERATING CHARACTERISTICS
+I.FACILITY DESCRIPTION
+Facility name: Salinas BESS
+Site name: Salinas
+Facility physical address: Undeveloped land in Aguirre, Pozo Hondo and Jobos Wards (access through PR -
+53 or PR -3), Salinas Municipality, Puerto Rico
+Total number of modules at the Facility: 100 MW
+Project elevation: 41 (feet above sea level)
+Project latitude: 17.97698735 (decimal form)
+Project longitude: -66.21194050 (decimal form)
+II.UNIT(S) DESCRIPTION
+Units: 43 Cores; each Core consists of 1 Transformer, 1 Inverter, and 12 Cubes
+Unit name: Fluence GridstackTM platform
+Battery Technology type: Northvolt NMC
+Specific module description: 360S2P battery rack with 12 modules per rack (6 modules in series; 2 modules
+in parallel) of 30.49 kW Usable Power per module 30.49 kWh Usable Energy per module
+Inverter: SMA SCS 3600 UP -US: 3.6 MVA nominal
+Battery Power / Energy at Metering Location: 100 MW / 400 MWh
+Interconnection Point for the Facility will have characteristics as follows:
+Distribution area: Salinas
+Existing zone: Salinas
+Load zone: Aguirre
+Substation: Aguirre TC Substation
+Other Charge Point(s) for the Facility will have characteristics as follows:
+Distribution area: Salinas
+20
+
+--- Page 21 ---
+Confidential
+Existing zone: Salinas
+Load zone: Aguin-e
+Substation: Aguirre TC Substation
+III.OPERATIONAL CHARACTERISTICS
+Discharging and Charging
+One hundred percent (100%) State of Charge (SOC) is defined as the highest state of charge to which the
+Facility can be consistently charged without damage beyond expected degradation from normal use. Zero
+percent (0%) SOC means the lowest state of charge to which the Facility can be consistently discharged
+without damage beyond expected degradation from normal use. If Resource Provider normally specifies
+highest and lowest SOC values differently, Resource Provider should normalize minimum and maximum
+SOC to zero percent (0%) SOC and one hundred percent (100%) SOC, respectively. Resource Provider
+should also normalize reporting of energy stored such that the amount of energy stored at zero percent
+(0%) SOC is 0 MWh and that the energy stored at one hundred percent (100%) SOC is fully available for
+discharge. Resource Provider will provide details on how the State of Charge is measured and physically
+indicated. For each characteristic, list the value that the Facility will be designed to have at the Commercial
+Operation Date.
+Design Dmax: 100 MW
+Design Di': 0 MW
+Design Discharge Duration: 4 (hours)
+Design Dm" Duration: 4 (hours)
+Design Storage Energy: 400 MWh
+Design Duration Energy: 400 MWh [Equals the product of the Design D""" and Design D"'' Duration]
+Design Cm": 100 MW
+Design Cm'": 0 MW
+Design Charge Duration: 4.68 hours at BOL; longer duration as the battery ages
+Design Cmae Duration: 4.68 hours at BOL; less duration as the battery ages
+Design Charge Energy: 468 MWh at BOL; potentially more as the battery ages
+21
+
+--- Page 22 ---
+Confidential
+[Power profile of the Facility across a full duty cycle.]
+150
+-150
+Indicative Power Profile for One Cycle of
+400MWh Discharge at P01
+Time (Hours)
+Available Energy for Discharge for One Cycle of
+400MWh Discharge at P01
+450
+400
+-5, 350
+2300
+ca 250L
+12 200w
+a)150
+3A0
+50
+0
+-50
+024681012141613202224
+Time (Hours)
+System Efficiency
+Total technical loss from battery DC terminal to POI (not including auxiliary consumption):4.0%
+(efficiency 96.0%)
+Round Trip Efficiency from POI to battery and back to POI (not including auxiliary consumption): 85%
+Stand-by Self Discharge: 1.8% per month with BMS deenergized, BESS not connected to the grid, all
+controls deenergized, cooling system deenergized, and ambient temperature below 40°C.
+99
+
+--- Page 23 ---
+Confidential
+BESS Equipment Stand-by Power Consumption:
+ For all standby conditions there will be transformer no-load loss estimated at 300kW; includes inverter
+transformers, auxiliary transformers, and main power transformer.
+ BESS non -transformer stand-by power consumption with chiller and HVAC off and controls energized:
+300kW.
+ If all chillers are working simultaneously and all controls and inverters: 2.6MW.
+Ramp Rates
+Wm to Dm": 6,000 MW/min
+Cm' to C"'": 6,000 MW/min
+Dm" to Dmin: 6,000 MW/min
+C"'" to Cm': 6,000 MW/min
+System Response Time
+[Timing should commence with system at a steady-state starting value and end when system has reached a
+steady-state ending value. Idle means that the Facility is neither charging nor discharging, but is online
+and available for immediate operation. Time should include time from notification.]
+System Response Time of 1000ms in Grid Following Mode is defined from the time the external party has
+written dispatch to the RTAC until the inverter output stabilizes at the point of interconnection.
+Idle to Dmae: 1 second
+Idle to Cmi: 1 second
+Dm" to Cma`: 1 second
+C"'ac to Dm": 1 second
+Dmin to Cmi": 1 second
+Cmi" to Dmin: 1 second
+[For the purpose of falling out this Appendix, Discharge (Charge) Start-up time means the amount of time
+needed to bring the Facility from non -operation to Dmi" (Cm'n). (The state of non -operation includes but is
+not limited to being unsynchronized to the grid.) If applicable, provide Start -Up time for each Unit. Provide
+in seconds if appropriate.]
+Discharge and Charge Start -Up times:
+ Estimate 10 minutes if BESS is connected to the grid and controls are operational.
+ 30 minutes from blackout assuming non -operation of UPSs for controls.
+ Testing required to confirm startup durations.
+23
+
+--- Page 24 ---
+Starts and other Run Time Limitations
+Start limitations:
+Resting time after full power charge:
+Resting time after full power discharge:
+Resting state of charge of the battery 20%.
+60 minutes
+60 minutes
+Confidential
+Run hour limitations: The offered system is designed to run at one (1) discharge throughput cycle at the
+Metering Location of 400MWh per day.
+Ancillary Services
+Equivalent throughput cannot exceed 400MWh per day.
+Spinning Reserves:100 MWs; Range: [+/- 100 MW]
+Non -Spinning Reserves:100 MWs; Range: [+/- 100 MW]
+Regulation up:100 MWs; Range: [+/- 100 MW]
+Regulation down:100 MWs; Range: [+/- 100 MW]
+Black start capability (if applicable):The BESS inverters are capable of supporting grid forming
+applications such as Black Start for certain loads. Supplier to evaluate loads when they are identified by
+PREPA to determine whether BESS inverters can comply with requirement.
+Equivalent Cycle Limitations
+An Equivalent Cycle is one or more cycles, for which the cumulative discharge energy is equal to the total
+Usable Discharge Capacity for a given reference year, accounting for battery degradation. A combination
+of Partial Cycles totaling the Usable Discharge Capacity MWh discharge is also an Equivalent Cycle.
+Set out in the table below is the available power and usable Discharge Energy capacity for the Facility in
+each Agreement Year (in MW and MWh) ("Usable Energy Capacity at POI"):
+Agreement YearAvailable Power (MW)Usable Discharge Energy Capacity at
+POI (MWh)
+0 100 400
+1 100 400
+2 100 400
+3 100 400
+4 100 400
+5 100 400
+6 100 400
+7 100 400
+8 100 400
+24
+
+--- Page 25 ---
+Confidential
+9 100 400
+10 100 400
+11 100 400
+12 100 400
+13 100 400
+14 100 400
+15 100 400
+16 100 400
+17 100 400
+18 100 400
+19 100 400
+20 100 400
+21 100 400
+22 100 400
+23 100 400
+24 100 400
+25 100 400
+The Parties shall count one (1) cycle of the Facility each time the cumulative amount of Discharge Energy
+(as measured at the Interconnection Point) equals the Usable Discharge Energy Capacity for the applicable
+Agreement Year (an "Equivalent Cycle").
+Resource Provider shall make the Facility available for 365 Equivalent Cycles in each Agreement Year.
+Degradation
+Annual D' Degradation Rate: 0% per Agreement Year
+Annual C' Degradation Rate: 0% per Agreement Year
+Annual Storage Degradation Rate: 0% per Agreement Year
+Annual Duration Energy Degradation Rate: 0% per Agreement Year
+25
+1
+
+--- Page 26 ---
+Confidential
+ANNEX E
+APPENDIX S
+FORM OF CONDITIONS SUBSEQUENT CERTIFICATE
+CONDITIONS SUBSEQUENT CERTIFICATE
+Date:[e]
+Agreement:[] [NTD: Insert contract number and title.]
+From:Puerto Rico Electric Power Authority ("PREPA")
+To:Clean Flexible Energy LLC ("Resource Provider")
+We refer to the Energy Storage Services Agreement dated [] between PREPA and Resource Provider (the
+"ESSA"). Unless the context otherwise requires, capitalized terms used in this Conditions Subsequent
+Certificate shall have the meanings ascribed to them in the ESSA.
+Resource Provider hereby certifies and confirms to PREPA that Resource Provider has satisfied all of its
+Conditions Subsequent under the ESSA, including mutual conditions. By signature below, PREPA likewise
+certifies and confirms to Resource Provider that PREPA has satisfied all of its Conditions Subsequent under
+the ESSA, including mutual conditions.
+We hereby certify that the Satisfaction of Conditions Subsequent occurred on [].
+Very truly yours,Acknowledged and agreed,
+Clean Flexible Energy LLCPuerto Rico Electric Power Authority
+as Resource Provideras PREPA
+26

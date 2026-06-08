@@ -1,0 +1,2 @@
+test_id,agreement_year,test_type,test_date,requested_by,TDE,measured_ramp_rate,certified_by,prepa_approved,approval_date,cure_or_retest_date,replaces_test_id,source_reference,notes
+PT-2026-01,1,PREPA Performance Test,2026-01-15,PREPA,400.00,6000.00,Independent test company,TRUE,2026-01-20,,,"Section 6.9; Appendix F Section 3(c); Appendix P Sections 2 and 4",Sample passing test; MCC effective next billing period; TR can be derived as TDE / DDD

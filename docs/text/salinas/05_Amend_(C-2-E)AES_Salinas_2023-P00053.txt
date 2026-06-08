@@ -1,0 +1,256 @@
+--- Page 1 ---
+2023-P00053E
+AMENDMENT NO, 5
+TO THE
+ENERGY STORAGE SERVICES AGREEMENT
+BETWEEN
+CLEAN FLEXIBLE ENERGY LLC
+AND
+THE PUERTO RICO ELECTRIC POWER AUTHORITY
+This Amendment No. 5 to the Energy Storage Services Agreement for Salinas (this "Amendment") is
+entered into as ofNovember 30, 2023 (the "Fifth Amendment Effective Date"), by and between the Puerto
+Rico Electric Power Authority ("PREPA") and Clean Flexible Energy LLC (the "Resource Provider").
+PREPA and Resource Provider are herein individually referred to as a "Party" and collectively referred to
+as "Parties." All capitalized terms used in this Amendment and not otherwise defined shall have the
+meaning given to them in the Agreement (defined below).
+RECITALS
+WHEREAS, the Parties entered into that certain Energy Storage Services Agreement, dated August 26,
+2022 (the "Agreement"), which provided two hundred forty (240) Days to reach the Closing Date;
+WHEREAS, the Parties entered into that certain Amendment No.1to the ESSA, dated March 17, 2023
+(the "First Amendment"), which provided for an additional sixty (60) Days to reach the Closing Date;
+WHEREAS, the Parties entered into that certain Amendment No. 2 to the ESSA, dated June 15, 2023 (the
+"Second Amendment"), which extended the Closing Date to June 30, 2023;
+WHEREAS, the Parties entered into that certain Amendment No. 3 to the ESSA, dated June 30, 2023 (the
+"Third Amendment"),which extended the Closing Date to July 10, 2023;
+WHEREAS, the Parties entered into that certain Amendment No. 4 to the PPOA, dated July 10, 2023 (the
+"Fourth Amendment"); and
+WHEREAS, the Parties now desire to amend certain provisions of the Agreement in accordance with the
+terms of this Amendment,
+NOW, THEREFORE, in consideration of the mutual promises, covenants and agreements set forth herein
+andfor other good and valuable consideration thereceipt and sufficiency of which are hereby
+acknowledged, the Parties hereto, intending to be legally bound, hereby agree as follows:
+SECTION A. Amendments
+1.In Section 1.1 (Definitions), the following defined terms and their corresponding definitions are
+hereby added in alphabetical order within such section:
+"Ciro" means Ciro One Salinas, LLC.
+"Ciro Agreement" means the agreement entered into or to be entered into between
+Resource Provider and Ciro pursuantto which Ciro willundertake the PREPA
+Interconnection Facilities Work and Resource Provider will reimburse Ciro for a portion
+of such work.
+1
+
+--- Page 2 ---
+"Ciro Reimbursement Amount" means the amount payable by Resource Provider to Ciro
+pursuant to the Ciro Agreement in reimbursement of Ciro's costs in relation to the PREPA
+Interconnection Facilities Work.
+"PREPA Interconnection Facilities Work" means the work to develop, design, finance,
+permit, construct, install, test and commission the PREPA Interconnection Facilities.
+"T&D Operator Fee" means the estimate of T&D Operator's internal costs related to the
+PREPA Interconnection Facilities Works as specified in Appendix D of the revised Facility
+Study and System Impact Study (as amended or replaced by the Parties from time to time),
+and to be paid in accordance with the Interconnection Agreement.
+2,In Section 1.1 (Definitions), the following defined terms and corresponding definitions are hereby
+amended and restated in their entirety:
+"Development Abandonment" means (i) the permanent cessation by Resource Provider
+of the development and construction of the Facility being installed by Resource Provider
+after the Closing Date and prior to the Commercial Operation Date, as evidenced by
+Resource Provider's or its construction contractors' personnel having withdrawn from the
+Site (unless Resource Provider demonstrates otherwise) and Resource Provider having
+otherwise ceased development and construction activities related to the Facility for more
+than one hundred twenty (120) consecutive Days for any reason other than as a result of
+Force Majeure affecting Resource Provider or a PREPA Risk Event; (ii) Resource
+Provider's failure to fund the PREPA Interconnection Facilities Work in accordance with
+the Ciro Agreement; or (iii) Resource Provider's failure to pay the T&D Operator Fee in
+accordance with the Interconnection Agreement,
+3.Sections 3,2(a) and (b)(Resource Provider's Development Obligations)of the Agreement are
+hereby amended and restated in their entirety to read as follows:
+3.2Resource Provider's Development Obligations
+a.Resource Provider shall (1) develop, design, finance, permit, construct, install, test, and
+commission the Facility, (ii) pay Ciro the Ciro Reimbursement Amount in accordance with
+the Ciro Agreement, and (iii) achieve Commercial Operation no later than the Guaranteed
+Commercial Operation Date, at its own cost, in accordance with the Milestone Schedule,
+the requirements of all Permits, the MTRs, the Approved Design, the Interconnection
+Agreement, Prudent Utility Practices, the other provisions of this Agreement, Applicable
+Law and Applicable Standards.
+b.Resource Provider shall promptly pay to 'MD Operator all amounts invoiced by T&D
+Operator in accordance with the Interconnection Agreement for the T&D Operator Fee,
+4.Section 33 (PREPADevelopment Obligations)is hereby amended and restated in its entirety to
+read as follows:
+3.3PREPA Interconnection Facilities Works
+PREPA acknowledges that (i) Ciro will have primary responsibility for the PREPA
+Interconnection Facilities Works and (ii) Resource Provider is obligated to pay Ciro the
+Ciro Reimbursement Amount under the Ciro Agreement. PREPA acknowledges that if the
+2
+
+--- Page 3 ---
+Ciro Reimbursement Amount (together with any other reasonable and documented costs
+incurred by Resource Provider that are directly attributable to the PREPA Interconnection
+Facilities Works) exceeds the Estimated Cost, the Interconnection Cost Recovery
+Component will not compensate Resource Provider for such excess cost, and agrees to
+work in good faith with Resource Provider, the T&D Operator, FOMB, PREB, and other
+relevant Governmental Authorities to agree on a mechanism to compensate Resource
+Provider for such excess cost.
+S.Limb (b) of Part 3 (Mutual Conditions) of Appendix C (Conditions Subsequent) to the Agreement
+is hereby amended and restated in its entirety to read as follows:
+b.an executed copy of the Interconnection Agreement (substantially in the form
+circulated by T&D Operator in February 2023), signed by the parties thereto, provided that
+such copy will (i) reflect the final interconnection design and arrangements for the Project
+agreed by Resource Provider, PREPA, and T&D Operator; and (ii) reflect the Point of
+Interconnection set out in Appendix I, as amended,
+6.Section 2 (Monthly Fixed Payment) of Appendix F (Compensation) of the Agreement is hereby
+amended by replacing references to the "Contracted Cost" with references to the "Ciro
+Reimbursement Amount,"
+7.Appendix H-1 (Electrical Interconnection Single Line Diagram) of the Agreement is hereby
+amended and restated in its entirety as shown by Annex A attached hereto.
+8.In Appendix J (Operating Procedures), the reference to "Aguirre S/E" as the Substation is hereby
+replaced by a reference to the "Ciro Sectionalizer."
+9.Notwithstanding anything to the contrary in the Agreement, if this Fifth Amendment requires the
+approval of the TOMB or PREB or any other Governmental Authority and any such approval is
+not provided and notified to Resource Provider before November 30, 2023, then the November 30,
+2023, deadline set out in Sections 2.3(b) and 2.3(c) of the Agreement, as amended by the Fourth
+Amendment, shall be extended on a day -for -day basis for each day beginning on November 30,
+2023, until each such approval is provided and notified to Resource Provider.
+SECTION B, Representations and Warranties
+1.PREPA hereby represents and warrants to Resource Provider that: (a) the execution and delivery
+by PREPA of this Amendment has been duly authorized by PREPA's Governing Board; and
+(b) this Amendment is a legal, valid, and binding obligation of PREPA, enforceable against PREPA
+in accordance with its terms, except as may be limited by applicable bankruptcy, insolvency or
+similar laws affecting the enforcement of rights generally, and subject to the approvals required by
+the Conditions Subsequent as defined therein,
+2.Resource Provider hereby represents and warrants to PREPA that: (a) the execution, delivery, and
+performance by Resource Provider of this Amendment (i) have been duly authorized, (ii) do not
+and will not require any additional internal consent or approval of Resource Provider and (iii) do
+not and will not violate any provision of Resource Provider's certificate of formation or operating
+agreement, or any material indenture, contract or agreement to which it is a party or by which it or
+its properties may be bound, or any law, ordinance, rule, regulation, order, writ, judgment,
+Injunction, decree, determination or award presently in effect; and (b) this Amendment is a legal,
+valid and binding obligation of Resource Provider, enforceable against Resource Provider in
+3
+
+--- Page 4 ---
+accordance with its terms, except as may be limited by applicable bankruptcy, insolvency or similar
+laws affecting the enforcement of rights generally.
+SECTION C. Miscellaneous
+1.Information for Controller's Office. PREPA will charge all payments thatit owes under the
+Agreement, as amended by this Amendment, to PREPA's budget account number
+and estimates that its costs under the Agreement will not exceed two billion four
+hundred fifty nine million five hundred forty two thousand six hundred filly five dollars and fifteen
+cents ($2,459,542,655.15). For the avoidance of doubt, the Parties have set out the expected account
+number and estimate of costs for informational purposes to satisfy the requirements of the Puerto
+Rico Controller. This paragraph does not bind the Parties or modify any other provision of the
+Agreement.
+2.Headings. The headings inthis Amendment are for reference only and do not affect the
+interpretation of this Amendment.
+3.No Implied Waiver. This Amendment shall be limited precisely as written and does not modify any
+provisions of the Agreement except as specifically amended above. This Amendment shall not be
+deemed to be a consent granted pursuant to, or a waiver or modification of, any other term or
+condition of the Agreement, whether or not known to the Parties, or to prejudice any other right or
+rights which the Agreement may now have or have in the future.
+4.Counterparts. This Amendment may be executed in any number of counterparts with the same
+effect as if both Parties had signed the same document. All counterparts shall be construed together
+and shall constitute one instrument.
+5.Entire Agreement. The Parties intend the Agreement, as amended by this Amendment, as the final
+expression of their agreement and also as a complete and exclusive statement of the terms of their
+agreement with respect to the subject matter thereof that supersedes all prior written and oral
+understandings between the Parties with respect thereto.
+6.Governing Law. This Amendment shall be governed by, construed, and enforced in accordance
+with the Laws of the Commonwealth of Puerto Rico without regard to any contrary result required
+under applicable conflicts of laws rules. The Parties herein agree that all Disputes arising hereunder
+shall be resolved pursuant to Article 21(Dispute Resolution)of the Agreement.
+[Signatures appear on llre following page.]
+4
+
+--- Page 5 ---
+IN WITNESS WHEREOF, the Parties hereto have caused this Amendment to be duly executed by
+their respective officers as of the date first above written.
+PU ERLECTRIC PO ER UTHORITY
+By:C
+Name: JosuColón Ortiz
+Title:Executive Director
+CLEAN F+ XIB E ENERGY LLC
+By:
+Name.-1saga
+Title:Psident
+5
+
+--- Page 6 ---
+/11)It
+00
+0880
+re liá
+rI 
+ANNEX A
+APPENDIX H-1
+TO SE CIROSECTIOWIIZER 7351Y
+H11
+ti/ d
+.}..d
+1  1/t
+Cr
+0000
+II
+00
+ri
+00
+Hw
+f
+`'i
+¡yC
+r. tw
+tNI
+frc.
+1
+t1.,5!!+ 01.5Us? 11 n1 *ytv N,lJ1,,itall
+OOhYt+h=vln0,1t5r11:\y 
+11\1Rt.a\,,\
+f«vni1.5
+tYf YI q
+TO 5,1 rr J f;UATO SY1iTCTi;U4
+2
+Note: The Interconnection Point (POI) will be a point identified along the transmission line outside the
+perimeter of the Ciro Sectionalizer,
+6
+
+--- Page 7 ---
+LEGEND
+52
+--o 0-111
+(YYYYYI
+CIRCUIT BREAKER
+SURGE ARRESTER
+POWER TRANSFORMER
+NEUTRAL GROUNDING RESISTOR
+POTENTIAL TRANSFORMER
+IIICURRENT TRANSFORMER
+« >' DRAW OUT EQUtP MEN T
+TESTSWITCH
+TS
+^)<""
+FUSE
+0,""''''()GOAD SWITCH
+LOW VOLTAGE CIRCUIT
+BREAKER
+ CABLE TERM WATKa4
+ TERMINAL
+TRIPPING USES
+O
+e
+G3P
+CURRENT
+POTENTIAL
+HIGH VOLTAGE BUS
+FIBER OPTIC CABLE
+MOTOR
+TRANSFORMER OIL TEMPERATURE RELAY
+TRANSF' COMERVAN DING TEMPERATURE RELAY
+TRANSFORMER SUDDEN PRESSURE
+RELAY
+PRESSURE RELIEVE RELAY
+OX. LEVEL RELAY
+PHASE OVERCURRENT
+GROWID OVERCURRENT
+GROUND OVERVOLTAGE
+TRANSFORMER CURRENT DIFFERENTIAL
+GROUND OVERCURRENT
+LOCKOUT RELAY
+7

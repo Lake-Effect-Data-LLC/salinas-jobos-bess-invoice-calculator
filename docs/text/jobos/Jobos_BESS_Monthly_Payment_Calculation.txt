@@ -1,0 +1,382 @@
+Jobos BESS       Jobos BESS
+Jobos BESS
+Jobos BESS
+Monthly Payment Calculation and Data RequirementsMonthly Payment Calculation and Data Requirements
+Monthly Payment Calculation and Data Requirements
+Monthly Payment Calculation and Data Requirements
+Table of Contents
+2Background4
+3Document Purpose5
+4Monthly Payment6
+4.1MP Calculation6
+4.1.1MFPₙ6
+4.1.2ADJₙ6
+5Monthly Fixed Payment Calculation7
+5.1Monthly Fixed PaymentError! Bookmark not defined.
+5.1.1CPP7
+5.1.2MCC7
+5.1.3FAAn7
+5.1.4PRAn7
+5.2Capability Payment Price7
+5.2.1CPPF7
+5.2.2CPPIF7
+5.3Monthly Contract Capability8
+5.3.1DDE8
+5.3.2DDD8
+5.3.3TR8
+5.4Facility Availability Adjustment Formula9
+5.4.1BPHRSn9
+5.4.2POHRSn9
+5.4.3UNAVHRSn9
+5.4.4UNAVPRODHRSn9
+5.5PREPA Risk Adjustment9
+5.5.1BPHRSn10
+5.5.2GSEHRSn10
+5.5.3PFHRSn10
+5.5.4IPHRSn10
+6Data Requirements11
+6.1Initial Data Requirements11
+6.1.1CPPF11
+6.1.2CPPIF11
+6.1.3DDD11
+6.2Annual Data Requirements11
+6.2.1DDE11
+6.2.2TR11
+6.3Monthly Data Requirements11
+6.3.1Timestamp (day)11
+6.3.2ADJ11
+6.3.3Facility Availability Variables11
+6.3.4PREPA Risk Availability Variables12
+7Operation of the Facility13
+7.1Hourly Each Day13
+7.1.1Continuous Operation13
+7.1.2Discharge Mode13
+7.1.3Storage Mode13
+7.1.4Charge Mode13
+7.2Initial Synchronization to Supply Period Expiry13
+7.2.1Facility Maintenance13
+7.2.2Qualified Personnel13
+7.2.3Performance Guarantees13
+7.3Electricity Supply13
+7.3.1Return to Pre-Outage Stored Energy Level13
+7.3.2For Station Use14
+7.3.3Cover any Unauthorized Charge or Renewable Energy Charge14
+7.4Scheduled Maintenance14
+7.4.1Scheduled Outages or Deratings14
+7.4.2Scheduled Maintenance Program Submission14
+7.4.3SMP Components14
+7.4.4SMP Review Period14
+7.4.5SMP Rescheduling Accommodations14
+7.4.6SMP Notification14
+7.4.7SMP Near Term Revisions14
+7.4.8SMP Timelines and Approval14
+7.5Unscheduled Outages & Deratings14
+7.5.1Coordination14
+7.5.2Notification15
+7.5.3Lack of Notification15
+7.6Supply Period Performance Tests15
+7.6.1Number of Tests15
+7.6.2Requirements15
+7.6.3Coordination15
+7.6.4Additional Tests16
+8Glossary17
+Background
+Puerto Rico's electrical grid serves approximately 1.5 million customers across a diverse and geographically challenging island territory. The system comprises over 30,000 miles of transmission and distribution lines, more than three hundred substations, and a generation fleet transitioning from fossil fuels toward renewable energy sources. LUMA Energy assumed management of the transmission and distribution system in June 2021, inheriting decades of deferred maintenance and the devastating impacts of Hurricanes Irma and Maria.
+Since assuming operations, LUMA has undertaken a comprehensive grid modernization program aimed at improving reliability, hardening infrastructure against future storms, and accelerating the integration of solar, wind, and battery storage resources. These efforts are guided by Puerto Rico's Act 17-2019, which mandates 100% renewable energy by 2050, with interim targets of 40% by 2025 and 60% by 2040.
+The operational environment in Puerto Rico presents unique challenges including tropical weather exposure, mountainous terrain, aging infrastructure, and evolving regulatory requirements. Understanding this context is essential for evaluating performance metrics and prioritizing capital investments.
+Jobos BESS is a gridscale Battery Energy Storage System in Jobos, Puerto Rico designed to store and deliver electricity to stabilize the island’s power grid and support nearby solar generation.
+Document Purpose
+This document provides a detailed explanation of the equations found in Section 6 and Appendix F of documents ESSA_(C-2-E)AES_Jobos_2023-P00053.pdf and 07_Amend_(C-2-E)AES_Jobos_2023-P00053G.pdf, along with a list of plant information required to independently review and determine each monthly payment.  All page numbers reference Amendment 7.
+Monthly Payment
+For each Billing Period, PREPA shall pay Resource Provider payment for Energy Storage Services provided to PREPA, in arrears (the "Monthly Payment").
+Source:  Appendix F – Compensation – Monthly Payment – Page 113
+Calculation
+MPn = MFPₙ - ADJₙ
+MFPₙ
+Monthly Fixed Payment for billing period “n”.
+The fixed monthly payment received for making the energy storage facility available, calculated based on its capability and performance factors.
+ADJₙ
+Other credits or amounts to which PREPA has a right under this Agreement.
+Monthly Fixed Payment
+For each Billing Period “n”, the Parties shall calculate the monthly fixed payment for such Billing Period (the “Monthly Fixed Payment” or “MFPn”).
+Source:  Appendix F – Compensation – Monthly Fixed Payment – Page 113
+Calculation
+MFPn =
+CPP
+Capability Payment Price for the respective agreement year.
+The base price paid per unit of capacity, combining project costs and interconnection costs.
+MCC
+Monthly Contract Capability for the respective agreement year.
+The adjusted capacity the facility is contractually able to deliver each month.
+FAAn
+Facility Availability Adjustment for billing period “n”.
+A performance adjustment based on the availability of the facility to deliver or receive energy.
+PRAn
+PREPA Risk Adjustment for billing period “n”.
+An adjustment that reduces payment for periods impacted by PREPA related risks.
+Capability Payment Price Calculation
+CPP is a defined term in the Energy Storage Services Agreement (ESSA) between the Puerto Rico Electric Power Authority (PREPA) and Clean Flexible Energy LLC.
+CPP is used to calculate the Monthly Fixed Payment paid to the Resource Provider for making contracted energy storage capability available to PREPA.
+CPP combines project (facility) costs and interconnection costs.
+Source:  Appendix F – Compensation – Monthly Fixed Payment – Pages 113-115
+CPP =
+CPPF
+Capability Payment Price Facility.
+Fixed payment to cover the facility’s project costs, excluding PREPA interconnection work.
+CPPPIF
+Capability Payment Price Interconnection Facilities.
+Fixed payment to cover the costs of PREPA Interconnection Facilities Work.
+Note:  CPPF and CPPPIF increase by 2% each agreement year.
+Monthly Contract Capability Calculation
+MCC is the facility’s verified energy storage capability for a given month. It is established through performance testing, used to determine monthly payments, and adjusted as needed based on test outcomes and facility degradation.
+Source:  Appendix F – Compensation – Monthly Contract Capability – Pages 115-116
+MCC =
+DDE
+Degraded Duration Energy for the respective agreement year.
+The reduced amount of energy the facility can delivery over time due to degradation.
+DDD
+Design Dmax Duration.
+The original design duration (energy capacity over time) of the facility at full performance.
+TR
+Tested Result.
+The actual measured performance of the facility is based on the most recent test.
+Facility Availability Adjustment Calculation
+The FAA is determined by the percentage of time the facility is available to deliver energy or accept charge energy, as measured against the contractual requirements.
+If the facility's availability meets or exceeds a threshold (e.g., 98%), the FAA is set to 100%.
+If availability falls below this threshold, the FAA is reduced according to a formula specified in the contract, which may include further reductions for lower availability levels, as such:
+FAA = 100% if Facility Availability ≥ 98%
+FAA = 100% - [(98% - Facility Availability) × 2] if Facility Availability is between 70% and 98%
+FAA = 0% if Facility Availability < 70% (unless otherwise specified for Force Majeure or other exceptions)
+Source:  Appendix F – Compensation – Monthly Contract Capability – Pages 116-119
+BPHRSn
+Total hours for billing period “n”.
+POHRSn
+Allowed outage hours, including scheduled maintenance and approved events.
+UNAVHRSn
+Unplanned or unapproved outage hours when the facility could not deliver or receive energy.
+UNAVPRODHRSn
+Hours when the facility could not provide non-energy services but could still deliver energy.
+PREPA Risk Adjustment
+The PRA ensures that the provider is not penalized for hours when PREPA-related risks (such as grid events, force majeure, or insurable interruptions) prevent the delivery of energy storage services.
+It proportionally reduces the payment for the billing period based on the number of hours affected by PREPA Risk Events.
+The PRA is part of the compensation structure to fairly allocate risk between PREPA and the Resource Provider.
+Source:  Appendix F – Compensation – PREPA Risk Adjustment – Pages 119-120
+PRAᵢ =
+BPHRSn
+Total number of hours in the billing period.
+GSEHRSn
+Duration (in hours) of any Grid System Event (other than a Force Majeure affecting PREPA) occurring in the billing period, subject to a maximum defined as the Grid System Waiting Period.
+PFHRSn
+Duration (in hours) of any Force Majeure affecting PREPA occurring in the billing period, subject to a maximum defined as the Force Majeure Waiting Period.
+IPHRSn
+Duration (in hours) of any event during the billing period in respect of which the Resource Provider may recover insurance proceeds from any insurance policy obtained in respect of PREPA Risk Events, including business interruption insurance.
+Data Requirements
+Initial Data Requirements
+Defined in contract.
+CPPPF
+Capability Payment Price Facility.
+Required for Capability Price calculation.
+Table provided in Appendix F on pages 113-114.
+CPPPIF
+Capability Payment Price Interconnection Facilities.
+Required for Capability Price calculation.
+Table provided in Appendix F on pages 114-115.
+DDD
+Design Dmax Duration.
+4 hours.
+Required for monthly Contract Capability calculation.
+Reflected in Appendix J on page 134.
+Annual Data Requirements
+Collected yearly.
+DDE
+Degraded Duration Energy for the respective agreement year.
+Required for monthly Contract Capability calculation.
+Reflected in Appendix F on page 116.
+TR
+Tested Result.
+The Monthly Contract Capability as adjusted to the most recent performance test.
+Required for monthly Contract Capability calculation.
+Reflected in Appendix F on page 116.
+Monthly Data Requirements
+Timestamp (day)
+ADJ
+Other credits or amounts.
+Reflected in Appendix F on page 113.
+Facility Availability Variables
+BPHRS: Total hours in billing period.
+POHRS: Approved or scheduled outage hours.
+UNAVHRS: Unplanned outage hours impacting energy delivery.
+UNAVPRODHRS: Outage hours impacting non-energy services.
+All variables reflected in Appendix F on pages 117-118.
+PREPA Risk Availability Variables
+BPHRS: Total hours in billing period.
+GSEHRS: Hours impacted by grid system events.
+PFMHRS: Hours impacted by PREPA force majeure events.
+IPHRS: Hours covered by insurance-recoverable events.
+All variables reflected in Appendix F on pages 119-120.
+Operation of the Facility
+Hourly Each Day
+Source:  Section 6.1 – Operation of the Facility – General – Pages 49-50
+Continuous Operation
+Operation continuously in Discharge Mode, Charge Mode, or Storage Mode very hour of every billing period, as directed by dispatch notices or charge notices.
+Discharge Mode
+The operator shall, while in Discharge Mode, make available energy corresponding to the Design Duration Energy at Dmax (maximum design duration energy—the maximum amount of energy deliverable over the design duration), plus Ancillary Services (support services that maintain grid reliability and are defined in the Minimum Technical Requirements or MTRs), at the Interconnection point.
+Storage Mode
+While in Storage Mode, make available storage of energy corresponding to the Design Storage Energy.
+Charge Mode
+While in Charge Mode, accept energy at the Charge Point corresponding to the Design Charge Energy during the Design Charge Duration.
+Initial Synchronization to Supply Period Expiry
+Source:  Section 6.1 – Operation of the Facility – General – Pages 49-50
+Facility Maintenance
+Operate, test, maintain, repair, and replace the facility per the Operating Procedures, Testing Protocol, MTRs, Dispatch/Charge Notices, Prudent Utility Practices, the Agreement and Applicable Law.
+Qualified Personnel
+Ensure qualified personnel are on duty at all times required to meet obligations.
+Any third-party operator must qualify as a Qualified Operator.
+Performance Guarantees
+Ensure facility satisfies all performance guarantees continuously.
+Electricity Supply
+From the Commercial Operation Date through Supply Period, Resource Provider provides at its own cost any energy needed.
+Source:  Section 6.2 – Operation of the Facility – Electricity Supply to the Facility – Page 50
+Return to Pre-Outage Stored Energy Level
+After any outage or derating, unless caused by a PREPA Risk Event, return the facility to its pre-outage stored energy level.
+For Station Use
+Cover any Unauthorized Charge or Renewable Energy Charge
+Scheduled Maintenance
+Source:  Section 6.3 – Operation of the Facility – Scheduled Maintenance – Page 50-52
+Scheduled Outages or Deratings
+Maximum of 160 hours of scheduled outages or deratings per agreement year.
+Unused outages do not carry over.
+Scheduled Maintenance Program Submission
+Scheduled Maintenance Program must be submitted to PREPA at least 60 days prior to the Commercial Operation Date and by September 1 of each subsequent year.
+SMP Components
+Scheduled Maintenance Program must include the description of work, approximate start and end dates and times, time to restore and for scheduled deratings, energy storage services available during such event.
+SMP Review Period
+PREPA has 30 days to accept the program or request rescheduling.
+If PREPA fails to respond within the 30 days, the SMP is considered accepted.
+SMP Rescheduling Accommodations
+Resource provider uses reasonable efforts to accommodate rescheduling.
+If resource provider is unable to meet requested dates, the provider will propose alternatives for PREPA to select.
+SMP Notification
+Resource provider notifies PREPA at least seven days prior to any scheduled outage or derating.
+SMP Near Term Revisions
+Resource provider bears PREPA’s costs for revisions, except force majeure or PREPA risk events, for changes that are less than 60 days prior to the start.
+SMP Timelines and Approval
+Only outages that meet submittal timelines and approved by PREPA will be counted as scheduled outages or deratings.
+Unscheduled Outages & Deratings
+Source:  Section 6.4 – Operation of the Facility – Non-Scheduled Outages & Deratings – Page 52
+Coordination
+If the Resource Provider determines that a NonScheduled Outage or NonScheduled Derating is necessary, it must coordinate the timing of that outage or derating with PREPA.
+Notification
+Resource Provider shall use commercially reasonable efforts to notify PREPA of any Non‑Scheduled Outage or Non‑Scheduled Derating by 17:00 (Puerto Rico time) on the third Business Day before the affected Day.
+If an unexpected Non‑Scheduled Outage or Non‑Scheduled Derating occurs, Resource Provider shall notify PREPA by telephone or email as soon as reasonably practicable and, except in cases of Force Majeure, within fifteen (15) minutes of the event.
+As soon as reasonably practicable thereafter, Resource Provider shall provide written notice to PREPA including:
+the event or condition,
+the date and time it occurred,
+the expected end date and time,
+for Non‑Scheduled Deratings, the Energy Storage Services available during the event, and
+any other information requested by PREPA.
+Lack of Notification
+Notwithstanding any notice or coordination with PREPA, the Facility shall be deemed unavailable for the full duration of a NonScheduled Outage for purposes of calculating Facility Availability.
+Supply Period Performance Tests
+Source:  Section 6.9 – Operation of the Facility – Supply Period Performance Tests – Pages 55-56
+Number of Tests
+During each Agreement Year of the Supply Period, PREPA may require up to two PREPA Performance Tests in accordance with the Testing Protocol.
+PREPA’s decision to forgo any test does not waive its right to require future Performance Tests.
+Requirements
+Resource Provider shall submit to PREPA, for evaluation and approval, all Performance Test reports certified by an experienced and duly qualified independent laboratory or company with specialized expertise in acceptance and related testing of renewable power facilities, demonstrating that the Facility meets all MTRs and the Performance Guarantee.
+PREPA may approve or reject the proposed laboratory or company, provided such approval is withheld or delayed.
+For clarity, Resource Provider acknowledges that PREPA will not accept manufacturers’ test reports as evidence of compliance.
+Coordination
+Resource Provider shall coordinate all Performance Tests with PREPA’s personnel and the Independent Expert, who shall witness the tests.
+Resource Provider shall provide PREPA with at least thirty (30) Days’ prior written notice of all Performance Tests, field tests, or other matters PREPA may witness.
+The Parties shall cooperate in good faith to establish mutually acceptable dates for all Performance Tests.
+Additional Tests
+Resource Provider may request an additional Performance Test (“Resource Provider Performance Test”) if (i) a Performance Test results in a downward adjustment to the Monthly Contract Capability under Appendix F (Compensation), (ii) a Scheduled Outage has been completed, or (iii) the results of a PREPA Performance Test fall outside the Testing Protocol standards.
+The Resource Provider Performance Test shall begin no later than ten (10) Business Days after the PREPA Performance Test showing the low results or after completion of the Scheduled Outage.
+Resource Provider shall conduct the test in accordance with the Testing Protocol, except that (A) Resource Provider shall notify PREPA of its request and proposed start and end times at least three (3) Business Days before commencement, and (B) PREPA, in its sole discretion, shall either approve the proposal or provide two (2) alternative start and stop times from which Resource Provider may choose.
+The Tested Duration Energy determined through the Resource Provider Performance Test shall be used to establish the Monthly Contract Capability in the same manner as results from a PREPA Performance Test.
+Glossary
+Term
+Definition
+ADJₙ
+Other credits or amounts to which PREPA has a right under the Agreement for Billing Period “n”.
+Charge Mode
+The mode in which the Facility accepts Charge Energy at the applicable Charge Point to increase the State of Charge.
+Charge Notice
+Operating instruction from PREPA directing the Facility to charge from a specified Charge Source at a specified rate and to a specified Stored Energy Level.
+COD
+Commercial Operation Date. The date on which the Facility has completed required testing and is authorized to deliver energy commercially.
+CPP
+Capability Payment Price. Price paid for Facility’s capability. Calculated as: CPP = CPPF + CPPPIF.
+CPPF
+Amount to compensate Resource Provider for Facility cost (excluding PREPA Interconnection Facilities Work).
+CPPPIF
+Amount to compensate Resource Provider for PREPA Interconnection Facilities Work.
+DDD
+Design D max Duration. Duration for which Facility can deliver at Design D max.
+DDE
+Degraded Duration Energy. Facility’s Design Duration Energy adjusted for degradation during each Agreement Year.
+Discharge Mode
+The mode in which the Facility delivers Discharge Energy to the Interconnection Point or provides Ancillary Services.
+Dispatch Notice
+Operating instruction from PREPA directing the Facility to operate in Discharge Mode at a specified output.
+Emergency
+Operational condition affecting the Grid System or Facility that results in imminent significant disruption or endangers life or property.
+FA
+Facility Availability. Percentage of hours Facility was available to deliver Adjusted Duration Energy or accept Charge Energy during the Billing Period.
+FAA
+Facility Availability Adjustment. Adjustment to Monthly Payment based on Facility Availability. If FA ≥ 98%: 100%; If FA < 98% but > 70%: 100% – [(98% – FA) × 2]; If FA < 70%: 0%.
+Facility Availability
+The percentage of hours the Facility was available to deliver Adjusted Duration Energy or accept Charge Energy during the Billing Period.
+Force Majeure
+Events beyond the reasonable control of a Party that prevent or delay performance under the Agreement.
+MCCₙ
+Monthly Contract Capability. Facility’s contract capability for a Billing Period, initially equal to Design D max at Commercial Operation Date and adjusted annually or after Performance Tests.
+MFP
+Monthly Fixed Payment. Fixed payment for each Billing Period. Calculated as: MFPₙ = CPP × MCCₙ × FAAₙ × PRAₙ.
+MP
+Monthly Payment. Payment PREPA makes to Resource Provider for Energy Storage Services in a Billing Period. Calculated as: MPₙ = MFPₙ – ADJₙ.
+Non-Scheduled Derating
+Unplanned reduction in Facility capability not coordinated in advance with PREPA.
+Non-Scheduled Outage
+Unplanned outage not coordinated in advance with PREPA.
+Performance Test
+Tests to verify Facility capability and compliance with Operating Characteristics, Performance Guarantee, and Minimum Acceptance Criteria.
+Permitted Outage Hour
+Hour during the Supply Period in which an Outage or Derating occurs because of a Scheduled Outage, Scheduled Derating, Force Majeure, or PREPA Risk Event.
+PPOA
+Power Purchase and Operating Agreement. A contract that sets the terms under which a power producer sells electricity (and often related services) to a buyer/utility, including operating, performance, and payment provisions.
+PRAₙ
+PREPA Risk Adjustment. Adjustment to Monthly Fixed Payment for Billing Period, determined by risk factors in the Agreement.
+PREB
+Puerto Rico Energy Bureau. The regulatory authority responsible for overseeing and regulating the energy sector in Puerto Rico, including approving contracts, extensions, and ensuring compliance with energy policy and law.
+PREPA
+The Puerto Rico Electric Power Authority, purchaser of electrical energy under the PPOA.
+PREPA Performance Test
+Performance Test requested by PREPA to verify Facility compliance.
+Resource Provider
+The owner and operator of the Facility responsible for energy delivery under the PPOA.
+Resource Provider Performance Test
+Additional Performance Test requested by Resource Provider under certain conditions.
+Restoration of the Facility
+Actions taken to return the Facility to operation after an Outage, Derating, or Emergency.
+RTU
+Remote Terminal Unit. Communication device linking the Facility with PREPA for control and monitoring.
+SCADA
+Supervisory Control and Data Acquisition system for Facility operation and integration with PREPA.
+Scheduled Derating
+Planned reduction in Facility capability coordinated in advance with PREPA and set out in the Scheduled Maintenance Program.
+Scheduled Maintenance
+Planned maintenance outages coordinated with PREPA under notice requirements.
+Scheduled Maintenance Program
+Written schedule of Scheduled Outages and Scheduled Deratings submitted by Resource Provider to PREPA.
+Scheduled Outage
+Planned outage coordinated in advance with PREPA and set out in the Scheduled Maintenance Program.
+Station Use
+Electrical load of the Facility’s auxiliary equipment necessary for operation, metered separately from Discharge Energy and Ancillary Services.
+Station Use Meters
+Meters installed to measure Station Use, owned and maintained by PREPA.
+Storage Mode
+The mode in which the Facility stands idle but ready for immediate operation, maintaining a certain State of Charge.
+TR
+Tested Result. Result of most recent Performance Test, used to adjust Monthly Contract Capability.

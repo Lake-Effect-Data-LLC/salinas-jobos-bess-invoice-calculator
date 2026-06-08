@@ -38,19 +38,31 @@ total CLD allocation across the failed-test/cure period is not implemented.
 Input Files
 -----------
 
-Primary files used by `main.py`:
+Projects are listed in:
 
 | File | Purpose |
 | --- | --- |
-| `data/bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, and design values |
-| `data/bess_yearly_inputs_template.csv` | Yearly values: `DDE` and fallback/manual `TR` |
-| `data/bess_monthly_inputs_template.csv` | Monthly compensation inputs: `ADJ`, availability hours, and PREPA risk hours |
-| `data/Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
-| `data/Performance_Tests.csv` | Event-based performance tests: `TDE`, ramp rate, test date, approval status, and cure/retest fields |
+| `data/projects.csv` | Maps `project_id` values such as `salinas` and `jobos` to data and output folders |
 
-The current code still reads the `bess_*_template.csv` files for the main
-compensation path. The friendlier sample names may be useful for review, but
-they are not the active inputs unless `main.py` is changed.
+Each project uses the same file names inside its own data folder:
+
+| File | Purpose |
+| --- | --- |
+| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, and design values |
+| `bess_yearly_inputs_template.csv` | Yearly values: `DDE` and fallback/manual `TR` |
+| `bess_monthly_inputs_template.csv` | Monthly compensation inputs: `ADJ`, availability hours, and PREPA risk hours |
+| `Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
+| `Performance_Tests.csv` | Event-based performance tests: `TDE`, ramp rate, test date, approval status, and cure/retest fields |
+
+Current project folders:
+
+| Project | Data Folder | Output Folder |
+| --- | --- | --- |
+| Salinas BESS | `data/salinas` | `output/salinas` |
+| Jobos BESS | `data/jobos` | `output/jobos` |
+
+The formulas are shared. Only input datasets should differ between Salinas and
+Jobos.
 
 
 Important Contract Modeling Decisions
@@ -82,13 +94,17 @@ Run It
 ------
 
 ```powershell
-python .\main.py
+python .\main.py salinas
+python .\main.py jobos
 ```
 
-Output is written to:
+If no project id is provided, `main.py` defaults to `salinas`.
+
+Outputs are written to:
 
 ```text
-output/bess_monthly_results.csv
+output/<project_id>/bess_monthly_results.csv
+output/<project_id>/report.txt
 ```
 
 
@@ -122,7 +138,8 @@ invoice-style report, not only a calculation table. A useful first structure is:
 7. Net invoice presentation, once treatment of LDs versus `ADJ` is settled
 
 
-Known Gaps
+Known Gaps and Assumptions
+
 ----------
 
 - `DDE` is not yet derived from degradation factors or qualifying upgrade tests.

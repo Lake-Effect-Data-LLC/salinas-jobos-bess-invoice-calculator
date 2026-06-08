@@ -22,13 +22,18 @@ BESS_MONTHLY_RESULT_COLUMNS = [
 ]
 
 
-def get_output_path(filename):
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    return OUTPUT_DIR / filename
+def get_output_path(filename, output_dir=OUTPUT_DIR):
+    output_dir = Path(output_dir)
+    output_dir.mkdir(exist_ok=True)
+    return output_dir / filename
 
 
-def write_bess_monthly_results(monthly_results, filename="bess_monthly_results.csv"):
-    csv_path = get_output_path(filename)
+def write_bess_monthly_results(
+    monthly_results,
+    filename="bess_monthly_results.csv",
+    output_dir=OUTPUT_DIR,
+):
+    csv_path = get_output_path(filename, output_dir)
 
     with csv_path.open("w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=BESS_MONTHLY_RESULT_COLUMNS)
