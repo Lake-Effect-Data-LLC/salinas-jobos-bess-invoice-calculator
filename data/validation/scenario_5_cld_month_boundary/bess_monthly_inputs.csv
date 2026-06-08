@@ -1,0 +1,3 @@
+timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,UNAVHRS,UNAVPRODHRS,GSE,PFM,IP,notes
+2026-01,1,0.00,744,0,0,0,0,0,0,Jan: MCC=100MW (test result not yet effective). 4 CLD days (Jan 28-31). MFP=2489600 then CLD subtracted.
+2026-02,1,0.00,672,0,0,0,0,0,0,Feb: MCC=95MW (380/4 — test effective Feb 1). 4 CLD days (Feb 1-4; cure Feb 5 not charged). MFP=24896x95x1x1=2365120.
