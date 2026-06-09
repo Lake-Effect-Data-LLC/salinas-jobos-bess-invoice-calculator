@@ -89,7 +89,7 @@ Current implementation:
 | --- | --- |
 | `calculations.calculate_capabability_payment_price` | Implemented as `CPPF + CPPPIF` |
 | `calculations.calculate_monthly_fixed_payment` | Implemented as `CPP * MCC * FAA * PRA` |
-| `classes.BessContractValues` | Loads design reference values from the contract CSV |
+| `classes.BessContractValues` | Loads design reference values and Appendix J degradation rate from the contract CSV |
 
 Open issue:
 
@@ -139,7 +139,9 @@ Open issues:
   approval process, but Appendix F says the adjustment continues until another
   Performance Test is completed. Confirm whether completion date, approval date,
   or approved report date controls the effective test.
-- `DDE` is currently an input, not derived.
+- `DDE` is currently a yearly input, but it is validated against the contract
+  values file using Design Duration Energy and Annual Duration Energy
+  Degradation Rate.
 - Cross-year MCC carry: `get_applicable_performance_test` filters tests to the
   current `agreement_year`. Tests from a prior agreement year do not carry
   forward automatically because the annual formula `MCCy = min(DDE/DDD, TR)`
@@ -168,18 +170,26 @@ Sources:
 | --- | --- |
 | Salinas | 06 Amendment definitions, extracted text around lines 707-710 |
 | Jobos | 05 Amendment definitions, extracted text around lines 657-660 |
+| Jobos | Appendix J Operating Characteristics, pages 109-112: Design Dmax `100 MW`, Design Dmax Duration `4 hours`, Design Duration Energy `400 MWh`, Design Charge Energy `482 MWh`, Guaranteed Efficiency `97%`, ramp rates `6,000 MW/min` |
 
 Current implementation:
 
 | Code/Input | Status |
 | --- | --- |
 | `bess_yearly_inputs_template.csv` | Requires `DDE` as yearly input |
-| `calculations.py` | Uses `DDE`, does not derive it |
+| `bess_contract_values_template.csv` | Provides `design_duration_energy` and `annual_duration_energy_degradation_rate` |
+| `calculations.calculate_degraded_duration_energy` | Derives expected DDE from design energy and annual degradation |
+| `compensation_calculator.calculate_monthly_results` | Validates yearly input DDE against derived DDE |
 
 Open issue:
 
-- Add degradation-factor and qualifying-upgrade-test logic only after the exact
-  annual degradation table and upgrade-test rules are confirmed.
+- Appendix J currently states Annual Duration Energy Degradation Rate is `0%`
+  per Agreement Year, so current Salinas/Jobos DDE should equal Design Duration
+  Energy. Qualifying upgrade/test upward adjustments are not automatically
+  modeled; if one applies, document it before overriding the yearly DDE input.
+- Jobos Appendix J values have been visually confirmed and match the current
+  Jobos contract values file for `design_dmax`, `DDD`,
+  `design_duration_energy`, `design_charge_energy`, and `GE`.
 
 ## Facility Availability And FAA
 
@@ -303,7 +313,7 @@ Current implementation:
 | Code | Status |
 | --- | --- |
 | `calculations.calculate_capability_liquidated_damages_per_day` | Supports CLD with or without a `DDE` multiplier |
-| `compensation_calculator.calculate_monthly_capability_liquidated_damages` | Allocates CLD across Billing Periods for approved failed tests with cure/retest dates |
+| `compensation_calculator.calculate_monthly_capability_liquidated_damages` | Allocates CLD across Billing Periods for approved failed tests until passing retest, explicit cure/retest date, or current Billing Period end |
 | `data_writer.write_bess_monthly_results` | Writes `CLD` and includes it in `ADJ_Total` |
 | `bess_contract_values_template.csv` | Uses `CLD_uses_DDE_multiplier` to select the project formula |
 | `bess_yearly_inputs_template.csv` | Optional `GC` column can override the default `GC = DDE` assumption |
@@ -321,12 +331,14 @@ Open issues:
 - Day-boundary interpretation: the contract says "for each Day from the failed
   Performance Test until Resource Provider demonstrates TDE at or above DDE."
   Current code treats the test date as the first accrual day (included) and the
-  cure/retest date as the day the shortfall is resolved (excluded). A test on
-  Dec 28 with cure on Jan 5 accrues 8 days: Dec 28–31 and Jan 1–4. Confirm
-  against a worked invoice example or counsel opinion before disputing an invoice
-  where the cure-day boundary is contested.
-- Open-ended failed tests are not accrued without a `cure_or_retest_date`.
-  Add an explicit invoice-through date if ongoing CLD accrual is needed.
+  passing test/cure date as the day the shortfall is resolved (excluded). A
+  failed test on Dec 28 with passing test on Jan 5 accrues 8 days: Dec 28-31
+  and Jan 1-4. Confirm against a worked invoice example or counsel opinion
+  before disputing an invoice where the cure-day boundary is contested.
+- Open-ended approved failed tests accrue through the current Billing Period
+  end. If a later approved passing test row exists, that test date ends the CLD
+  period. If no passing row exists but `cure_or_retest_date` is populated, that
+  explicit date is used as the end date.
 - Current CLD allocation requires `prepa_approved = TRUE`, then accrues from the
   test date. Confirm whether LD accrual should instead begin on approval date.
 - Current Salinas and Jobos inputs omit `GC`, so the calculator defaults
@@ -394,13 +406,16 @@ Current implementation:
 
 | Input/Code | Status |
 | --- | --- |
-| `Performance_Tests.csv` | Has `measured_ramp_rate` |
+| `Performance_Tests.csv` | Has `measured_ramp_rate`, `ramp_failure_caused_outage`, `outage_start`, `outage_end`, and `outage_equivalent_unavhrs` |
 | `compensation_calculator.py` | Does not calculate outage hours from ramp failure |
+| `error_checks.validate_input_files` | Requires outage detail fields when `ramp_failure_caused_outage = TRUE` |
 
 Open issue:
 
-- Decide whether ramp-rate failure is manually reflected in `UNAVHRS` or should
-  be automatically derived from failed test/cure dates.
+- Current data model can capture ramp-failure outage detail, but those hours are
+  not automatically added to monthly `UNAVHRS`. Until that is intentionally
+  wired in, users must also reflect the availability impact in
+  `bess_monthly_inputs_template.csv`.
 
 ## Invoice Report Requirements
 
@@ -431,3 +446,4 @@ Open issue:
 - The current report is a calculation support report, not yet a full contract
   invoice package with ancillary services, green credits, balance, supporting
   meter statements, or insurance detail.
+

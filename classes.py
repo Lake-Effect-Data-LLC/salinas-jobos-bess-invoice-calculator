@@ -17,6 +17,7 @@ class BessContractValues:
     eld_uses_ce_times_ge: bool = True
     design_dmax: float = 0.0
     design_duration_energy: float = 0.0
+    annual_duration_energy_degradation_rate: float = 0.0
     design_charge_energy: float = 0.0
     grid_system_waiting_period_hours: float = 80.0
     force_majeure_waiting_period_hours: float = 720.0
@@ -71,6 +72,10 @@ class BessPerformanceTest:
     approval_date: str = ""
     cure_or_retest_date: str = ""
     replaces_test_id: str = ""
+    ramp_failure_caused_outage: bool = False
+    outage_start: str = ""
+    outage_end: str = ""
+    outage_equivalent_unavhrs: float = 0.0
     source_reference: str = ""
     notes: str = ""
 
@@ -108,4 +113,3 @@ class BessMonthlyResult:
     cld: float = 0.0
     actual_efficiency: Optional[float] = None
     eld: float = 0.0
-

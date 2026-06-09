@@ -177,6 +177,31 @@ def calculate_performance_test_mcc(DDE, DDD, TDE):
     return DDE / DDD
 
 
+def calculate_degraded_duration_energy(
+    design_duration_energy,
+    annual_duration_energy_degradation_rate,
+    agreement_year,
+):
+    # Source: DDE definition and Appendix J degradation schedule.
+    # DDE equals Design Duration Energy adjusted by the Agreement Year's
+    # duration-energy degradation rate. Qualifying upgrade/test upward
+    # adjustments are still handled as input overrides, capped by contract.
+    if design_duration_energy < 0:
+        raise ValueError("Design Duration Energy must be non-negative.")
+    if annual_duration_energy_degradation_rate < 0:
+        raise ValueError("Annual Duration Energy Degradation Rate must be non-negative.")
+    if agreement_year < 1:
+        raise ValueError("Agreement Year must be at least 1.")
+
+    degradation_factor = 1 - annual_duration_energy_degradation_rate
+    if degradation_factor < 0:
+        raise ValueError(
+            "Annual Duration Energy Degradation Rate cannot exceed 100%."
+        )
+
+    return design_duration_energy * (degradation_factor ** (agreement_year - 1))
+
+
 def calculate_annual_mcc(DDE, DDD, TR):
     # This function will calculate the Monthly Contract Capability (MCC) for each month in the billing period based on the agreement year, DDE, and TR.
     #MCCy = min[DDE/DDD,TR]

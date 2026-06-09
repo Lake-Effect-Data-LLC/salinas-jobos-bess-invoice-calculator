@@ -6,6 +6,7 @@ from calculations import (
     calculate_availability_liquidated_damages,
     calculate_capability_liquidated_damages_per_day,
     calculate_capabability_payment_price,
+    calculate_degraded_duration_energy,
     calculate_efficiency_liquidated_damages,
     calculate_included_POHRS,
     calculate_monthly_fixed_payment,
@@ -50,6 +51,7 @@ def calculate_monthly_results(
             monthly_input.agreement_year,
             "yearly inputs",
         )
+        _validate_yearly_dde_matches_contract(contract, yearly)
 
         agreement_year = monthly_input.agreement_year
         prior_pohrs = prior_pohrs_by_year.get(agreement_year, 0.0)
@@ -163,6 +165,27 @@ def calculate_monthly_results(
     return results
 
 
+def _validate_yearly_dde_matches_contract(contract, yearly):
+    # Source: DDE definition plus Appendix J duration-energy degradation rate.
+    # Current Salinas/Jobos Appendix J states 0% annual Duration Energy
+    # degradation, so Yearly DDE should equal Design Duration Energy unless
+    # a contract-supported upgrade/test override is documented separately.
+    expected_dde = calculate_degraded_duration_energy(
+        contract.design_duration_energy,
+        contract.annual_duration_energy_degradation_rate,
+        yearly.agreement_year,
+    )
+    tolerance = 0.01
+
+    if abs(yearly.dde - expected_dde) > tolerance:
+        raise ValueError(
+            "Yearly DDE does not match contract-derived DDE for agreement "
+            f"year {yearly.agreement_year}: input DDE={yearly.dde:.2f}, "
+            f"derived DDE={expected_dde:.2f}. If this is due to a qualifying "
+            "upgrade/test adjustment, document it before overriding the input."
+        )
+
+
 def _map_monthly_performance_guarantee_inputs(monthly_performance_guarantee_inputs):
     return {
         (
@@ -225,8 +248,9 @@ def calculate_monthly_capability_liquidated_damages(
     # docs/screenshots/CLD_06_Amend_(C-2-E)AES_Salinas_2023-0005_pg_230_220.png.
     # Jobos visual source provided in chat confirms no DDE multiplier.
     # Current allocation rule: count failed-test days that overlap the Billing
-    # Period for approved tests, starting on the test date and ending before cure/retest date.
-    # Open-ended failures are not accrued without an explicit cure/retest date.
+    # Period for approved tests, starting on the failed test date. The end date
+    # is the next approved passing test date, then explicit cure/retest date if
+    # provided, otherwise the end of the current Billing Period.
     billing_period_start = _parse_month_start(timestamp_month)
     billing_period_end = _next_month_start(timestamp_month)
     guaranteed_capability = dde if gc is None else gc
@@ -242,23 +266,22 @@ def calculate_monthly_capability_liquidated_damages(
         if performance_test.tde >= guaranteed_capability:
             continue
 
-        if not performance_test.cure_or_retest_date:
-            continue
-
         test_date = _parse_date(performance_test.test_date)
-        cure_or_retest_date = _parse_date(performance_test.cure_or_retest_date)
+        cld_end_date = _get_cld_end_date(
+            performance_test,
+            performance_tests,
+            dde,
+            billing_period_end,
+        )
         # Day-boundary interpretation (Appendix P Section 2(b)):
         # "for each Day from the failed Performance Test until Resource Provider
         #  demonstrates TDE at or above DDE."
-        # "From the failed Performance Test" → test date is the first accrual day
-        #   (overlap_start includes test_date).
-        # "Until ... demonstrates" → the cure/retest date is the day the shortfall
-        #   is resolved, so it is not itself a CLD day
-        #   (overlap_end uses cure_or_retest_date exclusively).
-        # Example: test 2025-12-28, cure 2026-01-05 → 8 days total
-        #   (Dec 28–31 = 4, Jan 1–4 = 4; cure day Jan 5 not charged).
+        # The failed test date is the first accrual day. The passing test/cure
+        # date is the first resolved day and is excluded from CLD.
+        # Example: failed test 2025-12-28, passing test 2026-01-05 means
+        # Dec 28-31 and Jan 1-4 are charged.
         overlap_start = max(test_date, billing_period_start)
-        overlap_end = min(cure_or_retest_date, billing_period_end)
+        overlap_end = min(cld_end_date, billing_period_end)
         cld_days = max((overlap_end - overlap_start).days, 0)
 
         if cld_days == 0:
@@ -274,6 +297,55 @@ def calculate_monthly_capability_liquidated_damages(
         monthly_cld += cld_per_day * cld_days
 
     return monthly_cld
+
+
+def _get_cld_end_date(
+    failed_test,
+    performance_tests,
+    dde,
+    billing_period_end,
+):
+    # Source: Appendix P Section 2(b). CLD applies from the failed test date
+    # until Resource Provider demonstrates TDE at or above DDE. Prefer the next
+    # approved passing test row, then explicit cure/retest date, then accrue
+    # through the current Billing Period end for open-ended failures.
+    passing_test_date = _get_next_passing_performance_test_date(
+        failed_test,
+        performance_tests,
+        dde,
+    )
+    if passing_test_date is not None:
+        return passing_test_date
+
+    if failed_test.cure_or_retest_date:
+        return _parse_date(failed_test.cure_or_retest_date)
+
+    return billing_period_end
+
+
+def _get_next_passing_performance_test_date(failed_test, performance_tests, dde):
+    failed_test_date = _parse_date(failed_test.test_date)
+    passing_test_dates = [
+        _parse_date(performance_test.test_date)
+        for performance_test in performance_tests
+        if performance_test.agreement_year == failed_test.agreement_year
+        and performance_test.prepa_approved
+        and performance_test.tde >= dde
+        and _parse_date(performance_test.test_date) > failed_test_date
+        and _is_cure_test_for_failure(performance_test, failed_test)
+    ]
+
+    if not passing_test_dates:
+        return None
+
+    return min(passing_test_dates)
+
+
+def _is_cure_test_for_failure(performance_test, failed_test):
+    if performance_test.replaces_test_id:
+        return performance_test.replaces_test_id == failed_test.test_id
+
+    return True
 
 
 def _get_agreement_year_values(values_by_year, agreement_year, value_name):

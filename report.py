@@ -77,8 +77,8 @@ def generate_bess_invoice_support_report(results_df, output_file, project_name=N
         lines.append("  Balance: not provided in current input files")
         lines.append("  Insurance payments: not provided in current input files")
         lines.append(
-            "  CLD audit note: allocated only when failed test and "
-            "cure/retest dates are provided"
+            "  CLD audit note: approved failed tests accrue until passing "
+            "test, cure/retest date, or billing period end"
         )
         lines.append("")
 

@@ -37,6 +37,10 @@ def load_contract_values(csv_file_path):
             eld_uses_ce_times_ge=_required_bool(row, "ELD_uses_CE_times_GE"),
             design_dmax=_required_float(row, "design_dmax"),
             design_duration_energy=_required_float(row, "design_duration_energy"),
+            annual_duration_energy_degradation_rate=_required_float(
+                row,
+                "annual_duration_energy_degradation_rate",
+            ),
             design_charge_energy=_required_float(row, "design_charge_energy"),
             grid_system_waiting_period_hours=_optional_float(
                 row,
@@ -134,6 +138,17 @@ def load_performance_tests(csv_file_path):
             approval_date=_optional_text(row, "approval_date"),
             cure_or_retest_date=_optional_text(row, "cure_or_retest_date"),
             replaces_test_id=_optional_text(row, "replaces_test_id"),
+            ramp_failure_caused_outage=_optional_bool(
+                row,
+                "ramp_failure_caused_outage",
+            ),
+            outage_start=_optional_text(row, "outage_start"),
+            outage_end=_optional_text(row, "outage_end"),
+            outage_equivalent_unavhrs=_optional_float(
+                row,
+                "outage_equivalent_unavhrs",
+                0.0,
+            ),
             source_reference=_optional_text(row, "source_reference"),
             notes=_optional_text(row, "notes"),
         )

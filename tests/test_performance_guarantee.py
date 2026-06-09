@@ -9,11 +9,20 @@ from calculations import (
     calculate_included_GSEHRS,
     calculate_risk_adjustment_with_waiting_periods,
     calculate_capability_liquidated_damages_per_day,
+    calculate_degraded_duration_energy,
     calculate_efficiency_liquidated_damages,
     calculate_liquidated_damages_rate,
 )
-from classes import BessPerformanceTest
-from compensation_calculator import calculate_monthly_capability_liquidated_damages
+from classes import (
+    BessContractValues,
+    BessMonthlyInputs,
+    BessPerformanceTest,
+    BessYearlyInputs,
+)
+from compensation_calculator import (
+    calculate_monthly_capability_liquidated_damages,
+    calculate_monthly_results,
+)
 from error_checks import validate_input_files
 from report import generate_bess_invoice_support_report
 
@@ -21,6 +30,7 @@ import pandas as pd
 
 from classes import BessMonthlyResult
 from data_reader import load_contract_values
+from data_reader import load_performance_tests
 
 
 class PerformanceGuaranteeTest(unittest.TestCase):
@@ -81,7 +91,7 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             cld_per_day * 5,
         )
 
-    def test_open_ended_failed_test_does_not_accrue_cld_without_end_date(self):
+    def test_open_ended_failed_test_accrues_cld_through_billing_period_end(self):
         failed_test = BessPerformanceTest(
             test_id="FAIL-OPEN",
             agreement_year=1,
@@ -90,9 +100,17 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             requested_by="PREPA",
             tde=390.0,
             measured_ramp_rate=6000.0,
+            prepa_approved=True,
         )
 
-        self.assertEqual(
+        cld_per_day = calculate_capability_liquidated_damages_per_day(
+            GC=400.0,
+            TDE=390.0,
+            RER=170.0,
+            CPP=25096.0,
+        )
+
+        self.assertAlmostEqual(
             calculate_monthly_capability_liquidated_damages(
                 timestamp_month="2026-01",
                 agreement_year=1,
@@ -101,7 +119,60 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 rer=170.0,
                 cpp=25096.0,
             ),
-            0.0,
+            cld_per_day * 17,
+        )
+
+    def test_cld_ends_on_next_approved_passing_retest_row(self):
+        failed_test = BessPerformanceTest(
+            test_id="FAIL-1",
+            agreement_year=1,
+            test_type="PREPA Performance Test",
+            test_date="2026-03-12",
+            requested_by="PREPA",
+            tde=390.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=True,
+        )
+        passing_retest = BessPerformanceTest(
+            test_id="PASS-1",
+            agreement_year=1,
+            test_type="Resource Provider Performance Test",
+            test_date="2026-04-08",
+            requested_by="Resource Provider",
+            tde=401.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=True,
+            replaces_test_id="FAIL-1",
+        )
+
+        cld_per_day = calculate_capability_liquidated_damages_per_day(
+            GC=400.0,
+            TDE=390.0,
+            RER=170.0,
+            CPP=25096.0,
+        )
+
+        self.assertAlmostEqual(
+            calculate_monthly_capability_liquidated_damages(
+                timestamp_month="2026-03",
+                agreement_year=1,
+                performance_tests=[failed_test, passing_retest],
+                dde=400.0,
+                rer=170.0,
+                cpp=25096.0,
+            ),
+            cld_per_day * 20,
+        )
+        self.assertAlmostEqual(
+            calculate_monthly_capability_liquidated_damages(
+                timestamp_month="2026-04",
+                agreement_year=1,
+                performance_tests=[failed_test, passing_retest],
+                dde=400.0,
+                rer=170.0,
+                cpp=25096.0,
+            ),
+            cld_per_day * 7,
         )
 
     def test_unapproved_failed_test_does_not_accrue_cld(self):
@@ -259,6 +330,64 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             0.1,
         )
 
+    def test_dde_derives_from_design_duration_energy_and_degradation_rate(self):
+        self.assertAlmostEqual(
+            calculate_degraded_duration_energy(
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+                agreement_year=5,
+            ),
+            400.0,
+        )
+        self.assertAlmostEqual(
+            calculate_degraded_duration_energy(
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.01,
+                agreement_year=3,
+            ),
+            392.04,
+        )
+
+    def test_monthly_results_validate_dde_against_contract_values(self):
+        contract_values = {
+            1: BessContractValues(
+                agreement_year=1,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+            )
+        }
+        yearly_inputs = {
+            1: BessYearlyInputs(
+                agreement_year=1,
+                dde=399.0,
+                tr=100.0,
+            )
+        }
+        monthly_inputs = [
+            BessMonthlyInputs(
+                timestamp_month="2026-01",
+                agreement_year=1,
+                adj=0.0,
+                bphrs=744.0,
+                pohrs=0.0,
+                unavhrs=0.0,
+                unavprodhrs=0.0,
+                gse=0.0,
+                pfm=0.0,
+                ip=0.0,
+            )
+        ]
+
+        with self.assertRaisesRegex(ValueError, "derived DDE=400.00"):
+            calculate_monthly_results(
+                contract_values,
+                yearly_inputs,
+                monthly_inputs,
+            )
+
     def test_contract_values_validation_requires_ld_formula_columns(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "bess_contract_values_template.csv"
@@ -270,6 +399,45 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             ):
                 validate_input_files([path])
 
+    def test_performance_test_loader_reads_ramp_outage_fields(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "Performance_Tests.csv"
+            path.write_text(
+                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
+                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
+                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
+                "outage_start,outage_end,outage_equivalent_unavhrs,"
+                "source_reference,notes\n"
+                "RAMP-1,1,PREPA Performance Test,2026-01-15,PREPA,400,"
+                "3000,Independent,TRUE,2026-01-20,,,TRUE,"
+                "2026-01-15,2026-01-17,48,Appendix P Section 4,"
+                "Ramp failure outage\n"
+            )
+
+            performance_test = load_performance_tests(path)[0]
+
+            self.assertTrue(performance_test.ramp_failure_caused_outage)
+            self.assertEqual(performance_test.outage_start, "2026-01-15")
+            self.assertEqual(performance_test.outage_end, "2026-01-17")
+            self.assertEqual(performance_test.outage_equivalent_unavhrs, 48.0)
+
+    def test_ramp_failure_outage_requires_outage_fields(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "Performance_Tests.csv"
+            path.write_text(
+                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
+                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
+                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
+                "outage_start,outage_end,outage_equivalent_unavhrs,"
+                "source_reference,notes\n"
+                "RAMP-1,1,PREPA Performance Test,2026-01-15,PREPA,400,"
+                "3000,Independent,TRUE,2026-01-20,,,TRUE,"
+                ",2026-01-17,48,Appendix P Section 4,Ramp failure outage\n"
+            )
+
+            with self.assertRaisesRegex(ValueError, "outage_start"):
+                validate_input_files([path])
+
     def test_blank_required_contract_field_raises(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "bess_contract_values_template.csv"
@@ -277,10 +445,11 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             path.write_text(
                 "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
                 "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
-                "design_dmax,design_duration_energy,design_charge_energy,"
+                "design_dmax,design_duration_energy,"
+                "annual_duration_energy_degradation_rate,design_charge_energy,"
                 "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
                 "scheduled_maintenance_allowance_hours\n"
-                "1,25000,1200,4,,170,0.97,FALSE,TRUE,100,400,400,80,720,160\n"
+                "1,25000,1200,4,,170,0.97,FALSE,TRUE,100,400,0,400,80,720,160\n"
             )
 
             with self.assertRaisesRegex(ValueError, "TA"):

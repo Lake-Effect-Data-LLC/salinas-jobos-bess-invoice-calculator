@@ -27,8 +27,8 @@ Performance guarantee reporting:
 - `ALD` Availability Liquidated Damages
 - `Actual_Efficiency`
 - `ELD` Efficiency Liquidated Damages
-- `CLD` Capability Liquidated Damages, allocated across Billing Periods when a
-  failed test has a cure/retest date
+- `CLD` Capability Liquidated Damages, allocated across Billing Periods from
+  failed test date until passing test/cure date or Billing Period end
 
 `MP` is currently reduced by `ALD`, `CLD`, and `ELD` through `ADJ_Total`, based
 on the working assumption that Appendix F `ADJ` includes other credits or
@@ -48,11 +48,11 @@ Each project uses the same file names inside its own data folder:
 
 | File | Purpose |
 | --- | --- |
-| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, project-specific LD formula switches, outage/waiting-period allowances, and design reference values |
+| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, project-specific LD formula switches, outage/waiting-period allowances, design reference values, and Appendix J duration-energy degradation rate |
 | `bess_yearly_inputs_template.csv` | Yearly values: `DDE`, fallback/manual `TR`, and optional `GC` |
 | `bess_monthly_inputs_template.csv` | Monthly compensation inputs: `Other_ADJ`, availability hours, and PREPA risk hours |
 | `Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
-| `Performance_Tests.csv` | Event-based performance tests: `TDE`, ramp rate, test date, approval status, and cure/retest fields |
+| `Performance_Tests.csv` | Event-based performance tests: `TDE`, ramp rate, test date, approval status, cure/retest fields, and optional ramp-failure outage detail |
 
 Current project folders:
 
@@ -68,12 +68,20 @@ Jobos.
 Important Contract Modeling Decisions
 -------------------------------------
 
-`DDE` is currently a yearly input.
+`DDE` is currently a yearly input with a contract-derived validation check.
 
 Contractually, Degraded Duration Energy means Design Duration Energy adjusted
 downward by the applicable Energy Degradation Factor and adjusted upward by
 qualifying Performance Tests after maintenance or technology upgrades, capped
-at Design Duration Energy. The calculator does not derive that yet.
+at Design Duration Energy. Appendix J currently states Annual Duration Energy
+Degradation Rate is `0%` per Agreement Year, so current Salinas/Jobos DDE
+should equal Design Duration Energy unless a documented qualifying upgrade/test
+adjustment applies.
+
+The calculator still reads `DDE` from `bess_yearly_inputs_template.csv`, but it
+now derives an expected DDE from `design_duration_energy` and
+`annual_duration_energy_degradation_rate` in the contract values file and raises
+an error if the yearly input does not match.
 
 `TDE` is the performance-test source value.
 
@@ -138,11 +146,13 @@ invoice-style report, not only a calculation table. A useful first structure is:
 7. Net invoice presentation, once treatment of LDs versus `ADJ` is settled
 
 
-Known Gaps and Assumptions
---------------------------
 
 Modeled contract-specific differences:
 
+- Appendix J design operating characteristics are now confirmed for Jobos and
+  match the current contract-value inputs: `design_dmax = 100 MW`,
+  `DDD = 4 hours`, `design_duration_energy = 400 MWh`,
+  `design_charge_energy = 482 MWh`, and `GE = 97%`.
 - `CLD_uses_DDE_multiplier` is a project-specific contract switch in the
   contract values file. Salinas is `TRUE`; Jobos is `FALSE`. Both confirmed
   against the extracted contract text (Salinas 06 Amendment Appendix P Section
@@ -162,7 +172,12 @@ Modeled contract-specific differences:
 
 Remaining validation gaps:
 
-- `DDE` is not yet derived from degradation factors or qualifying upgrade tests.
+- `DDE` remains a yearly input, but it is validated against contract-derived DDE
+  using `design_duration_energy` and
+  `annual_duration_energy_degradation_rate`. Appendix J currently lists `0%`
+  annual Duration Energy degradation, so current Salinas/Jobos DDE should equal
+  Design Duration Energy unless a documented qualifying upgrade/test adjustment
+  applies.
 - `TR` remains as a fallback input while performance-test timing is being proven.
 - Performance Test MCC currently uses only `prepa_approved = TRUE` tests. This
   follows the Section 6.9 approval process, but Appendix F Section 3(c) says the
@@ -183,11 +198,16 @@ Remaining validation gaps:
   Capability equals Degraded Duration Energy. An optional `GC` column has been
   added to `bess_yearly_inputs_template.csv` for use if a future contract defines
   Guaranteed Capability separately from `DDE`.
-- `CLD` is allocated from failed test date up to, but not including, the
-  cure/retest date. Open-ended failed tests are not accrued without an explicit
-  cure/retest date.
+- `CLD` is allocated from failed test date up to, but not including, the next
+  approved passing test date or explicit cure/retest date. If no passing
+  test/cure date has occurred yet, CLD accrues through the current Billing
+  Period end.
 - `CLD` currently requires `prepa_approved = TRUE`, but approved failed tests
   still accrue from the test date. Confirm whether the LD clock should instead
   start on approval date.
-- Ramp-rate failure currently belongs in performance-test data, but its outage
-  consequence is not yet automatically rolled into `UNAVHRS`.
+- Ramp-rate failure belongs in `Performance_Tests.csv`. The file now captures
+  optional outage detail with `ramp_failure_caused_outage`, `outage_start`,
+  `outage_end`, and `outage_equivalent_unavhrs`. These fields are validated
+  when the outage flag is true, but they are not yet automatically rolled into
+  monthly `UNAVHRS`; for now, any availability impact must also be reflected in
+  the monthly input file.

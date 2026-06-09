@@ -15,6 +15,7 @@ BESS_REQUIRED_COLUMNS = {
         "ELD_uses_CE_times_GE",
         "design_dmax",
         "design_duration_energy",
+        "annual_duration_energy_degradation_rate",
         "design_charge_energy",
         "grid_system_waiting_period_hours",
         "force_majeure_waiting_period_hours",
@@ -46,6 +47,10 @@ BESS_REQUIRED_COLUMNS = {
         "TDE",
         "measured_ramp_rate",
         "prepa_approved",
+        "ramp_failure_caused_outage",
+        "outage_start",
+        "outage_end",
+        "outage_equivalent_unavhrs",
     },
     "Monthly_Performance_Guarantee.csv": {
         "timestamp_month",
@@ -68,6 +73,7 @@ def validate_input_files(csv_paths):
     paths = [Path(csv_path) for csv_path in csv_paths]
     _validate_files_exist(paths)
     _validate_known_bess_headers(paths)
+    _validate_performance_test_ramp_outage_fields(paths)
 
 
 def _validate_files_exist(paths):
@@ -101,3 +107,50 @@ def _read_csv_header(path):
             return {column.strip() for column in next(reader)}
         except StopIteration as exc:
             raise ValueError(f"{path} is empty.") from exc
+
+
+def _validate_performance_test_ramp_outage_fields(paths):
+    for path in paths:
+        if path.name != "Performance_Tests.csv":
+            continue
+
+        with path.open(newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row_number, row in enumerate(reader, start=2):
+                if not _csv_bool(row.get("ramp_failure_caused_outage")):
+                    continue
+
+                missing_fields = [
+                    field_name
+                    for field_name in [
+                        "outage_start",
+                        "outage_end",
+                        "outage_equivalent_unavhrs",
+                    ]
+                    if not str(row.get(field_name, "")).strip()
+                ]
+                if missing_fields:
+                    formatted_fields = ", ".join(missing_fields)
+                    raise ValueError(
+                        f"{path} row {row_number} has "
+                        "ramp_failure_caused_outage=TRUE but is missing "
+                        f"{formatted_fields}."
+                    )
+
+                try:
+                    outage_hours = float(row["outage_equivalent_unavhrs"])
+                except ValueError as exc:
+                    raise ValueError(
+                        f"{path} row {row_number} has non-numeric "
+                        "outage_equivalent_unavhrs."
+                    ) from exc
+
+                if outage_hours < 0:
+                    raise ValueError(
+                        f"{path} row {row_number} has negative "
+                        "outage_equivalent_unavhrs."
+                    )
+
+
+def _csv_bool(value):
+    return str(value or "").strip().lower() in {"true", "t", "yes", "y", "1"}
