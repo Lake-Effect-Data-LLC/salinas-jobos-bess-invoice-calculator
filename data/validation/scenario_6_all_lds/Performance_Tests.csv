@@ -1,0 +1,2 @@
+test_id,agreement_year,test_type,test_date,requested_by,TDE,measured_ramp_rate,certified_by,prepa_approved,approval_date,cure_or_retest_date,replaces_test_id,source_reference,notes
+PT-VAL-S6,1,PREPA Performance Test,2026-01-10,PREPA,380.00,6000.00,Independent Engineer,TRUE,2026-01-11,2026-01-21,,,Failing test (380 < 0.99x400=396). 10 CLD days Jan 10-20. Cure Jan 21 not charged. Entirely within billing period.

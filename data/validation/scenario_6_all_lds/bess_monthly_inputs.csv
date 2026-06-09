@@ -1,0 +1,2 @@
+timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,UNAVHRS,UNAVPRODHRS,GSE,PFM,IP,notes
+2026-01,1,0.00,720,0,252,0,0,0,0,FA=(720-252)/720=0.65=65%<TA=70% → FAA=0 MFP=0. ALD=(0.70-0.65)x400xLDR. CLD=10days in-month. ELD from perf guarantee.
