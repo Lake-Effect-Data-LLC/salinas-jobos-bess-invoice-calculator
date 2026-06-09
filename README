@@ -152,7 +152,7 @@ Modeled contract-specific differences:
 - Appendix J design operating characteristics are now confirmed for Jobos and
   match the current contract-value inputs: `design_dmax = 100 MW`,
   `DDD = 4 hours`, `design_duration_energy = 400 MWh`,
-  `design_charge_energy = 482 MWh`, and `GE = 97%`.
+  `design_charge_energy = 468 MWh`, and `GE = 85%`.
 - `CLD_uses_DDE_multiplier` is a project-specific contract switch in the
   contract values file. Salinas is `TRUE`; Jobos is `FALSE`. Both confirmed
   against the extracted contract text (Salinas 06 Amendment Appendix P Section
@@ -163,8 +163,11 @@ Modeled contract-specific differences:
   05 Amendment Appendix P Section 3(c)). Note: the Salinas formula as written,
   `(CE - GE) - DE`, is dimensionally inconsistent because `GE` is a unitless
   decimal while `CE` and `DE` are in MWh. Current code follows the literal
-  contract text. If counsel or a worked invoice example treats it as a drafting
-  error, set Salinas `ELD_uses_CE_times_GE` to `TRUE`.
+  contract text intentionally pending counsel, PREPA, or worked-invoice
+  confirmation. Do not submit a Salinas invoice month with non-zero `ELD` until
+  this interpretation is confirmed. If counsel or a worked invoice example
+  treats the Salinas text as a drafting error, set Salinas
+  `ELD_uses_CE_times_GE` to `TRUE`.
 - `grid_system_waiting_period_hours`, `force_majeure_waiting_period_hours`, and
   `scheduled_maintenance_allowance_hours` are project-specific contract values.
   Current Salinas and Jobos inputs both use `80`, `720`, and `160`,
@@ -178,11 +181,18 @@ Remaining validation gaps:
   annual Duration Energy degradation, so current Salinas/Jobos DDE should equal
   Design Duration Energy unless a documented qualifying upgrade/test adjustment
   applies.
-- `TR` remains as a fallback input while performance-test timing is being proven.
-- Performance Test MCC currently uses only `prepa_approved = TRUE` tests. This
+- `TR` remains as a fallback input while performance-test timing is being
+  proven. Input validation now emits a warning if Agreement Year `N` has
+  `TR > TDE_last / DDD` after the last approved Year `N-1` Performance Test
+  was below `0.99 x DDE`; review and document any intentional override before
+  relying on that year.
+- Performance Test MCC currently uses only `prepa_approved = TRUE` tests and
+  applies the MCC change from the first Billing Period after `test_date`. This
   follows the Section 6.9 approval process, but Appendix F Section 3(c) says the
-  adjustment continues until another Performance Test is completed, so the exact
-  approval-versus-completion trigger should be confirmed.
+  adjustment continues until another Performance Test is completed. Confirm
+  whether MCC and CLD cure timing should be triggered by test completion date,
+  PREPA approval date, or certified report date before relying on months where
+  those dates differ.
 - Annual adjustment replacement is modeled by Agreement Year. If an annual
   adjustment can occur mid-Agreement-Year, that timing is not yet represented.
 - `FAA` at exactly `70%` is interpreted as the last non-zero point, producing
@@ -201,10 +211,13 @@ Remaining validation gaps:
 - `CLD` is allocated from failed test date up to, but not including, the next
   approved passing test date or explicit cure/retest date. If no passing
   test/cure date has occurred yet, CLD accrues through the current Billing
-  Period end.
-- `CLD` currently requires `prepa_approved = TRUE`, but approved failed tests
-  still accrue from the test date. Confirm whether the LD clock should instead
-  start on approval date.
+  Period end. The cure-day boundary is unconfirmed; verify against a worked
+  invoice before relying on a month where including or excluding the cure day
+  changes the charge.
+- `CLD` currently requires `prepa_approved = TRUE` for failed tests and for
+  passing retests/cures that stop accrual. Approved failed tests still accrue
+  from the test date. Confirm whether the LD clock and cure date should instead
+  use approval date, certified report date, or test completion date.
 - Ramp-rate failure belongs in `Performance_Tests.csv`. The file now captures
   optional outage detail with `ramp_failure_caused_outage`, `outage_start`,
   `outage_end`, and `outage_equivalent_unavhrs`. These fields are validated

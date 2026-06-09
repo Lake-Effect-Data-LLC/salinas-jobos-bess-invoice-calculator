@@ -1,4 +1,5 @@
 import unittest
+import warnings
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -236,6 +237,51 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             cld_per_day * 5,
         )
 
+    def test_cld_gc_passing_retest_stops_accrual_below_raw_dde(self):
+        failed_test = BessPerformanceTest(
+            test_id="FAIL-GC",
+            agreement_year=1,
+            test_type="PREPA Performance Test",
+            test_date="2026-01-15",
+            requested_by="PREPA",
+            tde=390.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=True,
+        )
+        passing_retest = BessPerformanceTest(
+            test_id="PASS-GC",
+            agreement_year=1,
+            test_type="Resource Provider Performance Test",
+            test_date="2026-01-20",
+            requested_by="Resource Provider",
+            tde=396.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=True,
+            replaces_test_id="FAIL-GC",
+        )
+
+        cld_per_day = calculate_capability_liquidated_damages_per_day(
+            GC=395.0,
+            TDE=390.0,
+            RER=170.0,
+            CPP=25096.0,
+            DDE=400.0,
+        )
+
+        self.assertAlmostEqual(
+            calculate_monthly_capability_liquidated_damages(
+                timestamp_month="2026-01",
+                agreement_year=1,
+                performance_tests=[failed_test, passing_retest],
+                dde=400.0,
+                rer=170.0,
+                cpp=25096.0,
+                cld_uses_dde_multiplier=True,
+                gc=395.0,
+            ),
+            cld_per_day * 5,
+        )
+
     def test_eld_uses_jobos_ce_times_ge_formula(self):
         self.assertAlmostEqual(
             calculate_efficiency_liquidated_damages(
@@ -421,6 +467,40 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             self.assertEqual(performance_test.outage_end, "2026-01-17")
             self.assertEqual(performance_test.outage_equivalent_unavhrs, 48.0)
 
+    def test_performance_test_loader_rejects_invalid_optional_bool(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "Performance_Tests.csv"
+            path.write_text(
+                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
+                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
+                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
+                "outage_start,outage_end,outage_equivalent_unavhrs,"
+                "source_reference,notes\n"
+                "TEST-1,1,PREPA Performance Test,2026-01-15,PREPA,400,"
+                "6000,Independent,Trye,2026-01-20,,,FALSE,"
+                ",,,Appendix P Section 2,Typo should fail\n"
+            )
+
+            with self.assertRaisesRegex(ValueError, "prepa_approved"):
+                load_performance_tests(path)
+
+    def test_performance_test_loader_rejects_invalid_ramp_bool(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "Performance_Tests.csv"
+            path.write_text(
+                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
+                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
+                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
+                "outage_start,outage_end,outage_equivalent_unavhrs,"
+                "source_reference,notes\n"
+                "TEST-1,1,PREPA Performance Test,2026-01-15,PREPA,400,"
+                "6000,Independent,TRUE,2026-01-20,,,Flase,"
+                ",,,Appendix P Section 4,Typo should fail\n"
+            )
+
+            with self.assertRaisesRegex(ValueError, "ramp_failure_caused_outage"):
+                load_performance_tests(path)
+
     def test_ramp_failure_outage_requires_outage_fields(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "Performance_Tests.csv"
@@ -454,6 +534,119 @@ class PerformanceGuaranteeTest(unittest.TestCase):
 
             with self.assertRaisesRegex(ValueError, "TA"):
                 load_contract_values(path)
+
+    def test_contract_values_loader_rejects_invalid_required_bool(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bess_contract_values_template.csv"
+            path.write_text(
+                "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
+                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
+                "design_dmax,design_duration_energy,"
+                "annual_duration_energy_degradation_rate,design_charge_energy,"
+                "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
+                "scheduled_maintenance_allowance_hours\n"
+                "1,25000,1200,4,0.70,170,0.97,Flase,TRUE,"
+                "100,400,0,400,80,720,160\n"
+            )
+
+            with self.assertRaisesRegex(ValueError, "CLD_uses_DDE_multiplier"):
+                load_contract_values(path)
+
+    def test_validation_warns_when_tr_not_carried_from_prior_year_failed_test(self):
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            contract_path = temp_path / "bess_contract_values_template.csv"
+            yearly_path = temp_path / "bess_yearly_inputs_template.csv"
+            monthly_path = temp_path / "bess_monthly_inputs_template.csv"
+            tests_path = temp_path / "Performance_Tests.csv"
+            guarantee_path = temp_path / "Monthly_Performance_Guarantee.csv"
+
+            contract_path.write_text(
+                "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
+                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
+                "design_dmax,design_duration_energy,"
+                "annual_duration_energy_degradation_rate,design_charge_energy,"
+                "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
+                "scheduled_maintenance_allowance_hours\n"
+                "1,25000,1200,4,0.70,170,0.85,TRUE,FALSE,"
+                "100,400,0,468,80,720,160\n"
+                "2,25500,1224,4,0.70,170,0.85,TRUE,FALSE,"
+                "100,400,0,468,80,720,160\n"
+            )
+            yearly_path.write_text(
+                "agreement_year,DDE,TR\n"
+                "1,400,100\n"
+                "2,400,100\n"
+            )
+            monthly_path.write_text(
+                "timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,"
+                "UNAVHRS,UNAVPRODHRS,GSE,PFM,IP\n"
+                "2027-01,2,0,744,0,0,0,0,0,0\n"
+            )
+            tests_path.write_text(
+                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
+                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
+                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
+                "outage_start,outage_end,outage_equivalent_unavhrs,"
+                "source_reference,notes\n"
+                "FAIL-Y1,1,PREPA Performance Test,2026-12-15,PREPA,380,"
+                "6000,Independent,TRUE,2026-12-20,,,FALSE,"
+                ",,,Appendix F Section 3,Year-end failed test\n"
+            )
+            guarantee_path.write_text(
+                "timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes\n"
+            )
+
+            with self.assertWarnsRegex(UserWarning, "Expected TR"):
+                validate_input_files(
+                    [
+                        contract_path,
+                        yearly_path,
+                        monthly_path,
+                        tests_path,
+                        guarantee_path,
+                    ]
+                )
+
+    def test_validation_accepts_tr_carried_from_prior_year_failed_test(self):
+        with TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            contract_path = temp_path / "bess_contract_values_template.csv"
+            yearly_path = temp_path / "bess_yearly_inputs_template.csv"
+            tests_path = temp_path / "Performance_Tests.csv"
+
+            contract_path.write_text(
+                "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
+                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
+                "design_dmax,design_duration_energy,"
+                "annual_duration_energy_degradation_rate,design_charge_energy,"
+                "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
+                "scheduled_maintenance_allowance_hours\n"
+                "1,25000,1200,4,0.70,170,0.85,TRUE,FALSE,"
+                "100,400,0,468,80,720,160\n"
+                "2,25500,1224,4,0.70,170,0.85,TRUE,FALSE,"
+                "100,400,0,468,80,720,160\n"
+            )
+            yearly_path.write_text(
+                "agreement_year,DDE,TR\n"
+                "1,400,100\n"
+                "2,400,95\n"
+            )
+            tests_path.write_text(
+                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
+                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
+                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
+                "outage_start,outage_end,outage_equivalent_unavhrs,"
+                "source_reference,notes\n"
+                "FAIL-Y1,1,PREPA Performance Test,2026-12-15,PREPA,380,"
+                "6000,Independent,TRUE,2026-12-20,,,FALSE,"
+                ",,,Appendix F Section 3,Year-end failed test\n"
+            )
+
+            with warnings.catch_warnings(record=True) as recorded_warnings:
+                warnings.simplefilter("always")
+                validate_input_files([contract_path, yearly_path, tests_path])
+                self.assertEqual(recorded_warnings, [])
 
     def test_monthly_result_has_no_adj_alias(self):
         self.assertFalse(

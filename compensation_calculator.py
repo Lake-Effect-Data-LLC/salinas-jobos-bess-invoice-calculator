@@ -270,7 +270,7 @@ def calculate_monthly_capability_liquidated_damages(
         cld_end_date = _get_cld_end_date(
             performance_test,
             performance_tests,
-            dde,
+            guaranteed_capability,
             billing_period_end,
         )
         # Day-boundary interpretation (Appendix P Section 2(b)):
@@ -302,17 +302,18 @@ def calculate_monthly_capability_liquidated_damages(
 def _get_cld_end_date(
     failed_test,
     performance_tests,
-    dde,
+    guaranteed_capability,
     billing_period_end,
 ):
     # Source: Appendix P Section 2(b). CLD applies from the failed test date
-    # until Resource Provider demonstrates TDE at or above DDE. Prefer the next
-    # approved passing test row, then explicit cure/retest date, then accrue
-    # through the current Billing Period end for open-ended failures.
+    # until Resource Provider demonstrates TDE at or above the guaranteed
+    # capability. Prefer the next approved passing test row, then explicit
+    # cure/retest date, then accrue through the current Billing Period end for
+    # open-ended failures.
     passing_test_date = _get_next_passing_performance_test_date(
         failed_test,
         performance_tests,
-        dde,
+        guaranteed_capability,
     )
     if passing_test_date is not None:
         return passing_test_date
@@ -323,14 +324,18 @@ def _get_cld_end_date(
     return billing_period_end
 
 
-def _get_next_passing_performance_test_date(failed_test, performance_tests, dde):
+def _get_next_passing_performance_test_date(
+    failed_test,
+    performance_tests,
+    guaranteed_capability,
+):
     failed_test_date = _parse_date(failed_test.test_date)
     passing_test_dates = [
         _parse_date(performance_test.test_date)
         for performance_test in performance_tests
         if performance_test.agreement_year == failed_test.agreement_year
         and performance_test.prepa_approved
-        and performance_test.tde >= dde
+        and performance_test.tde >= guaranteed_capability
         and _parse_date(performance_test.test_date) > failed_test_date
         and _is_cure_test_for_failure(performance_test, failed_test)
     ]

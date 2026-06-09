@@ -182,7 +182,7 @@ def _required_bool(row, field_name):
     if isinstance(value, bool):
         return value
 
-    return str(value).strip().lower() in {"true", "t", "yes", "y", "1"}
+    return _parse_bool_value(value, field_name)
 
 
 def _optional_text(row, field_name):
@@ -201,13 +201,26 @@ def _optional_bool(row, field_name, default=False):
         return default
 
     value = getattr(row, field_name)
-    if pd.isna(value):
+    if pd.isna(value) or str(value).strip() == "":
         return default
 
     if isinstance(value, bool):
         return value
 
-    return str(value).strip().lower() in {"true", "t", "yes", "y", "1"}
+    return _parse_bool_value(value, field_name)
+
+
+def _parse_bool_value(value, field_name):
+    text_value = str(value).strip().lower()
+    if text_value in {"true", "t", "yes", "y", "1"}:
+        return True
+    if text_value in {"false", "f", "no", "n", "0"}:
+        return False
+
+    raise ValueError(
+        f"Boolean field '{field_name}' has invalid value '{value}'. "
+        "Use TRUE/FALSE, YES/NO, or 1/0."
+    )
 
 
 def _optional_float(row, field_name, default):

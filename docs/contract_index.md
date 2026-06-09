@@ -152,7 +152,9 @@ Open issues:
   - Last Year N-1 test had `TDE >= 0.99 × DDE_last`: `TR = DDE_last / DDD`.
   - No approved tests in Year N-1: carry Year N-1 `TR` forward unchanged.
   Failing to update `TR` after a below-threshold year-end test will overstate
-  MCC in the new agreement year. See also the comment in
+  MCC in the new agreement year. Input validation now warns when Year N `TR`
+  exceeds `TDE_last / DDD` after the last approved Year N-1 test was below
+  `0.99 × DDE_last`. See also the comment in
   `compensation_calculator.get_applicable_performance_test`.
 
 ## Degraded Duration Energy
@@ -170,7 +172,7 @@ Sources:
 | --- | --- |
 | Salinas | 06 Amendment definitions, extracted text around lines 707-710 |
 | Jobos | 05 Amendment definitions, extracted text around lines 657-660 |
-| Jobos | Appendix J Operating Characteristics, pages 109-112: Design Dmax `100 MW`, Design Dmax Duration `4 hours`, Design Duration Energy `400 MWh`, Design Charge Energy `482 MWh`, Guaranteed Efficiency `97%`, ramp rates `6,000 MW/min` |
+| Jobos | Amended Appendix J Operating Characteristics: Design Dmax `100 MW`, Design Dmax Duration `4 hours`, Design Duration Energy `400 MWh`, Design Charge Energy `468 MWh`, Guaranteed Efficiency `85%`, ramp rates `6,000 MW/min` |
 
 Current implementation:
 
