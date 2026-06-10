@@ -1,3 +1,3 @@
-agreement_year,DDE,TR,notes
-1,400.00,100.00,TR at COD = design_dmax (100 MW = DDE/DDD = 400/4). No prior Performance Tests.
-2,400.00,100.00,"TR carried forward from Year 1. No Year 1 tests produced TDE below 0.99 x DDE. If a Year 1 test had TDE_last < 0.99 x DDE_last, set TR = TDE_last / DDD; otherwise TR = DDE_last / DDD."
+"agreement_year","DDE","notes"
+"1","400.00","DDE is contract-derived. Year-start tested result is derived from design_dmax when no prior Performance Tests exist."
+"2","400.00","DDE is contract-derived. Year-start tested result is derived from approved prior-year Performance Test history."

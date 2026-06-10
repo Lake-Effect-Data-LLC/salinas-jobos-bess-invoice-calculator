@@ -130,8 +130,9 @@ Current implementation:
 | Code | Status |
 | --- | --- |
 | `calculations.calculate_performance_test_mcc` | Implements the 99% `TDE` test |
-| `calculations.calculate_annual_mcc` | Implements fallback `min(DDE / DDD, TR)` |
+| `calculations.calculate_annual_mcc` | Implements `min(DDE / DDD, derived Tested Result)` |
 | `compensation_calculator.get_applicable_performance_test` | Selects latest approved test effective in the next billing month |
+| `compensation_calculator.derive_tested_result` | Derives year-start Tested Result from approved Performance Test history |
 
 Open issues:
 
@@ -143,19 +144,16 @@ Open issues:
   values file using Design Duration Energy and Annual Duration Energy
   Degradation Rate.
 - Cross-year MCC carry: `get_applicable_performance_test` filters tests to the
-  current `agreement_year`. Tests from a prior agreement year do not carry
-  forward automatically because the annual formula `MCCy = min(DDE/DDD, TR)`
-  resets MCC at the year boundary. `TR` in `bess_yearly_inputs_template.csv`
-  is the intended carry-forward mechanism. Data entry rule for `TR`:
-  - Agreement Year 1 at COD, no prior tests: `TR = design_dmax` (MW).
-  - Last Year N-1 test had `TDE < 0.99 × DDE_last`: `TR = TDE_last / DDD`.
-  - Last Year N-1 test had `TDE >= 0.99 × DDE_last`: `TR = DDE_last / DDD`.
-  - No approved tests in Year N-1: carry Year N-1 `TR` forward unchanged.
-  Failing to update `TR` after a below-threshold year-end test will overstate
-  MCC in the new agreement year. Input validation now warns when Year N `TR`
-  exceeds `TDE_last / DDD` after the last approved Year N-1 test was below
-  `0.99 × DDE_last`. See also the comment in
-  `compensation_calculator.get_applicable_performance_test`.
+  current `agreement_year`; the separate year-start Tested Result is derived by
+  `derive_tested_result`. Current derivation rule:
+  - Agreement Year 1 at COD, no prior tests: derived Tested Result =
+    `design_dmax` (MW).
+  - Last Year N-1 approved test had `TDE < 0.99 × DDE_last`: derived Tested
+    Result = `TDE_last / DDD`.
+  - Last Year N-1 approved test had `TDE >= 0.99 × DDE_last`: derived Tested
+    Result = `DDE_last / DDD`.
+  - No approved tests in Year N-1: carry prior derived Tested Result forward.
+  Manual `TR` has been removed from `bess_yearly_inputs_template.csv`.
 
 ## Degraded Duration Energy
 
@@ -326,6 +324,13 @@ Open issues:
   CLD formula includes a `DDE` multiplier:
   `CLD = (GC - TDE) x DDE x (RER - CPP / (30.33 x 24))`.
   Code path: `CLD_uses_DDE_multiplier = TRUE`.
+- Critical interpretation risk: `DDE` is not defined in the Salinas Section
+  2(b) "where" clause, and `(GC - TDE) x DDE` is dimensionally `MWh^2`.
+  For equivalent shortfalls, the Salinas literal formula produces CLD amounts
+  roughly `DDE` times larger than the Jobos formula. The implementation is
+  faithful to the extracted Salinas text, but a PREPA worked invoice example or
+  counsel confirmation is required before submitting or disputing any Salinas
+  invoice month with non-zero `CLD`.
 - Jobos contract text (05 Amendment Appendix P Section 2(b)) confirms the CLD
   formula omits the `DDE` multiplier:
   `CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))`.

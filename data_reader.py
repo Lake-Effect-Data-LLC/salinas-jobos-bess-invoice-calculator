@@ -71,7 +71,6 @@ def load_yearly_inputs(csv_file_path):
         int(row.agreement_year): BessYearlyInputs(
             agreement_year=int(row.agreement_year),
             dde=float(row.DDE),
-            tr=float(row.TR),
             gc=_optional_float(row, "GC", None),
             source_reference=_optional_text(row, "source_reference"),
             notes=_optional_text(row, "notes"),

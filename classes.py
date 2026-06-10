@@ -28,11 +28,10 @@ class BessContractValues:
 
 @dataclass(frozen=True)
 class BessYearlyInputs:
-    """Yearly inputs needed for Monthly Contract Capability and capability LDs."""
+    """Yearly inputs needed for yearly DDE and optional capability LD GC."""
 
     agreement_year: int
     dde: float
-    tr: float
     gc: Optional[float] = None
     source_reference: str = ""
     notes: str = ""

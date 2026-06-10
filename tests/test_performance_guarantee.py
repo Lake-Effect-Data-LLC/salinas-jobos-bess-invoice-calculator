@@ -23,6 +23,7 @@ from classes import (
 from compensation_calculator import (
     calculate_monthly_capability_liquidated_damages,
     calculate_monthly_results,
+    derive_tested_result,
 )
 from error_checks import validate_input_files
 from report import generate_bess_invoice_support_report
@@ -31,6 +32,7 @@ import pandas as pd
 
 from classes import BessMonthlyResult
 from data_reader import load_contract_values
+from data_reader import load_yearly_inputs
 from data_reader import load_performance_tests
 
 
@@ -409,7 +411,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             1: BessYearlyInputs(
                 agreement_year=1,
                 dde=399.0,
-                tr=100.0,
             )
         }
         monthly_inputs = [
@@ -433,6 +434,67 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 yearly_inputs,
                 monthly_inputs,
             )
+
+    def test_monthly_results_derive_year_start_tr_from_prior_year_failed_test(self):
+        contract_values = {
+            1: BessContractValues(
+                agreement_year=1,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+            ),
+            2: BessContractValues(
+                agreement_year=2,
+                cppf=24169.92,
+                cpppif=1224.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+            ),
+        }
+        yearly_inputs = {
+            1: BessYearlyInputs(agreement_year=1, dde=400.0),
+            2: BessYearlyInputs(agreement_year=2, dde=400.0),
+        }
+        monthly_inputs = [
+            BessMonthlyInputs(
+                timestamp_month="2027-01",
+                agreement_year=2,
+                adj=0.0,
+                bphrs=744.0,
+                pohrs=0.0,
+                unavhrs=0.0,
+                unavprodhrs=0.0,
+                gse=0.0,
+                pfm=0.0,
+                ip=0.0,
+            )
+        ]
+        performance_tests = [
+            BessPerformanceTest(
+                test_id="FAIL-Y1",
+                agreement_year=1,
+                test_type="PREPA Performance Test",
+                test_date="2026-12-15",
+                requested_by="PREPA",
+                tde=380.0,
+                measured_ramp_rate=6000.0,
+                prepa_approved=True,
+            )
+        ]
+
+        results = calculate_monthly_results(
+            contract_values,
+            yearly_inputs,
+            monthly_inputs,
+            performance_tests,
+        )
+
+        self.assertAlmostEqual(results[0].mcc, 95.0)
 
     def test_contract_values_validation_requires_ld_formula_columns(self):
         with TemporaryDirectory() as temp_dir:
@@ -552,100 +614,138 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "CLD_uses_DDE_multiplier"):
                 load_contract_values(path)
 
-    def test_validation_warns_when_tr_not_carried_from_prior_year_failed_test(self):
+    def test_yearly_inputs_load_without_manual_tr(self):
         with TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            contract_path = temp_path / "bess_contract_values_template.csv"
-            yearly_path = temp_path / "bess_yearly_inputs_template.csv"
-            monthly_path = temp_path / "bess_monthly_inputs_template.csv"
-            tests_path = temp_path / "Performance_Tests.csv"
-            guarantee_path = temp_path / "Monthly_Performance_Guarantee.csv"
+            path = Path(temp_dir) / "bess_yearly_inputs_template.csv"
+            path.write_text("agreement_year,DDE\n1,400\n")
 
-            contract_path.write_text(
-                "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
-                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
-                "design_dmax,design_duration_energy,"
-                "annual_duration_energy_degradation_rate,design_charge_energy,"
-                "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
-                "scheduled_maintenance_allowance_hours\n"
-                "1,25000,1200,4,0.70,170,0.85,TRUE,FALSE,"
-                "100,400,0,468,80,720,160\n"
-                "2,25500,1224,4,0.70,170,0.85,TRUE,FALSE,"
-                "100,400,0,468,80,720,160\n"
+            yearly_inputs = load_yearly_inputs(path)
+
+            self.assertEqual(yearly_inputs[1].dde, 400.0)
+
+    def test_derive_tested_result_uses_design_dmax_at_cod(self):
+        contract_values = {
+            1: BessContractValues(
+                agreement_year=1,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
             )
-            yearly_path.write_text(
-                "agreement_year,DDE,TR\n"
-                "1,400,100\n"
-                "2,400,100\n"
+        }
+        yearly_inputs = {1: BessYearlyInputs(agreement_year=1, dde=400.0)}
+
+        self.assertEqual(
+            derive_tested_result(1, contract_values, yearly_inputs, []),
+            100.0,
+        )
+
+    def test_derive_tested_result_uses_prior_year_failed_test(self):
+        contract_values = {
+            1: BessContractValues(
+                agreement_year=1,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+            ),
+            2: BessContractValues(
+                agreement_year=2,
+                cppf=24169.92,
+                cpppif=1224.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+            ),
+        }
+        yearly_inputs = {
+            1: BessYearlyInputs(agreement_year=1, dde=400.0),
+            2: BessYearlyInputs(agreement_year=2, dde=400.0),
+        }
+        failed_test = BessPerformanceTest(
+            test_id="FAIL-Y1",
+            agreement_year=1,
+            test_type="PREPA Performance Test",
+            test_date="2026-12-15",
+            requested_by="PREPA",
+            tde=380.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=True,
+        )
+
+        self.assertEqual(
+            derive_tested_result(2, contract_values, yearly_inputs, [failed_test]),
+            95.0,
+        )
+
+    def test_derive_tested_result_carries_forward_when_prior_year_has_no_tests(self):
+        contract_values = {
+            year: BessContractValues(
+                agreement_year=year,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
             )
-            monthly_path.write_text(
+            for year in [1, 2, 3]
+        }
+        yearly_inputs = {
+            year: BessYearlyInputs(agreement_year=year, dde=400.0)
+            for year in [1, 2, 3]
+        }
+        failed_test = BessPerformanceTest(
+            test_id="FAIL-Y1",
+            agreement_year=1,
+            test_type="PREPA Performance Test",
+            test_date="2026-12-15",
+            requested_by="PREPA",
+            tde=380.0,
+            measured_ramp_rate=6000.0,
+            prepa_approved=True,
+        )
+
+        self.assertEqual(
+            derive_tested_result(3, contract_values, yearly_inputs, [failed_test]),
+            95.0,
+        )
+
+    def test_validation_accepts_yearly_inputs_without_manual_tr(self):
+        with TemporaryDirectory() as temp_dir:
+            yearly_path = Path(temp_dir) / "bess_yearly_inputs_template.csv"
+            yearly_path.write_text("agreement_year,DDE\n1,400\n")
+
+            with warnings.catch_warnings(record=True) as recorded_warnings:
+                warnings.simplefilter("always")
+                validate_input_files([yearly_path])
+                self.assertEqual(recorded_warnings, [])
+
+    def test_validation_warns_when_monthly_other_adj_is_nonzero(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "bess_monthly_inputs_template.csv"
+            path.write_text(
                 "timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,"
                 "UNAVHRS,UNAVPRODHRS,GSE,PFM,IP\n"
-                "2027-01,2,0,744,0,0,0,0,0,0\n"
-            )
-            tests_path.write_text(
-                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
-                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
-                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
-                "outage_start,outage_end,outage_equivalent_unavhrs,"
-                "source_reference,notes\n"
-                "FAIL-Y1,1,PREPA Performance Test,2026-12-15,PREPA,380,"
-                "6000,Independent,TRUE,2026-12-20,,,FALSE,"
-                ",,,Appendix F Section 3,Year-end failed test\n"
-            )
-            guarantee_path.write_text(
-                "timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes\n"
+                "2026-01,1,250.00,744,0,0,0,0,0,0\n"
             )
 
-            with self.assertWarnsRegex(UserWarning, "Expected TR"):
-                validate_input_files(
-                    [
-                        contract_path,
-                        yearly_path,
-                        monthly_path,
-                        tests_path,
-                        guarantee_path,
-                    ]
-                )
+            with self.assertWarnsRegex(UserWarning, "Other_ADJ=250.00"):
+                validate_input_files([path])
 
-    def test_validation_accepts_tr_carried_from_prior_year_failed_test(self):
+    def test_validation_does_not_warn_when_monthly_other_adj_is_zero(self):
         with TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            contract_path = temp_path / "bess_contract_values_template.csv"
-            yearly_path = temp_path / "bess_yearly_inputs_template.csv"
-            tests_path = temp_path / "Performance_Tests.csv"
-
-            contract_path.write_text(
-                "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
-                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
-                "design_dmax,design_duration_energy,"
-                "annual_duration_energy_degradation_rate,design_charge_energy,"
-                "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
-                "scheduled_maintenance_allowance_hours\n"
-                "1,25000,1200,4,0.70,170,0.85,TRUE,FALSE,"
-                "100,400,0,468,80,720,160\n"
-                "2,25500,1224,4,0.70,170,0.85,TRUE,FALSE,"
-                "100,400,0,468,80,720,160\n"
-            )
-            yearly_path.write_text(
-                "agreement_year,DDE,TR\n"
-                "1,400,100\n"
-                "2,400,95\n"
-            )
-            tests_path.write_text(
-                "test_id,agreement_year,test_type,test_date,requested_by,TDE,"
-                "measured_ramp_rate,certified_by,prepa_approved,approval_date,"
-                "cure_or_retest_date,replaces_test_id,ramp_failure_caused_outage,"
-                "outage_start,outage_end,outage_equivalent_unavhrs,"
-                "source_reference,notes\n"
-                "FAIL-Y1,1,PREPA Performance Test,2026-12-15,PREPA,380,"
-                "6000,Independent,TRUE,2026-12-20,,,FALSE,"
-                ",,,Appendix F Section 3,Year-end failed test\n"
+            path = Path(temp_dir) / "bess_monthly_inputs_template.csv"
+            path.write_text(
+                "timestamp_month,agreement_year,Other_ADJ,BPHRS,POHRS,"
+                "UNAVHRS,UNAVPRODHRS,GSE,PFM,IP\n"
+                "2026-01,1,0.00,744,0,0,0,0,0,0\n"
             )
 
             with warnings.catch_warnings(record=True) as recorded_warnings:
                 warnings.simplefilter("always")
-                validate_input_files([contract_path, yearly_path, tests_path])
+                validate_input_files([path])
                 self.assertEqual(recorded_warnings, [])
 
     def test_monthly_result_has_no_adj_alias(self):

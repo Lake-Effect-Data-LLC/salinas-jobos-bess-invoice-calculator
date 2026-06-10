@@ -65,7 +65,13 @@ def calculate_monthly_results(
             performance_tests,
         )
         if applicable_test is None:
-            mcc = calculate_annual_mcc(yearly.dde, contract.ddd, yearly.tr)
+            tested_result = derive_tested_result(
+                monthly_input.agreement_year,
+                contract_values,
+                yearly_inputs,
+                performance_tests,
+            )
+            mcc = calculate_annual_mcc(yearly.dde, contract.ddd, tested_result)
         else:
             mcc = calculate_performance_test_mcc(
                 yearly.dde,
@@ -204,17 +210,9 @@ def get_applicable_performance_test(
     # Source: Appendix F Section 3(c). MCC test adjustments take effect on the
     # first day of the Billing Period after the Billing Period containing the test.
     #
-    # Cross-year design: tests are filtered to the current agreement_year because
-    # the annual adjustment formula (MCCy = min(DDE/DDD, TR)) resets MCC at the
-    # start of each agreement year. TR in bess_yearly_inputs_template.csv is the
-    # mechanism for carrying any prior-year test result forward. Data entry rule:
-    #   Year 1 at COD: TR = design_dmax (MW).
-    #   Year N > 1: derive from the last approved test of Year N-1:
-    #     TDE_last < 0.99 x DDE_last  →  TR = TDE_last / DDD
-    #     TDE_last >= 0.99 x DDE_last →  TR = DDE_last / DDD
-    #   No Year N-1 tests: carry forward Year N-1 TR unchanged.
-    # Failing to update TR after a below-threshold year-end test will overstate
-    # MCC for the new agreement year.
+    # Cross-year design: tests are filtered to the current agreement_year
+    # because annual MCC uses a year-start Tested Result derived from prior
+    # Performance Test history.
     billing_period_start = _parse_month_start(timestamp_month)
     applicable_tests = [
         performance_test
@@ -231,6 +229,59 @@ def get_applicable_performance_test(
         applicable_tests,
         key=lambda performance_test: _parse_date(performance_test.test_date),
     )
+
+
+def derive_tested_result(
+    agreement_year,
+    contract_values,
+    yearly_inputs,
+    performance_tests,
+):
+    # Source: Appendix F Section 3(b). TR is the Tested Result used in the
+    # annual MCC formula. Derive it from approved prior-year test history
+    # instead of treating it as an independent yearly input.
+    derived_results = {}
+    for year in sorted(year for year in yearly_inputs if year <= agreement_year):
+        contract = _get_agreement_year_values(contract_values, year, "contract values")
+        if year == 1:
+            derived_results[year] = contract.design_dmax
+            continue
+
+        prior_year = year - 1
+        prior_tests = [
+            performance_test
+            for performance_test in performance_tests
+            if performance_test.agreement_year == prior_year
+            and performance_test.prepa_approved
+        ]
+        if not prior_tests:
+            derived_results[year] = derived_results.get(
+                prior_year,
+                contract.design_dmax,
+            )
+            continue
+
+        prior_contract = _get_agreement_year_values(
+            contract_values,
+            prior_year,
+            "contract values",
+        )
+        prior_yearly = _get_agreement_year_values(
+            yearly_inputs,
+            prior_year,
+            "yearly inputs",
+        )
+        last_test = max(
+            prior_tests,
+            key=lambda performance_test: _parse_date(performance_test.test_date),
+        )
+        derived_results[year] = calculate_performance_test_mcc(
+            prior_yearly.dde,
+            prior_contract.ddd,
+            last_test.tde,
+        )
+
+    return derived_results[agreement_year]
 
 
 def calculate_monthly_capability_liquidated_damages(

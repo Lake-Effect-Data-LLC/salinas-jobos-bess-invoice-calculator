@@ -5,18 +5,17 @@ This repo should move from solar/PPOA inputs to BESS compensation inputs before 
 The current source of truth for input design is the "All Data Required to Make Calculations" inventory from Appendix F:
 
 - contract-defined values: `CPPF`, `CPPPIF`, and Design Dmax Duration (`DDD`)
-- yearly collected or derived values: Degraded Duration Energy (`DDE`) and most recent Tested Result (`TR`)
+- yearly collected or derived values: Degraded Duration Energy (`DDE`) and optional Guaranteed Capability (`GC`)
 - monthly collected values: invoice month, adjustment amount (`ADJ`), Facility Availability (`FA`) variables, and PREPA Risk Availability (`PRA`) variables
 
 The current working split is:
 
 1. Contract-defined tables and constants: values copied from the contract, keyed by agreement year where needed.
    - Appendix P / Appendix J constants now tracked with contract values include `TA`, `RER`, `GE`, `design_dmax`, `design_duration_energy`, and `design_charge_energy`.
-2. Yearly operating inputs: `DDE` and `TR`.
+2. Yearly operating inputs: `DDE` and optional `GC`.
    - Current sample data assumes Design Dmax of 100 MW, Design Dmax Duration of 4 hours, Design Duration Energy of 400 MWh, and 0% annual duration energy degradation, so sample `DDE` is 400 MWh.
    - `DDE` is currently accepted as a sourced yearly input. Contractually, `DDE` means Design Duration Energy adjusted downward by the applicable Energy Degradation Factor and adjusted upward by qualifying Performance Tests after maintenance or technology upgrades, capped at Design Duration Energy. Future versions should derive `DDE` when degradation factors and qualifying upgrade/maintenance test data are available.
-   - Current sample data assumes no performance-test reduction, so sample `TR` is 100 MW.
-   - `TR` is retained as a manual input for the current calculator, but the contract source input is `TDE` from performance tests. Future versions should derive `TR = TDE / DDD` from the latest applicable approved performance test.
+   - Manual `TR` has been removed. The calculator derives year-start Tested Result from approved Performance Test history: Year 1 uses Design Dmax, later years use the last approved prior-year Performance Test if present, otherwise they carry forward the prior derived Tested Result.
 3. Monthly billing inputs: timestamp month, `ADJ`, Facility Availability variables, and PREPA Risk Availability variables.
 4. Monthly performance guarantee inputs: monthly metered efficiency values `CE`, `DE`, `AE_beg`, and `AE_end`.
 5. Performance test inputs: event-based test records containing `TDE`, measured ramp rate, test date, approval status/date, and any cure or retest date.
@@ -36,7 +35,7 @@ See `bess_data_dictionary.md` for the working input dictionary.
 | File | Purpose |
 | --- | --- |
 | `bess_contract_values_template.csv` | Contract-defined constants and agreement-year factors |
-| `bess_yearly_inputs_template.csv` | Yearly `DDE` and `TR` values; sample values assume `DDE = 400 MWh` and `TR = 100 MW` |
+| `bess_yearly_inputs_template.csv` | Yearly `DDE` values and optional `GC`; year-start Tested Result is derived from `Performance_Tests.csv` |
 | `bess_monthly_inputs_template.csv` | Monthly `ADJ`, `FA`, and `PRA` variables |
 | `Monthly_Performance_Guarantee.csv` | Monthly metered values for Appendix P Efficiency Guarantee (`CE`, `DE`, `AE_beg`, `AE_end`) |
 | `Performance_Tests.csv` | Event-based Appendix P / Section 6.9 performance test data (`TDE`, ramp rate, dates, approval) |
@@ -60,6 +59,6 @@ Battery Power / Energy at Metering Location = 103,380 kW / 421,260 kWh
 
 - Does Appendix F treat `ADJ` as one net monthly adjustment, or as separate credits and deductions?
 - Should `DDE` be derived from Energy Degradation Factors and qualifying Section 4.7 upgrade/maintenance tests, or continue as a sourced yearly input?
-- Should `TR` remain as a fallback input once performance-test-derived `MCC` is fully trusted?
+- Confirm whether Performance Test completion date, PREPA approval date, or certified report date controls year-start Tested Result derivation and MCC cure timing.
 - Confirm that source `ADJ` inputs exclude calculated Appendix P liquidated damages now included in `ADJ_Total`.
 - How should total `CLD` be allocated when a failed Performance Test spans multiple Billing Periods before cure/retest?

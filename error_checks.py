@@ -25,7 +25,6 @@ BESS_REQUIRED_COLUMNS = {
     "bess_yearly_inputs_template.csv": {
         "agreement_year",
         "DDE",
-        "TR",
     },
     "bess_monthly_inputs_template.csv": {
         "timestamp_month",
@@ -75,7 +74,7 @@ def validate_input_files(csv_paths):
     _validate_files_exist(paths)
     _validate_known_bess_headers(paths)
     _validate_performance_test_ramp_outage_fields(paths)
-    _warn_if_tr_misses_prior_year_failed_test_carry(paths)
+    _warn_if_other_adj_requires_review(paths)
 
 
 def _validate_files_exist(paths):
@@ -154,80 +153,28 @@ def _validate_performance_test_ramp_outage_fields(paths):
                     )
 
 
-def _warn_if_tr_misses_prior_year_failed_test_carry(paths):
-    contract_path = _find_path(
-        paths,
-        {"bess_contract_values_template.csv", "bess_contract_values.csv"},
-    )
-    yearly_path = _find_path(
-        paths,
-        {"bess_yearly_inputs_template.csv", "bess_yearly_inputs.csv"},
-    )
-    tests_path = _find_path(paths, {"Performance_Tests.csv"})
-    if contract_path is None or yearly_path is None or tests_path is None:
-        return
-
-    contract_by_year = _read_rows_by_year(contract_path)
-    yearly_by_year = _read_rows_by_year(yearly_path)
-    tests_by_year = {}
-    with tests_path.open(newline="", encoding="utf-8-sig") as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            if not _csv_bool(row.get("prepa_approved")):
-                continue
-
-            agreement_year = int(row["agreement_year"])
-            tests_by_year.setdefault(agreement_year, []).append(row)
-
-    for agreement_year, yearly_row in yearly_by_year.items():
-        if agreement_year <= 1:
-            continue
-
-        prior_year = agreement_year - 1
-        prior_tests = tests_by_year.get(prior_year, [])
-        if not prior_tests:
-            continue
-
-        prior_yearly = yearly_by_year.get(prior_year)
-        prior_contract = contract_by_year.get(prior_year)
-        if prior_yearly is None or prior_contract is None:
-            continue
-
-        last_test = max(prior_tests, key=lambda row: str(row["test_date"]))
-        prior_dde = float(prior_yearly["DDE"])
-        last_tde = float(last_test["TDE"])
-        if last_tde >= 0.99 * prior_dde:
-            continue
-
-        ddd = float(prior_contract["DDD"])
-        expected_tr = last_tde / ddd
-        actual_tr = float(yearly_row["TR"])
-        if actual_tr <= expected_tr + 1e-9:
-            continue
-
-        warnings.warn(
-            f"{yearly_path} agreement_year {agreement_year} has TR={actual_tr:.2f}, "
-            f"but the last approved Year {prior_year} Performance Test "
-            f"({last_test['test_id']}) had TDE={last_tde:.2f} below "
-            f"0.99 x DDE={0.99 * prior_dde:.2f}. Expected TR should be no "
-            f"greater than TDE/DDD={expected_tr:.2f} unless a documented "
-            "contract adjustment applies.",
-            UserWarning,
-        )
-
-
-def _find_path(paths, names):
+def _warn_if_other_adj_requires_review(paths):
     for path in paths:
-        if path.name in names:
-            return path
+        if path.name not in {
+            "bess_monthly_inputs_template.csv",
+            "bess_monthly_inputs.csv",
+        }:
+            continue
 
-    return None
+        with path.open(newline="", encoding="utf-8-sig") as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row_number, row in enumerate(reader, start=2):
+                other_adj = float(row.get("Other_ADJ") or 0.0)
+                if other_adj == 0:
+                    continue
 
-
-def _read_rows_by_year(path):
-    with path.open(newline="", encoding="utf-8-sig") as csvfile:
-        reader = csv.DictReader(csvfile)
-        return {int(row["agreement_year"]): row for row in reader}
+                billing_period = row.get("timestamp_month", "<unknown>")
+                warnings.warn(
+                    f"{path} row {row_number} billing period {billing_period} "
+                    f"has Other_ADJ={other_adj:.2f}. Confirm this amount does "
+                    "not duplicate calculator-generated ALD, CLD, or ELD.",
+                    UserWarning,
+                )
 
 
 def _csv_bool(value):

@@ -202,18 +202,14 @@ def calculate_degraded_duration_energy(
     return design_duration_energy * (degradation_factor ** (agreement_year - 1))
 
 
-def calculate_annual_mcc(DDE, DDD, TR):
-    # This function will calculate the Monthly Contract Capability (MCC) for each month in the billing period based on the agreement year, DDE, and TR.
-    #MCCy = min[DDE/DDD,TR]
-    #MCCy is the adjusted MCC for the agreement yewar
-    #DDE is the Degraded Duration Energy for the Agreement Year
-    #DDD is the Design Dmax Duration 
-    #TR is the Tested Result, i.e, the MCC as adjusted to the most recent Peformance Test
+def calculate_annual_mcc(DDE, DDD, tested_result):
+    # MCCy = min[DDE / DDD, TR], where TR is the Tested Result derived from
+    # approved Performance Test history.
 
     if DDD <= 0:
         raise ValueError("DDD must be greater than zero.")
 
-    return min(DDE / DDD, TR)
+    return min(DDE / DDD, tested_result)
 
 
 def calculate_capabability_payment_price(cppf: float, cpppif: float) -> float:
