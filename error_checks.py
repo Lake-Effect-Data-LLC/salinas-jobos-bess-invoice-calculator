@@ -12,8 +12,6 @@ BESS_REQUIRED_COLUMNS = {
         "TA",
         "RER",
         "GE",
-        "CLD_uses_DDE_multiplier",
-        "ELD_uses_CE_times_GE",
         "design_dmax",
         "design_duration_energy",
         "annual_duration_energy_degradation_rate",

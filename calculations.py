@@ -1,7 +1,7 @@
-GRID_SYSTEM_WAITING_PERIOD_HOURS = 80
-FORCE_MAJEURE_WAITING_PERIOD_HOURS = 720
+DEFAULT_GRID_SYSTEM_WAITING_PERIOD_HOURS = 80
+DEFAULT_FORCE_MAJEURE_WAITING_PERIOD_HOURS = 720
 
-SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS = 160
+DEFAULT_SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS = 160
 
 def calculate_included_hours(current_hours, prior_hours, annual_allowance_hours):
     if any(value < 0 for value in [current_hours, prior_hours, annual_allowance_hours]):
@@ -13,7 +13,7 @@ def calculate_included_hours(current_hours, prior_hours, annual_allowance_hours)
 def calculate_included_GSEHRS(
     GSEHRS,
     prior_GSEHRS,
-    annual_allowance_hours=GRID_SYSTEM_WAITING_PERIOD_HOURS,
+    annual_allowance_hours=DEFAULT_GRID_SYSTEM_WAITING_PERIOD_HOURS,
 ):
     return calculate_included_hours(
         GSEHRS,
@@ -25,7 +25,7 @@ def calculate_included_GSEHRS(
 def calculate_included_PFMHRS(
     PFMHRS,
     prior_PFMHRS,
-    annual_allowance_hours=FORCE_MAJEURE_WAITING_PERIOD_HOURS,
+    annual_allowance_hours=DEFAULT_FORCE_MAJEURE_WAITING_PERIOD_HOURS,
 ):
     return calculate_included_hours(
         PFMHRS,
@@ -37,7 +37,7 @@ def calculate_included_PFMHRS(
 def calculate_included_POHRS(
     POHRS,
     prior_POHRS,
-    annual_allowance_hours=SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS,
+    annual_allowance_hours=DEFAULT_SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS,
 ):
     return calculate_included_hours(
         POHRS,
@@ -53,7 +53,7 @@ def calculate_FA_with_included_POHRS(
     BPHRS,
     UNAVHRS,
     UNAVPRODHRS,
-    scheduled_maintenance_allowance_hours=SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS,
+    scheduled_maintenance_allowance_hours=DEFAULT_SCHEDULED_MAINTENANCE_ALLOWANCE_HOURS,
 ):
     included_POHRS = calculate_included_POHRS(
         currentPOHRS,
@@ -103,8 +103,8 @@ def calculate_risk_adjustment_with_waiting_periods(
     IPHRS,
     prior_GSEHRS,
     prior_PFMHRS,
-    grid_system_waiting_period_hours=GRID_SYSTEM_WAITING_PERIOD_HOURS,
-    force_majeure_waiting_period_hours=FORCE_MAJEURE_WAITING_PERIOD_HOURS,
+    grid_system_waiting_period_hours=DEFAULT_GRID_SYSTEM_WAITING_PERIOD_HOURS,
+    force_majeure_waiting_period_hours=DEFAULT_FORCE_MAJEURE_WAITING_PERIOD_HOURS,
 ):
     
     # This function will calculate PRAi for billing period n based on the total number of hours for the Billing Period BPHRSn,the duration 
@@ -249,27 +249,18 @@ def calculate_capability_liquidated_damages_per_day(
     TDE,
     RER,
     CPP,
-    DDE=None,
 ):
     # Source: Appendix P Section 2(b), Capability Liquidated Damages.
-    # Salinas visual source: docs/screenshots/CLD_06_Amend_(C-2-E)AES_Salinas_2023-0005_pg_230_220.png.
-    # Jobos visual source provided in chat confirms no DDE multiplier in its CLD formula.
     # CLD = Capability Liquidated Damages per Day, expressed in dollars.
     # GC = Guaranteed Capability, expressed in MWh.
     # TDE = Tested Duration Energy, expressed in MWh.
     # RER = Replacement Energy Rate, expressed in $/MWh.
     # CPP = Capability Payment Price for the Agreement Year, expressed in $/MW-Month.
-    # DDE = optional Salinas multiplier, expressed in MWh.
-    inputs = [GC, TDE, RER, CPP]
-    if DDE is not None:
-        inputs.append(DDE)
-
-    if any(value < 0 for value in inputs):
+    if any(value < 0 for value in [GC, TDE, RER, CPP]):
         raise ValueError("CLD inputs must be non-negative.")
 
     capability_shortfall = max(GC - TDE, 0)
-    dde_multiplier = DDE if DDE is not None else 1.0
-    return capability_shortfall * dde_multiplier * calculate_liquidated_damages_rate(
+    return capability_shortfall * calculate_liquidated_damages_rate(
         RER,
         CPP,
     )
@@ -292,11 +283,8 @@ def calculate_efficiency_liquidated_damages(
     GE,
     DE,
     actual_efficiency,
-    uses_ce_times_ge=True,
 ):
     # Source: Appendix P Section 3(c), Efficiency Liquidated Damages.
-    # Salinas visual source: docs/screenshots/ELD_AES_Salinas_2023-00053_Pg_231_Pg_221.png.
-    # Jobos visual source provided in chat confirms the CE x GE formula.
     # ELD = Efficiency Liquidated Damages, expressed in dollars.
     # CE = Charge Energy for the Billing Period, expressed in MWh.
     # GE = Guaranteed Efficiency, expressed as its decimal equivalent.
@@ -309,10 +297,5 @@ def calculate_efficiency_liquidated_damages(
     if actual_efficiency >= GE:
         return 0.0
 
-    if uses_ce_times_ge:
-        energy_shortfall = (CE * GE) - DE
-    else:
-        energy_shortfall = (CE - GE) - DE
-
-    energy_shortfall = max(energy_shortfall, 0)
+    energy_shortfall = max((CE * GE) - DE, 0)
     return calculate_liquidated_damages_rate(RER, CPP) * energy_shortfall

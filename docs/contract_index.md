@@ -62,10 +62,9 @@ Open issue:
 
 - `ALD`, `CLD`, and `ELD` are currently included in `ADJ_Total`. The monthly
   input column is named `Other_ADJ` to signal that operator-entered adjustments
-  must exclude calculated LDs; however there is no programmatic check that a
-  user has not entered an LD amount there. Confirm source inputs exclude
-  calculated liquidated damages before submitting any invoice where both an LD
-  was calculated and `Other_ADJ` is non-zero in the same billing period.
+  must exclude calculated LDs. Input validation warns whenever `Other_ADJ` is
+  non-zero so the reviewer confirms it does not duplicate calculator-generated
+  liquidated damages.
 
 ## Monthly Fixed Payment
 
@@ -134,7 +133,7 @@ Current implementation:
 | `compensation_calculator.get_applicable_performance_test` | Selects latest approved test effective in the next billing month |
 | `compensation_calculator.derive_tested_result` | Derives year-start Tested Result from approved Performance Test history |
 
-Open issues:
+Notes and open issues:
 
 - Code currently requires `prepa_approved = TRUE`. Section 6.9 supports an
   approval process, but Appendix F says the adjustment continues until another
@@ -181,7 +180,7 @@ Current implementation:
 | `calculations.calculate_degraded_duration_energy` | Derives expected DDE from design energy and annual degradation |
 | `compensation_calculator.calculate_monthly_results` | Validates yearly input DDE against derived DDE |
 
-Open issue:
+Note:
 
 - Appendix J currently states Annual Duration Energy Degradation Rate is `0%`
   per Agreement Year, so current Salinas/Jobos DDE should equal Design Duration
@@ -291,11 +290,10 @@ Open issue:
 
 ## Capability Liquidated Damages
 
-Current working contract rules:
+Current working contract rule:
 
 ```text
-Salinas CLD = (GC - TDE) x DDE x (RER - CPP / (30.33 x 24))
-Jobos CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))
+CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))
 ```
 
 CLD applies for each Day from the failed Performance Test until Resource
@@ -305,36 +303,25 @@ Sources:
 
 | Project | Source |
 | --- | --- |
-| Salinas | 06 Amendment, Appendix P Section 2, extracted text around lines 8931-8948 |
+| Salinas | Base ESSA Appendix P Section 2, extracted text around lines 7599-7609; user-confirmed dimensionally correct contract version |
 | Jobos | 05 Amendment, Appendix P Section 2, extracted text around lines 8924-8941 |
 
 Current implementation:
 
 | Code | Status |
 | --- | --- |
-| `calculations.calculate_capability_liquidated_damages_per_day` | Supports CLD with or without a `DDE` multiplier |
+| `calculations.calculate_capability_liquidated_damages_per_day` | Implements CLD without a `DDE` multiplier for current Salinas/Jobos inputs |
 | `compensation_calculator.calculate_monthly_capability_liquidated_damages` | Allocates CLD across Billing Periods for approved failed tests until passing retest, explicit cure/retest date, or current Billing Period end |
 | `data_writer.write_bess_monthly_results` | Writes `CLD` and includes it in `ADJ_Total` |
-| `bess_contract_values_template.csv` | Uses `CLD_uses_DDE_multiplier` to select the project formula |
 | `bess_yearly_inputs_template.csv` | Optional `GC` column can override the default `GC = DDE` assumption |
 
-Open issues:
+Implementation notes:
 
-- Salinas contract text (06 Amendment Appendix P Section 2(b)) confirms the
-  CLD formula includes a `DDE` multiplier:
-  `CLD = (GC - TDE) x DDE x (RER - CPP / (30.33 x 24))`.
-  Code path: `CLD_uses_DDE_multiplier = TRUE`.
-- Critical interpretation risk: `DDE` is not defined in the Salinas Section
-  2(b) "where" clause, and `(GC - TDE) x DDE` is dimensionally `MWh^2`.
-  For equivalent shortfalls, the Salinas literal formula produces CLD amounts
-  roughly `DDE` times larger than the Jobos formula. The implementation is
-  faithful to the extracted Salinas text, but a PREPA worked invoice example or
-  counsel confirmation is required before submitting or disputing any Salinas
-  invoice month with non-zero `CLD`.
-- Jobos contract text (05 Amendment Appendix P Section 2(b)) confirms the CLD
-  formula omits the `DDE` multiplier:
+- Current Salinas and Jobos inputs both use the dimensionally correct CLD
+  formula without a `DDE` multiplier:
   `CLD = (GC - TDE) x (RER - CPP / (30.33 x 24))`.
-  Code path: `CLD_uses_DDE_multiplier = FALSE`.
+  The prior project-specific formula switch has been removed from the active
+  CSV schema.
 - Day-boundary interpretation: the contract says "for each Day from the failed
   Performance Test until Resource Provider demonstrates TDE at or above DDE."
   Current code treats the test date as the first accrual day (included) and the
@@ -359,8 +346,7 @@ Contract rules:
 ```text
 Actual Efficiency = (DE + (AEend - AEbeg)) / CE
 
-Salinas ELD = (RER - CPP / (30.33 x 24)) x ((CE - GE) - DE)
-Jobos ELD = (RER - CPP / (30.33 x 24)) x ((CE x GE) - DE)
+ELD = (RER - CPP / (30.33 x 24)) x ((CE x GE) - DE)
 ```
 
 ELD applies if Actual Efficiency for the Billing Period falls below Guaranteed
@@ -370,7 +356,7 @@ Sources:
 
 | Project | Source |
 | --- | --- |
-| Salinas | 06 Amendment, Appendix P Section 3, extracted text around lines 8950-9004 |
+| Salinas | Base ESSA Appendix P Section 3, extracted text around line 7644; user-confirmed dimensionally correct contract version |
 | Jobos | 05 Amendment, Appendix P Section 3, extracted text around lines 8943-9001 |
 
 Current implementation:
@@ -378,21 +364,15 @@ Current implementation:
 | Code | Status |
 | --- | --- |
 | `calculations.calculate_actual_efficiency` | Implemented |
-| `calculations.calculate_efficiency_liquidated_damages` | Supports ELD with either `CE - GE` or `CE x GE` |
+| `calculations.calculate_efficiency_liquidated_damages` | Implements current Salinas/Jobos ELD with `CE x GE` |
 | `compensation_calculator.calculate_monthly_results` | Includes `ELD` in `ADJ_Total` |
-| `bess_contract_values_template.csv` | Uses `ELD_uses_CE_times_GE` to select the project formula |
+| `bess_contract_values_template.csv` | Provides `GE`, used in the current `CE x GE` formula |
 
-Open issue:
+Implementation note:
 
-- Salinas contract text (06 Amendment Appendix P Section 3(c)) shows
-  `((CE - GE) - DE)`. This is dimensionally inconsistent: `CE` and `DE` are
-  in MWh but `GE` is a unitless decimal fraction. Current code follows the
-  literal text with `ELD_uses_CE_times_GE = FALSE`.
-- Jobos contract text (05 Amendment Appendix P Section 3(c)) shows
-  `((CE x GE) - DE)`. Dimensionally consistent. Code: `ELD_uses_CE_times_GE = TRUE`.
-- If counsel, a worked invoice example, or an official PREPA model treats the
-  Salinas formula as a drafting error, change Salinas `ELD_uses_CE_times_GE`
-  to `TRUE`.
+- The current active Salinas and Jobos inputs both use the dimensionally correct
+  `CE x GE` formula. The prior project-specific formula switch has been removed
+  from the active CSV schema.
 
 ## Ramp Rate
 

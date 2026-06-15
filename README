@@ -35,6 +35,28 @@ on the working assumption that Appendix F `ADJ` includes other credits or
 amounts to which PREPA has a right under the Agreement.
 
 
+Contract Source Map
+-------------------
+
+Use `docs/contract_index.md` as the detailed contract trace. It maps each major
+formula to extracted contract text and to the code that implements it.
+
+High-level code map:
+
+| Area | Primary File |
+| --- | --- |
+| Main project flow | `main.py` |
+| Calculation orchestration | `compensation_calculator.py` |
+| Formula helpers | `calculations.py` |
+| Input loading | `data_reader.py` |
+| Input validation | `error_checks.py` |
+| Monthly CSV output | `data_writer.py` |
+| Invoice support report | `report.py` |
+
+For notebook-specific troubleshooting, see
+`JUPYTER_TROUBLESHOOTING_GUIDE.md`.
+
+
 Input Files
 -----------
 
@@ -48,7 +70,7 @@ Each project uses the same file names inside its own data folder:
 
 | File | Purpose |
 | --- | --- |
-| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, project-specific LD formula switches, outage/waiting-period allowances, design reference values, and Appendix J duration-energy degradation rate |
+| `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, outage/waiting-period allowances, design reference values, and Appendix J duration-energy degradation rate |
 | `bess_yearly_inputs_template.csv` | Yearly values: `DDE` and optional `GC`; year-start Tested Result is derived from `Performance_Tests.csv` |
 | `bess_monthly_inputs_template.csv` | Monthly compensation inputs: `Other_ADJ`, availability hours, and PREPA risk hours |
 | `Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
@@ -67,6 +89,16 @@ Jobos.
 
 Important Contract Modeling Decisions
 -------------------------------------
+
+### DDE, TDE, and TR
+
+The calculator keeps these three concepts separate:
+
+| Term | Current Source | How It Is Used |
+| --- | --- | --- |
+| `DDE` | Yearly input, validated against contract design/degradation values | Annual design-duration energy used in MCC and LD formulas |
+| `TDE` | Event input in `Performance_Tests.csv` | Actual tested duration energy from a Performance Test |
+| `TR` | Derived by the calculator from approved prior Performance Test history | Year-start Tested Result used when no same-year Performance Test is yet effective |
 
 `DDE` is currently a yearly input with a contract-derived validation check.
 
@@ -98,6 +130,36 @@ Current MCC behavior:
 - If no approved applicable same-year Performance Test exists, derive the
   year-start Tested Result from approved prior-year Performance Test history
   and use `MCC = min(DDE / DDD, derived Tested Result)`.
+
+Main validation concern: if PREPA provides or expects an explicit year-start
+`TR`, the current derived-TR model needs to become either a required input or a
+documented override with source support.
+
+
+Questions To Confirm With PREPA
+-------------------------------
+
+These are the questions most likely to matter before relying on known-example
+validation or submitting an invoice:
+
+1. For annual MCC, does PREPA expect `TR` to be supplied as an explicit
+   year-start value, or should it be derived from the latest approved prior-year
+   Performance Test?
+2. When a Performance Test changes MCC, which date controls the first affected
+   Billing Period: test completion date, PREPA approval date, certified report
+   date, or another formal acceptance date?
+3. For CLD, does the damages clock start on the failed test date, approval date,
+   or certified report date?
+4. For CLD cure/retest allocation, is the passing test or cure date included in
+   damages, or is it the first non-damages day?
+5. If a failed Performance Test remains open at month end, should CLD accrue
+   through the current Billing Period end before a cure is known?
+6. Should calculated `ALD`, `CLD`, and `ELD` be netted through Appendix F `ADJ`
+   in monthly payment, or shown separately without reducing `MP` until PREPA
+   confirms the credit?
+7. Should ramp-rate outage hours from `Performance_Tests.csv` automatically
+   increase monthly `UNAVHRS`, or should they only be included when already
+   reflected in the monthly input file?
 
 
 Run It
@@ -155,27 +217,9 @@ Modeled contract-specific differences:
   match the current contract-value inputs: `design_dmax = 100 MW`,
   `DDD = 4 hours`, `design_duration_energy = 400 MWh`,
   `design_charge_energy = 468 MWh`, and `GE = 85%`.
-- `CLD_uses_DDE_multiplier` is a project-specific contract switch in the
-  contract values file. Salinas is `TRUE`; Jobos is `FALSE`. Both confirmed
-  against the extracted contract text (Salinas 06 Amendment Appendix P Section
-  2(b); Jobos 05 Amendment Appendix P Section 2(b)). The Salinas formula is a
-  critical interpretation risk: the literal text multiplies `(GC - TDE)` by
-  `DDE`, making the shortfall term dimensionally `MWh^2` and producing CLD
-  amounts roughly `DDE` times larger than the Jobos formula for equivalent
-  shortfalls. Current code follows the literal Salinas text intentionally.
-  Obtain a PREPA worked invoice example or counsel confirmation before
-  submitting or disputing any Salinas invoice month with non-zero `CLD`.
-- `ELD_uses_CE_times_GE` is a project-specific contract switch in the contract
-  values file. Salinas is `FALSE`; Jobos is `TRUE`. Both confirmed against the
-  extracted contract text (Salinas 06 Amendment Appendix P Section 3(c); Jobos
-  05 Amendment Appendix P Section 3(c)). Note: the Salinas formula as written,
-  `(CE - GE) - DE`, is dimensionally inconsistent because `GE` is a unitless
-  decimal while `CE` and `DE` are in MWh. Current code follows the literal
-  contract text intentionally pending counsel, PREPA, or worked-invoice
-  confirmation. Do not submit a Salinas invoice month with non-zero `ELD` until
-  this interpretation is confirmed. If counsel or a worked invoice example
-  treats the Salinas text as a drafting error, set Salinas
-  `ELD_uses_CE_times_GE` to `TRUE`.
+- Salinas and Jobos both use the dimensionally correct Appendix P formulas:
+  CLD without a `DDE` multiplier, and ELD using `(CE x GE) - DE`. The older
+  project-specific formula switches were removed from the active CSV schema.
 - `grid_system_waiting_period_hours`, `force_majeure_waiting_period_hours`, and
   `scheduled_maintenance_allowance_hours` are project-specific contract values.
   Current Salinas and Jobos inputs both use `80`, `720`, and `160`,

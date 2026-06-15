@@ -65,6 +65,10 @@ def calculate_monthly_results(
             performance_tests,
         )
         if applicable_test is None:
+            # Appendix F Section 3(b): before a same-year Performance Test has
+            # become effective, the annual MCC cap uses Tested Result (TR).
+            # This model derives TR from approved prior Performance Test history
+            # instead of requiring a separate manual TR input.
             tested_result = derive_tested_result(
                 monthly_input.agreement_year,
                 contract_values,
@@ -73,6 +77,8 @@ def calculate_monthly_results(
             )
             mcc = calculate_annual_mcc(yearly.dde, contract.ddd, tested_result)
         else:
+            # Appendix F Section 3(c): once an approved same-year Performance
+            # Test is effective, MCC is based on TDE versus 99% of DDE.
             mcc = calculate_performance_test_mcc(
                 yearly.dde,
                 contract.ddd,
@@ -106,7 +112,6 @@ def calculate_monthly_results(
             yearly.dde,
             contract.rer,
             cpp,
-            contract.cld_uses_dde_multiplier,
             yearly.gc,
         )
         pra = calculate_risk_adjustment_with_waiting_periods(
@@ -138,7 +143,6 @@ def calculate_monthly_results(
                 contract.ge,
                 monthly_performance_input.de,
                 actual_efficiency,
-                contract.eld_uses_ce_times_ge,
             )
         adj_total = monthly_input.adj + ald + cld + eld
         mfp = calculate_monthly_fixed_payment(cpp, mcc, faa, pra)
@@ -210,9 +214,9 @@ def get_applicable_performance_test(
     # Source: Appendix F Section 3(c). MCC test adjustments take effect on the
     # first day of the Billing Period after the Billing Period containing the test.
     #
-    # Cross-year design: tests are filtered to the current agreement_year
-    # because annual MCC uses a year-start Tested Result derived from prior
-    # Performance Test history.
+    # Cross-year design: same-year tests control monthly Section 3(c)
+    # adjustments only after their effective month. Prior-year tests feed the
+    # separate Section 3(b) TR derivation in derive_tested_result().
     billing_period_start = _parse_month_start(timestamp_month)
     applicable_tests = [
         performance_test
@@ -240,6 +244,10 @@ def derive_tested_result(
     # Source: Appendix F Section 3(b). TR is the Tested Result used in the
     # annual MCC formula. Derive it from approved prior-year test history
     # instead of treating it as an independent yearly input.
+    #
+    # Open validation question: if PREPA issues an explicit year-start TR,
+    # that value may need to become a required input or an override with source
+    # support rather than a value inferred from Performance_Tests.csv.
     derived_results = {}
     for year in sorted(year for year in yearly_inputs if year <= agreement_year):
         contract = _get_agreement_year_values(contract_values, year, "contract values")
@@ -291,13 +299,9 @@ def calculate_monthly_capability_liquidated_damages(
     dde,
     rer,
     cpp,
-    cld_uses_dde_multiplier=False,
     gc=None,
 ):
     # Source: Appendix P Section 2(b), Capability Liquidated Damages.
-    # Salinas visual source:
-    # docs/screenshots/CLD_06_Amend_(C-2-E)AES_Salinas_2023-0005_pg_230_220.png.
-    # Jobos visual source provided in chat confirms no DDE multiplier.
     # Current allocation rule: count failed-test days that overlap the Billing
     # Period for approved tests, starting on the failed test date. The end date
     # is the next approved passing test date, then explicit cure/retest date if
@@ -343,7 +347,6 @@ def calculate_monthly_capability_liquidated_damages(
             performance_test.tde,
             rer,
             cpp,
-            DDE=dde if cld_uses_dde_multiplier else None,
         )
         monthly_cld += cld_per_day * cld_days
 

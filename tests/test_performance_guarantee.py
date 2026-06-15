@@ -37,19 +37,7 @@ from data_reader import load_performance_tests
 
 
 class PerformanceGuaranteeTest(unittest.TestCase):
-    def test_cld_per_day_uses_salinas_dde_multiplier(self):
-        self.assertAlmostEqual(
-            calculate_capability_liquidated_damages_per_day(
-                GC=400.0,
-                TDE=390.0,
-                RER=170.0,
-                CPP=25096.0,
-                DDE=400.0,
-            ),
-            4000.0 * calculate_liquidated_damages_rate(170.0, 25096.0),
-        )
-
-    def test_cld_per_day_can_omit_jobos_dde_multiplier(self):
+    def test_cld_per_day_uses_dimensionally_correct_formula_without_dde_multiplier(self):
         self.assertAlmostEqual(
             calculate_capability_liquidated_damages_per_day(
                 GC=400.0,
@@ -78,7 +66,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             TDE=390.0,
             RER=170.0,
             CPP=25096.0,
-            DDE=400.0,
         )
 
         self.assertAlmostEqual(
@@ -89,7 +76,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 dde=400.0,
                 rer=170.0,
                 cpp=25096.0,
-                cld_uses_dde_multiplier=True,
             ),
             cld_per_day * 5,
         )
@@ -199,7 +185,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 dde=400.0,
                 rer=170.0,
                 cpp=25096.0,
-                cld_uses_dde_multiplier=True,
             ),
             0.0,
         )
@@ -222,7 +207,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             TDE=390.0,
             RER=170.0,
             CPP=25096.0,
-            DDE=400.0,
         )
 
         self.assertAlmostEqual(
@@ -233,7 +217,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 dde=400.0,
                 rer=170.0,
                 cpp=25096.0,
-                cld_uses_dde_multiplier=True,
                 gc=395.0,
             ),
             cld_per_day * 5,
@@ -267,7 +250,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             TDE=390.0,
             RER=170.0,
             CPP=25096.0,
-            DDE=400.0,
         )
 
         self.assertAlmostEqual(
@@ -278,13 +260,12 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 dde=400.0,
                 rer=170.0,
                 cpp=25096.0,
-                cld_uses_dde_multiplier=True,
                 gc=395.0,
             ),
             cld_per_day * 5,
         )
 
-    def test_eld_uses_jobos_ce_times_ge_formula(self):
+    def test_eld_uses_ce_times_ge_formula(self):
         self.assertAlmostEqual(
             calculate_efficiency_liquidated_damages(
                 RER=170.0,
@@ -293,23 +274,8 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 GE=0.97,
                 DE=95.0,
                 actual_efficiency=0.95,
-                uses_ce_times_ge=True,
             ),
             calculate_liquidated_damages_rate(170.0, 25096.0) * 2.0,
-        )
-
-    def test_eld_can_use_salinas_displayed_ce_minus_ge_formula(self):
-        self.assertAlmostEqual(
-            calculate_efficiency_liquidated_damages(
-                RER=170.0,
-                CPP=25096.0,
-                CE=100.0,
-                GE=0.97,
-                DE=95.0,
-                actual_efficiency=0.95,
-                uses_ce_times_ge=False,
-            ),
-            calculate_liquidated_damages_rate(170.0, 25096.0) * 4.03,
         )
 
     def test_fa_helper_counts_excess_permitted_outage_as_unavailable(self):
@@ -496,17 +462,6 @@ class PerformanceGuaranteeTest(unittest.TestCase):
 
         self.assertAlmostEqual(results[0].mcc, 95.0)
 
-    def test_contract_values_validation_requires_ld_formula_columns(self):
-        with TemporaryDirectory() as temp_dir:
-            path = Path(temp_dir) / "bess_contract_values_template.csv"
-            path.write_text("agreement_year,cppf,cpppif,DDD\n1,1,1,4\n")
-
-            with self.assertRaisesRegex(
-                ValueError,
-                "CLD_uses_DDE_multiplier",
-            ):
-                validate_input_files([path])
-
     def test_performance_test_loader_reads_ramp_outage_fields(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "Performance_Tests.csv"
@@ -586,32 +541,34 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             # TA cell is intentionally blank
             path.write_text(
                 "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
-                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
                 "design_dmax,design_duration_energy,"
                 "annual_duration_energy_degradation_rate,design_charge_energy,"
                 "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
                 "scheduled_maintenance_allowance_hours\n"
-                "1,25000,1200,4,,170,0.97,FALSE,TRUE,100,400,0,400,80,720,160\n"
+                "1,25000,1200,4,,170,0.97,100,400,0,400,80,720,160\n"
             )
 
             with self.assertRaisesRegex(ValueError, "TA"):
                 load_contract_values(path)
 
-    def test_contract_values_loader_rejects_invalid_required_bool(self):
+    def test_blank_contract_allowance_field_raises(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "bess_contract_values_template.csv"
+            # scheduled_maintenance_allowance_hours cell is intentionally blank.
             path.write_text(
                 "agreement_year,cppf,cpppif,DDD,TA,RER,GE,"
-                "CLD_uses_DDE_multiplier,ELD_uses_CE_times_GE,"
                 "design_dmax,design_duration_energy,"
                 "annual_duration_energy_degradation_rate,design_charge_energy,"
                 "grid_system_waiting_period_hours,force_majeure_waiting_period_hours,"
                 "scheduled_maintenance_allowance_hours\n"
-                "1,25000,1200,4,0.70,170,0.97,Flase,TRUE,"
-                "100,400,0,400,80,720,160\n"
+                "1,25000,1200,4,0.70,170,0.97,"
+                "100,400,0,400,80,720,\n"
             )
 
-            with self.assertRaisesRegex(ValueError, "CLD_uses_DDE_multiplier"):
+            with self.assertRaisesRegex(
+                ValueError,
+                "scheduled_maintenance_allowance_hours",
+            ):
                 load_contract_values(path)
 
     def test_yearly_inputs_load_without_manual_tr(self):

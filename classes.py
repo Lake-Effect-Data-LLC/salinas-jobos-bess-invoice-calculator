@@ -13,8 +13,6 @@ class BessContractValues:
     ta: float = 0.70
     rer: float = 170.00
     ge: float = 0.97
-    cld_uses_dde_multiplier: bool = False
-    eld_uses_ce_times_ge: bool = True
     design_dmax: float = 0.0
     design_duration_energy: float = 0.0
     annual_duration_energy_degradation_rate: float = 0.0

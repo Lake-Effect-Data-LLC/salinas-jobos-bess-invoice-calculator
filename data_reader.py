@@ -33,8 +33,6 @@ def load_contract_values(csv_file_path):
             ta=_required_float(row, "TA"),
             rer=_required_float(row, "RER"),
             ge=_required_float(row, "GE"),
-            cld_uses_dde_multiplier=_required_bool(row, "CLD_uses_DDE_multiplier"),
-            eld_uses_ce_times_ge=_required_bool(row, "ELD_uses_CE_times_GE"),
             design_dmax=_required_float(row, "design_dmax"),
             design_duration_energy=_required_float(row, "design_duration_energy"),
             annual_duration_energy_degradation_rate=_required_float(
@@ -42,20 +40,17 @@ def load_contract_values(csv_file_path):
                 "annual_duration_energy_degradation_rate",
             ),
             design_charge_energy=_required_float(row, "design_charge_energy"),
-            grid_system_waiting_period_hours=_optional_float(
+            grid_system_waiting_period_hours=_required_float(
                 row,
                 "grid_system_waiting_period_hours",
-                80.0,
             ),
-            force_majeure_waiting_period_hours=_optional_float(
+            force_majeure_waiting_period_hours=_required_float(
                 row,
                 "force_majeure_waiting_period_hours",
-                720.0,
             ),
-            scheduled_maintenance_allowance_hours=_optional_float(
+            scheduled_maintenance_allowance_hours=_required_float(
                 row,
                 "scheduled_maintenance_allowance_hours",
-                160.0,
             ),
             source_reference=_optional_text(row, "source_reference"),
             notes=_optional_text(row, "notes"),
@@ -166,22 +161,6 @@ def _required_float(row, field_name):
         )
 
     return float(value)
-
-
-def _required_bool(row, field_name):
-    if not hasattr(row, field_name):
-        raise ValueError(f"Required column '{field_name}' is missing from the CSV.")
-
-    value = getattr(row, field_name)
-    if pd.isna(value) or str(value).strip() == "":
-        raise ValueError(
-            f"Required field '{field_name}' is blank; a value must be provided."
-        )
-
-    if isinstance(value, bool):
-        return value
-
-    return _parse_bool_value(value, field_name)
 
 
 def _optional_text(row, field_name):
