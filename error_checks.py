@@ -1,5 +1,4 @@
 import csv
-import warnings
 from pathlib import Path
 
 
@@ -72,7 +71,6 @@ def validate_input_files(csv_paths):
     _validate_files_exist(paths)
     _validate_known_bess_headers(paths)
     _validate_performance_test_ramp_outage_fields(paths)
-    _warn_if_other_adj_requires_review(paths)
 
 
 def _validate_files_exist(paths):
@@ -98,7 +96,6 @@ def _validate_known_bess_headers(paths):
                 f"{path} is missing required column(s): {formatted_columns}"
             )
 
-
 def _read_csv_header(path):
     with path.open(newline="", encoding="utf-8-sig") as csvfile:
         reader = csv.reader(csvfile)
@@ -106,7 +103,6 @@ def _read_csv_header(path):
             return {column.strip() for column in next(reader)}
         except StopIteration as exc:
             raise ValueError(f"{path} is empty.") from exc
-
 
 def _validate_performance_test_ramp_outage_fields(paths):
     for path in paths:
@@ -149,30 +145,6 @@ def _validate_performance_test_ramp_outage_fields(paths):
                         f"{path} row {row_number} has negative "
                         "outage_equivalent_unavhrs."
                     )
-
-
-def _warn_if_other_adj_requires_review(paths):
-    for path in paths:
-        if path.name not in {
-            "bess_monthly_inputs_template.csv",
-            "bess_monthly_inputs.csv",
-        }:
-            continue
-
-        with path.open(newline="", encoding="utf-8-sig") as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row_number, row in enumerate(reader, start=2):
-                other_adj = float(row.get("Other_ADJ") or 0.0)
-                if other_adj == 0:
-                    continue
-
-                billing_period = row.get("timestamp_month", "<unknown>")
-                warnings.warn(
-                    f"{path} row {row_number} billing period {billing_period} "
-                    f"has Other_ADJ={other_adj:.2f}. Confirm this amount does "
-                    "not duplicate calculator-generated ALD, CLD, or ELD.",
-                    UserWarning,
-                )
 
 
 def _csv_bool(value):

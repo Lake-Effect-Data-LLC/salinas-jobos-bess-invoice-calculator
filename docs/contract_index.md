@@ -129,9 +129,8 @@ Current implementation:
 | Code | Status |
 | --- | --- |
 | `calculations.calculate_performance_test_mcc` | Implements the 99% `TDE` test |
-| `calculations.calculate_annual_mcc` | Implements `min(DDE / DDD, derived Tested Result)` |
+| `calculations.calculate_annual_mcc` | Implements `min(DDE / DDD, TR)` using the yearly `TR` input |
 | `compensation_calculator.get_applicable_performance_test` | Selects latest approved test effective in the next billing month |
-| `compensation_calculator.derive_tested_result` | Derives year-start Tested Result from approved Performance Test history |
 
 Notes and open issues:
 
@@ -143,16 +142,9 @@ Notes and open issues:
   values file using Design Duration Energy and Annual Duration Energy
   Degradation Rate.
 - Cross-year MCC carry: `get_applicable_performance_test` filters tests to the
-  current `agreement_year`; the separate year-start Tested Result is derived by
-  `derive_tested_result`. Current derivation rule:
-  - Agreement Year 1 at COD, no prior tests: derived Tested Result =
-    `design_dmax` (MW).
-  - Last Year N-1 approved test had `TDE < 0.99 × DDE_last`: derived Tested
-    Result = `TDE_last / DDD`.
-  - Last Year N-1 approved test had `TDE >= 0.99 × DDE_last`: derived Tested
-    Result = `DDE_last / DDD`.
-  - No approved tests in Year N-1: carry prior derived Tested Result forward.
-  Manual `TR` has been removed from `bess_yearly_inputs_template.csv`.
+  current `agreement_year`; the separate year-start Tested Result is supplied as
+  yearly input `TR`. The calculator does not infer annual `TR` from prior
+  Performance Test history because the contract does not define that derivation.
 
 ## Degraded Duration Energy
 
@@ -175,7 +167,7 @@ Current implementation:
 
 | Code/Input | Status |
 | --- | --- |
-| `bess_yearly_inputs_template.csv` | Requires `DDE` as yearly input |
+| `bess_yearly_inputs_template.csv` | Requires `DDE` as yearly input and accepts yearly `TR` for annual MCC |
 | `bess_contract_values_template.csv` | Provides `design_duration_energy` and `annual_duration_energy_degradation_rate` |
 | `calculations.calculate_degraded_duration_energy` | Derives expected DDE from design energy and annual degradation |
 | `compensation_calculator.calculate_monthly_results` | Validates yearly input DDE against derived DDE |

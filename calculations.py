@@ -64,6 +64,7 @@ def calculate_FA_with_included_POHRS(
     return calculate_FA(BPHRS, included_POHRS, UNAVHRS + excess_POHRS, UNAVPRODHRS)
 
 def calculate_FA(BPHRS, POHRS, UNAVHRS, UNAVPRODHRS):
+    # Appendix F, Section 4(a) defines Facility Availability (FA) for the Billing Period as follows:
     # FAn = (BPHRSn - (POHRSn + UNAVHRSn + UNAVPRODHRSn))/(BPHRSn - POHRSn)
     # BPHRSn = total number of hours  for the Billing Period "n"
     # POHRSn = total number of permitted outage hours where the facility was unavailable to deliver Adjusted Duration Energy or unable to accept Charge Energy in the Billing Period
@@ -106,15 +107,13 @@ def calculate_risk_adjustment_with_waiting_periods(
     grid_system_waiting_period_hours=DEFAULT_GRID_SYSTEM_WAITING_PERIOD_HOURS,
     force_majeure_waiting_period_hours=DEFAULT_FORCE_MAJEURE_WAITING_PERIOD_HOURS,
 ):
-    
-    # This function will calculate PRAi for billing period n based on the total number of hours for the Billing Period BPHRSn,the duration 
-    # of a Grid System Event occurring in the Billing Period, provided that the number of GSEHRS in teh Billing Period when added to the number of GSEHRS in the preceding Billing Periods
+    # source: Appendix F, Section 5
+    # This function will calculate PRAi for billing period n based on the total number of hours for the Billing Period BPHRSn, the duration 
+    # of a Grid System Event occurring in the Billing Period, provided that the number of GSEHRS in the Billing Period when added to the number of GSEHRS in the preceding Billing Periods
     # shall not exceed the Grid System Waiting Period, and any excess GSEHRS shall not be included in the calculation of GSEHRSn
-    # Duration of any Force Majeure affecting PREPA occurring in teh Billing Period, provided that the number of PFMHRS in the Billing Period when added to the number of PFMHRS in the preceding Billing Periods for the Year, shall not exceed
+    # Duration of any Force Majeure affecting PREPA occurring in the Billing Period, provided that the number of PFMHRS in the Billing Period when added to the number of PFMHRS in the preceding Billing Periods for the Year, shall not exceed
     # the Force Majeure Waiting Period, and any excess PFMHRS shall not be included in the calculation of PFMHRSn
-
     # PRAn = (BPHRSn - (GSEHRSn + PFMHRSn + IPHRSn)) / BPHRSn
-
     # IPHRSn duration of any event any event during the Billing Period in respect of which Resrouce Provider may recover insurance proceeds from any insurance policy that Resource Provider obtains in respect of PREPA Risk Events
     # PRAi = (BPn - (GSEHRSn + PFMHRSn + IPHRSn)) / BPn
     # PRAn = PREPA Risk Adjustment for the Billing Period; 
@@ -160,14 +159,8 @@ def calculate_risk_adjustment_with_waiting_periods(
 
     return max(adjustment, 0)
 
-
-
-
-
-
-
 def calculate_performance_test_mcc(DDE, DDD, TDE):
-
+# As per Appendix F, section 3
     if DDD <= 0:
         raise ValueError("DDD must be greater than zero.")
 
@@ -203,8 +196,8 @@ def calculate_degraded_duration_energy(
 
 
 def calculate_annual_mcc(DDE, DDD, tested_result):
-    # MCCy = min[DDE / DDD, TR], where TR is the Tested Result derived from
-    # approved Performance Test history.
+    # MCCy = min[DDE / DDD, TR], where TR is the externally supplied Tested
+    # Result for the Agreement Year.
 
     if DDD <= 0:
         raise ValueError("DDD must be greater than zero.")

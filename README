@@ -71,7 +71,7 @@ Each project uses the same file names inside its own data folder:
 | File | Purpose |
 | --- | --- |
 | `bess_contract_values_template.csv` | Contract values by Agreement Year: `CPPF`, `CPPPIF`, `DDD`, `TA`, `RER`, `GE`, outage/waiting-period allowances, design reference values, and Appendix J duration-energy degradation rate |
-| `bess_yearly_inputs_template.csv` | Yearly values: `DDE` and optional `GC`; year-start Tested Result is derived from `Performance_Tests.csv` |
+| `bess_yearly_inputs_template.csv` | Yearly values: `DDE`, externally supplied `TR`, and optional `GC` |
 | `bess_monthly_inputs_template.csv` | Monthly compensation inputs: `Other_ADJ`, availability hours, and PREPA risk hours |
 | `Monthly_Performance_Guarantee.csv` | Monthly metered efficiency inputs: `CE`, `DE`, `AE_beg`, `AE_end` |
 | `Performance_Tests.csv` | Event-based performance tests: `TDE`, ramp rate, test date, approval status, cure/retest fields, and optional ramp-failure outage detail |
@@ -98,7 +98,7 @@ The calculator keeps these three concepts separate:
 | --- | --- | --- |
 | `DDE` | Yearly input, validated against contract design/degradation values | Annual design-duration energy used in MCC and LD formulas |
 | `TDE` | Event input in `Performance_Tests.csv` | Actual tested duration energy from a Performance Test |
-| `TR` | Derived by the calculator from approved prior Performance Test history | Year-start Tested Result used when no same-year Performance Test is yet effective |
+| `TR` | Yearly input supplied from PREPA or another authoritative source | Year-start Tested Result used when no same-year Performance Test is yet effective |
 
 `DDE` is currently a yearly input with a contract-derived validation check.
 
@@ -115,8 +115,9 @@ now derives an expected DDE from `design_duration_energy` and
 `annual_duration_energy_degradation_rate` in the contract values file and raises
 an error if the yearly input does not match.
 
-`TDE` is the performance-test source value. Manual `TR` has been removed from
-yearly inputs.
+`TDE` is the performance-test source value. `TR` is a separate yearly input.
+The calculator does not derive annual `TR` from `TDE` or prior Performance Test
+history because the contract does not provide a standalone derivation rule.
 
 Approved Performance Tests can affect `MCC`. The adjustment starts on the first
 day of the Billing Period after the Billing Period in which the Performance Test
@@ -127,13 +128,11 @@ Current MCC behavior:
 - If an approved applicable Performance Test exists, use Appendix F Section 3(c):
   - if `TDE < 0.99 x DDE`, then `MCC = TDE / DDD`
   - otherwise `MCC = DDE / DDD`
-- If no approved applicable same-year Performance Test exists, derive the
-  year-start Tested Result from approved prior-year Performance Test history
-  and use `MCC = min(DDE / DDD, derived Tested Result)`.
+- If no approved applicable same-year Performance Test exists, use the supplied
+  yearly `TR` input and calculate `MCC = min(DDE / DDD, TR)`.
 
-Main validation concern: if PREPA provides or expects an explicit year-start
-`TR`, the current derived-TR model needs to become either a required input or a
-documented override with source support.
+Main validation concern: `TR` should be populated from PREPA or another
+documented source of truth before relying on annual MCC results.
 
 
 Questions To Confirm With PREPA
@@ -142,9 +141,8 @@ Questions To Confirm With PREPA
 These are the questions most likely to matter before relying on known-example
 validation or submitting an invoice:
 
-1. For annual MCC, does PREPA expect `TR` to be supplied as an explicit
-   year-start value, or should it be derived from the latest approved prior-year
-   Performance Test?
+1. For annual MCC, what PREPA document or process supplies the explicit
+   year-start `TR` value?
 2. When a Performance Test changes MCC, which date controls the first affected
    Billing Period: test completion date, PREPA approval date, certified report
    date, or another formal acceptance date?
@@ -233,10 +231,9 @@ Remaining validation gaps:
   annual Duration Energy degradation, so current Salinas/Jobos DDE should equal
   Design Duration Energy unless a documented qualifying upgrade/test adjustment
   applies.
-- Manual `TR` has been removed from yearly inputs. The calculator derives
-  year-start Tested Result from approved Performance Test history: Year 1 uses
-  `design_dmax`; later years use the last approved prior-year test if present,
-  otherwise they carry forward the prior derived Tested Result.
+- `TR` is a yearly input used for annual MCC. The calculator does not infer it
+  from prior Performance Test history; it should come from PREPA or another
+  documented source of truth.
 - Performance Test MCC currently uses only `prepa_approved = TRUE` tests and
   applies the MCC change from the first Billing Period after `test_date`. This
   follows the Section 6.9 approval process, but Appendix F Section 3(c) says the

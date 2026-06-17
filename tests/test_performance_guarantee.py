@@ -23,7 +23,6 @@ from classes import (
 from compensation_calculator import (
     calculate_monthly_capability_liquidated_damages,
     calculate_monthly_results,
-    derive_tested_result,
 )
 from error_checks import validate_input_files
 from report import generate_bess_invoice_support_report
@@ -401,7 +400,7 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 monthly_inputs,
             )
 
-    def test_monthly_results_derive_year_start_tr_from_prior_year_failed_test(self):
+    def test_monthly_results_use_yearly_tr_for_annual_mcc(self):
         contract_values = {
             1: BessContractValues(
                 agreement_year=1,
@@ -423,8 +422,8 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             ),
         }
         yearly_inputs = {
-            1: BessYearlyInputs(agreement_year=1, dde=400.0),
-            2: BessYearlyInputs(agreement_year=2, dde=400.0),
+            1: BessYearlyInputs(agreement_year=1, dde=400.0, tr=100.0),
+            2: BessYearlyInputs(agreement_year=2, dde=400.0, tr=96.0),
         }
         monthly_inputs = [
             BessMonthlyInputs(
@@ -440,27 +439,48 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 ip=0.0,
             )
         ]
-        performance_tests = [
-            BessPerformanceTest(
-                test_id="FAIL-Y1",
-                agreement_year=1,
-                test_type="PREPA Performance Test",
-                test_date="2026-12-15",
-                requested_by="PREPA",
-                tde=380.0,
-                measured_ramp_rate=6000.0,
-                prepa_approved=True,
-            )
-        ]
-
         results = calculate_monthly_results(
             contract_values,
             yearly_inputs,
             monthly_inputs,
-            performance_tests,
         )
 
-        self.assertAlmostEqual(results[0].mcc, 95.0)
+        self.assertAlmostEqual(results[0].mcc, 96.0)
+
+    def test_monthly_results_require_tr_before_effective_performance_test(self):
+        contract_values = {
+            1: BessContractValues(
+                agreement_year=1,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+            )
+        }
+        yearly_inputs = {1: BessYearlyInputs(agreement_year=1, dde=400.0)}
+        monthly_inputs = [
+            BessMonthlyInputs(
+                timestamp_month="2026-01",
+                agreement_year=1,
+                adj=0.0,
+                bphrs=744.0,
+                pohrs=0.0,
+                unavhrs=0.0,
+                unavprodhrs=0.0,
+                gse=0.0,
+                pfm=0.0,
+                ip=0.0,
+            )
+        ]
+
+        with self.assertRaisesRegex(ValueError, "Missing TR"):
+            calculate_monthly_results(
+                contract_values,
+                yearly_inputs,
+                monthly_inputs,
+            )
 
     def test_performance_test_loader_reads_ramp_outage_fields(self):
         with TemporaryDirectory() as temp_dir:
@@ -571,105 +591,17 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             ):
                 load_contract_values(path)
 
-    def test_yearly_inputs_load_without_manual_tr(self):
+    def test_yearly_inputs_load_optional_tr(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "bess_yearly_inputs_template.csv"
-            path.write_text("agreement_year,DDE\n1,400\n")
+            path.write_text("agreement_year,DDE,TR\n1,400,99.5\n")
 
             yearly_inputs = load_yearly_inputs(path)
 
             self.assertEqual(yearly_inputs[1].dde, 400.0)
+            self.assertEqual(yearly_inputs[1].tr, 99.5)
 
-    def test_derive_tested_result_uses_design_dmax_at_cod(self):
-        contract_values = {
-            1: BessContractValues(
-                agreement_year=1,
-                cppf=23696.0,
-                cpppif=1200.0,
-                ddd=4.0,
-                design_dmax=100.0,
-                design_duration_energy=400.0,
-            )
-        }
-        yearly_inputs = {1: BessYearlyInputs(agreement_year=1, dde=400.0)}
-
-        self.assertEqual(
-            derive_tested_result(1, contract_values, yearly_inputs, []),
-            100.0,
-        )
-
-    def test_derive_tested_result_uses_prior_year_failed_test(self):
-        contract_values = {
-            1: BessContractValues(
-                agreement_year=1,
-                cppf=23696.0,
-                cpppif=1200.0,
-                ddd=4.0,
-                design_dmax=100.0,
-                design_duration_energy=400.0,
-            ),
-            2: BessContractValues(
-                agreement_year=2,
-                cppf=24169.92,
-                cpppif=1224.0,
-                ddd=4.0,
-                design_dmax=100.0,
-                design_duration_energy=400.0,
-            ),
-        }
-        yearly_inputs = {
-            1: BessYearlyInputs(agreement_year=1, dde=400.0),
-            2: BessYearlyInputs(agreement_year=2, dde=400.0),
-        }
-        failed_test = BessPerformanceTest(
-            test_id="FAIL-Y1",
-            agreement_year=1,
-            test_type="PREPA Performance Test",
-            test_date="2026-12-15",
-            requested_by="PREPA",
-            tde=380.0,
-            measured_ramp_rate=6000.0,
-            prepa_approved=True,
-        )
-
-        self.assertEqual(
-            derive_tested_result(2, contract_values, yearly_inputs, [failed_test]),
-            95.0,
-        )
-
-    def test_derive_tested_result_carries_forward_when_prior_year_has_no_tests(self):
-        contract_values = {
-            year: BessContractValues(
-                agreement_year=year,
-                cppf=23696.0,
-                cpppif=1200.0,
-                ddd=4.0,
-                design_dmax=100.0,
-                design_duration_energy=400.0,
-            )
-            for year in [1, 2, 3]
-        }
-        yearly_inputs = {
-            year: BessYearlyInputs(agreement_year=year, dde=400.0)
-            for year in [1, 2, 3]
-        }
-        failed_test = BessPerformanceTest(
-            test_id="FAIL-Y1",
-            agreement_year=1,
-            test_type="PREPA Performance Test",
-            test_date="2026-12-15",
-            requested_by="PREPA",
-            tde=380.0,
-            measured_ramp_rate=6000.0,
-            prepa_approved=True,
-        )
-
-        self.assertEqual(
-            derive_tested_result(3, contract_values, yearly_inputs, [failed_test]),
-            95.0,
-        )
-
-    def test_validation_accepts_yearly_inputs_without_manual_tr(self):
+    def test_validation_accepts_yearly_inputs_without_tr_column(self):
         with TemporaryDirectory() as temp_dir:
             yearly_path = Path(temp_dir) / "bess_yearly_inputs_template.csv"
             yearly_path.write_text("agreement_year,DDE\n1,400\n")
@@ -679,7 +611,7 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 validate_input_files([yearly_path])
                 self.assertEqual(recorded_warnings, [])
 
-    def test_validation_warns_when_monthly_other_adj_is_nonzero(self):
+    def test_validation_does_not_warn_when_monthly_other_adj_is_nonzero(self):
         with TemporaryDirectory() as temp_dir:
             path = Path(temp_dir) / "bess_monthly_inputs_template.csv"
             path.write_text(
@@ -688,8 +620,10 @@ class PerformanceGuaranteeTest(unittest.TestCase):
                 "2026-01,1,250.00,744,0,0,0,0,0,0\n"
             )
 
-            with self.assertWarnsRegex(UserWarning, "Other_ADJ=250.00"):
+            with warnings.catch_warnings(record=True) as recorded_warnings:
+                warnings.simplefilter("always")
                 validate_input_files([path])
+                self.assertEqual(recorded_warnings, [])
 
     def test_validation_does_not_warn_when_monthly_other_adj_is_zero(self):
         with TemporaryDirectory() as temp_dir:
@@ -710,6 +644,43 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             hasattr(BessMonthlyResult, "adj"),
             "BessMonthlyResult.adj alias should have been removed (QUALITY-6)",
         )
+
+    def test_monthly_results_reject_other_adj_when_calculated_ld_exists(self):
+        contract_values = {
+            1: BessContractValues(
+                agreement_year=1,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                ta=0.70,
+                rer=170.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+            )
+        }
+        yearly_inputs = {1: BessYearlyInputs(agreement_year=1, dde=400.0, tr=100.0)}
+        monthly_inputs = [
+            BessMonthlyInputs(
+                timestamp_month="2026-01",
+                agreement_year=1,
+                adj=250.0,
+                bphrs=100.0,
+                pohrs=0.0,
+                unavhrs=40.0,
+                unavprodhrs=0.0,
+                gse=0.0,
+                pfm=0.0,
+                ip=0.0,
+            )
+        ]
+
+        with self.assertRaisesRegex(ValueError, "Other_ADJ=250.00"):
+            calculate_monthly_results(
+                contract_values,
+                yearly_inputs,
+                monthly_inputs,
+            )
 
     def test_report_header_uses_project_name(self):
         with TemporaryDirectory() as temp_dir:

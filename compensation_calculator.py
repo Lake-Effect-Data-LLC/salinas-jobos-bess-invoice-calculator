@@ -67,15 +67,15 @@ def calculate_monthly_results(
         if applicable_test is None:
             # Appendix F Section 3(b): before a same-year Performance Test has
             # become effective, the annual MCC cap uses Tested Result (TR).
-            # This model derives TR from approved prior Performance Test history
-            # instead of requiring a separate manual TR input.
-            tested_result = derive_tested_result(
-                monthly_input.agreement_year,
-                contract_values,
-                yearly_inputs,
-                performance_tests,
-            )
-            mcc = calculate_annual_mcc(yearly.dde, contract.ddd, tested_result)
+            # TR is an externally supplied yearly input; the contract does not
+            # define a standalone derivation rule for it.
+            if yearly.tr is None:
+                raise ValueError(
+                    "Missing TR for agreement year "
+                    f"{monthly_input.agreement_year}. TR is required before "
+                    "a same-year Performance Test becomes effective."
+                )
+            mcc = calculate_annual_mcc(yearly.dde, contract.ddd, yearly.tr)
         else:
             # Appendix F Section 3(c): once an approved same-year Performance
             # Test is effective, MCC is based on TDE versus 99% of DDE.
@@ -91,6 +91,7 @@ def calculate_monthly_results(
         )
         excess_pohrs = monthly_input.pohrs - included_pohrs
         unavhrs = monthly_input.unavhrs + excess_pohrs
+        # Appendix F, Section 4(a)
         fa = calculate_FA(
             monthly_input.bphrs,
             included_pohrs,
@@ -98,6 +99,7 @@ def calculate_monthly_results(
             monthly_input.unavprodhrs,
         )
         faa = calculate_FAA(fa)
+        # Source: Appendix P Section 1(b), Availability Liquidated Damages.
         ald = calculate_availability_liquidated_damages(
             contract.ta,
             fa,
@@ -105,6 +107,7 @@ def calculate_monthly_results(
             contract.rer,
             cpp,
         )
+        # Source: Appendix P Section 2(b), Capability Liquidated Damages.
         cld = calculate_monthly_capability_liquidated_damages(
             monthly_input.timestamp_month,
             monthly_input.agreement_year,
@@ -114,6 +117,8 @@ def calculate_monthly_results(
             cpp,
             yearly.gc,
         )
+
+        # source: Appendix F, Section 5
         pra = calculate_risk_adjustment_with_waiting_periods(
             monthly_input.bphrs,
             monthly_input.gse,
@@ -144,6 +149,12 @@ def calculate_monthly_results(
                 monthly_performance_input.de,
                 actual_efficiency,
             )
+        _validate_other_adj_not_double_counting_liquidated_damages(
+            monthly_input,
+            ald,
+            cld,
+            eld,
+        )
         adj_total = monthly_input.adj + ald + cld + eld
         mfp = calculate_monthly_fixed_payment(cpp, mcc, faa, pra)
         mp = calculate_monthly_payment(mfp, adj_total)
@@ -174,6 +185,23 @@ def calculate_monthly_results(
 
     return results
 
+
+def _validate_other_adj_not_double_counting_liquidated_damages(
+    monthly_input,
+    ald,
+    cld,
+    eld,
+):
+    calculated_ld_total = ald + cld + eld
+    if monthly_input.adj == 0 or calculated_ld_total == 0:
+        return
+
+    raise ValueError(
+        f"{monthly_input.timestamp_month} has Other_ADJ={monthly_input.adj:.2f} "
+        f"and calculated liquidated damages of {calculated_ld_total:.2f} "
+        f"(ALD={ald:.2f}, CLD={cld:.2f}, ELD={eld:.2f}). Remove any manually "
+        "entered LD from Other_ADJ or set Other_ADJ to non-LD adjustments only."
+    )
 
 def _validate_yearly_dde_matches_contract(contract, yearly):
     # Source: DDE definition plus Appendix J duration-energy degradation rate.
@@ -216,7 +244,7 @@ def get_applicable_performance_test(
     #
     # Cross-year design: same-year tests control monthly Section 3(c)
     # adjustments only after their effective month. Prior-year tests feed the
-    # separate Section 3(b) TR derivation in derive_tested_result().
+    # separate Section 3(b) TR yearly input.
     billing_period_start = _parse_month_start(timestamp_month)
     applicable_tests = [
         performance_test
@@ -233,63 +261,6 @@ def get_applicable_performance_test(
         applicable_tests,
         key=lambda performance_test: _parse_date(performance_test.test_date),
     )
-
-
-def derive_tested_result(
-    agreement_year,
-    contract_values,
-    yearly_inputs,
-    performance_tests,
-):
-    # Source: Appendix F Section 3(b). TR is the Tested Result used in the
-    # annual MCC formula. Derive it from approved prior-year test history
-    # instead of treating it as an independent yearly input.
-    #
-    # Open validation question: if PREPA issues an explicit year-start TR,
-    # that value may need to become a required input or an override with source
-    # support rather than a value inferred from Performance_Tests.csv.
-    derived_results = {}
-    for year in sorted(year for year in yearly_inputs if year <= agreement_year):
-        contract = _get_agreement_year_values(contract_values, year, "contract values")
-        if year == 1:
-            derived_results[year] = contract.design_dmax
-            continue
-
-        prior_year = year - 1
-        prior_tests = [
-            performance_test
-            for performance_test in performance_tests
-            if performance_test.agreement_year == prior_year
-            and performance_test.prepa_approved
-        ]
-        if not prior_tests:
-            derived_results[year] = derived_results.get(
-                prior_year,
-                contract.design_dmax,
-            )
-            continue
-
-        prior_contract = _get_agreement_year_values(
-            contract_values,
-            prior_year,
-            "contract values",
-        )
-        prior_yearly = _get_agreement_year_values(
-            yearly_inputs,
-            prior_year,
-            "yearly inputs",
-        )
-        last_test = max(
-            prior_tests,
-            key=lambda performance_test: _parse_date(performance_test.test_date),
-        )
-        derived_results[year] = calculate_performance_test_mcc(
-            prior_yearly.dde,
-            prior_contract.ddd,
-            last_test.tde,
-        )
-
-    return derived_results[agreement_year]
 
 
 def calculate_monthly_capability_liquidated_damages(
