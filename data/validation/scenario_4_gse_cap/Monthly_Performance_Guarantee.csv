@@ -1,1 +1,4 @@
-﻿timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
+timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
+2026-01,1,6750.00,5800.00,112.00,116.00,GSE cap month 1 efficiency input; actual efficiency=(5800+4)/6750=85.99% and above GE=85%.
+2026-02,1,6200.00,5305.00,116.00,113.00,GSE cap month 2 efficiency input; actual efficiency=(5305-3)/6200=85.52% and above GE=85%.
+2026-03,1,7050.00,6070.00,113.00,119.00,GSE cap month 3 efficiency input; actual efficiency=(6070+6)/7050=86.18% and above GE=85%.

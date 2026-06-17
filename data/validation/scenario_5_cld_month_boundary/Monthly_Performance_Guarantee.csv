@@ -1,1 +1,3 @@
 timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
+2026-01,1,6900.00,5935.00,120.00,124.00,CLD boundary January efficiency input; actual efficiency=(5935+4)/6900=86.07% and above GE=85%.
+2026-02,1,6050.00,5128.00,124.00,119.00,CLD boundary February lower-efficiency input; actual efficiency=(5128-5)/6050=84.68% and creates modest ELD.

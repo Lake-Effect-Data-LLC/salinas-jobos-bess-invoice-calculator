@@ -1,3 +1,2 @@
 timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
-2026-01,1,500.00,400.00,50.00,50.00,actual_efficiency=(400+0)/500=0.80 < GE=0.85. ELD=(500x0.85-400)xLDR.
-
+2026-01,1,6500.00,5350.00,120.00,115.00,All-LDs scenario lower-efficiency month; actual_efficiency=(5350-5)/6500=82.23% < GE=85% and creates ELD.
