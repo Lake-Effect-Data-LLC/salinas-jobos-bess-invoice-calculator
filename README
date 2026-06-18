@@ -177,6 +177,26 @@ output/<project_id>/bess_monthly_results.csv
 output/<project_id>/report.txt
 ```
 
+Streamlit App
+-------------
+
+`streamlit_app.py` provides a browser UI for the same standardized CSV inputs.
+It can select Salinas or Jobos, preview the five input files, accept drag-and-
+drop CSV inputs, validate inputs, run the calculation, and download the monthly
+results/report. When local project CSVs are present, they are used as defaults.
+Uploaded CSVs override those defaults for the current run. If local CSVs are not
+bundled with the app, such as in a Snowflake-hosted deployment, users must upload
+the required CSVs.
+
+Current Streamlit releases require `pandas<3`, while the main Python 3.14
+notebook environment uses `pandas==3.0.3`. Use a separate Python 3.13-or-earlier
+environment for Streamlit until that dependency conflict is resolved upstream.
+
+```powershell
+pip install -r requirements-streamlit.txt
+streamlit run streamlit_app.py
+```
+
 
 Report Structure Target
 -----------------------

@@ -1,1 +1,3 @@
-﻿timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
+timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
+2026-01,1,7000.00,6025.00,118.00,121.00,POHRS cap month 1 efficiency input; actual efficiency=(6025+3)/7000=86.11% and above GE=85%.
+2026-02,1,6100.00,5230.00,121.00,117.00,POHRS cap month 2 lower-efficiency input; actual efficiency=(5230-4)/6100=85.67% and above GE=85%.

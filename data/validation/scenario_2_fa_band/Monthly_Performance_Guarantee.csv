@@ -1,1 +1,2 @@
-﻿timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
+timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
+2026-01,1,6400.00,5500.00,115.00,119.00,FA-band scenario efficiency input; actual efficiency=(5500+4)/6400=86.00% and above GE=85%.
