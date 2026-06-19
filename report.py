@@ -32,7 +32,9 @@ def generate_bess_invoice_support_report(results_df, output_file, project_name=N
     lines.append(f"Generated: {datetime.now():%Y-%m-%d %H:%M:%S}")
     lines.append("")
 
-    for row in results_df.itertuples(index=False):
+    report_rows_df = results_df.sort_values("timestamp_month", ascending=False)
+
+    for row in report_rows_df.itertuples(index=False):
         lines.append("-" * 88)
         lines.append(
             f"Billing Period: {row.timestamp_month}    "

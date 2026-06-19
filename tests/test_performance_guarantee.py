@@ -715,6 +715,47 @@ class PerformanceGuaranteeTest(unittest.TestCase):
 
             self.assertIn("JOBOS BESS MONTHLY INVOICE SUPPORT REPORT", report_text)
 
+    def test_report_lists_latest_billing_period_first(self):
+        with TemporaryDirectory() as temp_dir:
+            output_file = Path(temp_dir) / "report.txt"
+            base_row = {
+                "agreement_year": 1,
+                "CPP": 25096.0,
+                "MCC": 100.0,
+                "FA": 1.0,
+                "FAA": 1.0,
+                "PRA": 1.0,
+                "MFP": 2509600.0,
+                "Other_ADJ": 0.0,
+                "ALD": 0.0,
+                "CLD": 0.0,
+                "Actual_Efficiency": 0.97,
+                "ELD": 0.0,
+                "ADJ_Total": 0.0,
+                "MP": 2509600.0,
+            }
+            results_df = pd.DataFrame(
+                [
+                    {"timestamp_month": "2026-01", **base_row},
+                    {"timestamp_month": "2026-03", **base_row},
+                    {"timestamp_month": "2026-02", **base_row},
+                ]
+            )
+
+            report_text = generate_bess_invoice_support_report(
+                results_df,
+                output_file,
+            )
+
+            self.assertLess(
+                report_text.index("Billing Period: 2026-03"),
+                report_text.index("Billing Period: 2026-02"),
+            )
+            self.assertLess(
+                report_text.index("Billing Period: 2026-02"),
+                report_text.index("Billing Period: 2026-01"),
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
