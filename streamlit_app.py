@@ -1,4 +1,5 @@
 import base64
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -272,7 +273,7 @@ def read_input_table(source):
     if not source["available"]:
         return pd.DataFrame()
     if source["uploaded_file"] is not None:
-        return pd.read_csv(source["uploaded_file"])
+        return pd.read_csv(BytesIO(source["uploaded_file"].getvalue()))
     return pd.read_csv(source["path"])
 
 
@@ -300,7 +301,6 @@ class materialized_input_paths:
                 continue
 
             staged_path = temp_path / source["filename"]
-            source["uploaded_file"].seek(0)
             staged_path.write_bytes(source["uploaded_file"].getvalue())
             paths[label] = staged_path
         return paths
