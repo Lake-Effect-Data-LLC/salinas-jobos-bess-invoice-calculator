@@ -6,6 +6,7 @@ from app.services.table_editor import (
     _normalize_monthly_inputs_df,
     _normalize_monthly_performance_guarantee_df,
     _normalize_yearly_inputs_df,
+    save_yearly_inputs_edits,
 )
 
 
@@ -134,6 +135,33 @@ class TableEditorNormalizationTest(unittest.TestCase):
         records = _normalize_monthly_performance_guarantee_df(df, require_id=True)
 
         self.assertEqual(records[0]["timestamp_month"], "2026-01-01")
+
+    def test_yearly_inputs_do_not_require_form_audit_metadata(self):
+        df = pd.DataFrame(
+            [
+                {
+                    "id": "row-1",
+                    "agreement_year": 1,
+                    "dde": 400,
+                    "tr": 100,
+                    "gc": 15,
+                    "source_reference": None,
+                    "notes": "Manual note in the table row",
+                }
+            ]
+        )
+
+        result = save_yearly_inputs_edits(
+            engine=None,
+            project_id="salinas",
+            dataset_name="actual",
+            original_df=df,
+            edited_df=df.copy(),
+            edit_reason=None,
+            source=None,
+        )
+
+        self.assertEqual(result, {"inserted": 0, "updated": 0})
 
 
 if __name__ == "__main__":

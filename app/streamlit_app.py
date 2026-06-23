@@ -52,23 +52,28 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    :root {
+        --app-sidebar-width: 16rem;
+        --app-sidebar-half-width: 8rem;
+    }
+
     [data-testid="stSidebar"] {
-        min-width: 25rem;
-        width: 25rem;
+        min-width: var(--app-sidebar-width);
+        width: var(--app-sidebar-width);
     }
 
     [data-testid="stSidebar"] > div:first-child {
-        min-width: 25rem;
-        width: 25rem;
+        min-width: var(--app-sidebar-width);
+        width: var(--app-sidebar-width);
     }
 
     .app-banner {
         position: relative;
         left: 50%;
-        width: calc(100vw - 25rem - 4rem);
+        width: calc(100vw - var(--app-sidebar-width) - 4rem);
         max-width: none;
         height: 11rem;
-        margin: -1.25rem 0 1.75rem calc(-50vw + 12.5rem + 2rem);
+        margin: -1.25rem 0 1.75rem calc(-50vw + var(--app-sidebar-half-width) + 2rem);
         overflow: hidden;
         border-radius: 0;
     }

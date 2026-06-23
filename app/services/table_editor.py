@@ -215,11 +215,15 @@ def _save_table_edits(
     insert_fn,
     update_fn,
     unknown_id_label,
+    require_edit_metadata=False,
 ):
-    if not edit_reason.strip():
-        raise ValueError("Edit reason is required before saving.")
-    if not source.strip():
-        raise ValueError("Source is required before saving.")
+    edit_reason = _optional_audit_text(edit_reason)
+    source = _optional_audit_text(source)
+    if require_edit_metadata:
+        if edit_reason is None:
+            raise ValueError("Edit reason is required before saving.")
+        if source is None:
+            raise ValueError("Source is required before saving.")
 
     original_records = normalize_fn(original_df, require_id=True)
     edited_df = _restore_existing_ids(original_df, edited_df)
@@ -591,6 +595,13 @@ def _optional_text(value):
     if _is_blank(value):
         return ""
     return str(value)
+
+
+def _optional_audit_text(value):
+    value = _cell_value(value)
+    if _is_blank(value):
+        return None
+    return str(value).strip()
 
 
 def _without_id(record):

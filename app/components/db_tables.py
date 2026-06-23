@@ -166,16 +166,6 @@ def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
         },
     )
 
-    edit_reason = st.text_input(
-        "Edit reason",
-        key=f"monthly-inputs-edit-reason-{project_id}-{dataset_name}",
-        placeholder="Example: February values updated from revised meter data",
-    )
-    source = st.text_input(
-        "Source",
-        key=f"monthly-inputs-edit-source-{project_id}-{dataset_name}",
-        placeholder="Example: PREPA monthly file, email from ..., manual correction",
-    )
     if st.button(
         "Save monthly inputs",
         type="primary",
@@ -188,8 +178,8 @@ def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=edit_reason,
-                source=source,
+                edit_reason=None,
+                source=None,
             )
         except Exception as exc:
             st.error(str(exc))
@@ -228,16 +218,6 @@ def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
         },
     )
 
-    edit_reason = st.text_input(
-        "Edit reason",
-        key=f"yearly-inputs-edit-reason-{project_id}-{dataset_name}",
-        placeholder="Example: Added agreement year 3 values from annual update",
-    )
-    source = st.text_input(
-        "Source",
-        key=f"yearly-inputs-edit-source-{project_id}-{dataset_name}",
-        placeholder="Example: Annual input file, contract source, manual correction",
-    )
     if st.button(
         "Save yearly inputs",
         type="primary",
@@ -250,8 +230,8 @@ def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=edit_reason,
-                source=source,
+                edit_reason=None,
+                source=None,
             )
         except Exception as exc:
             st.error(str(exc))
@@ -309,16 +289,6 @@ def render_performance_tests_editor(engine, project_id, dataset_name, table):
         },
     )
 
-    edit_reason = st.text_input(
-        "Edit reason",
-        key=f"performance-tests-edit-reason-{project_id}-{dataset_name}",
-        placeholder="Example: Added approved January performance test",
-    )
-    source = st.text_input(
-        "Source",
-        key=f"performance-tests-edit-source-{project_id}-{dataset_name}",
-        placeholder="Example: Performance test report, PREPA approval email",
-    )
     if st.button(
         "Save performance tests",
         type="primary",
@@ -331,8 +301,8 @@ def render_performance_tests_editor(engine, project_id, dataset_name, table):
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=edit_reason,
-                source=source,
+                edit_reason=None,
+                source=None,
             )
         except Exception as exc:
             st.error(str(exc))
@@ -377,16 +347,6 @@ def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name
         },
     )
 
-    edit_reason = st.text_input(
-        "Edit reason",
-        key=f"monthly-performance-edit-reason-{project_id}-{dataset_name}",
-        placeholder="Example: Added March metered performance values",
-    )
-    source = st.text_input(
-        "Source",
-        key=f"monthly-performance-edit-source-{project_id}-{dataset_name}",
-        placeholder="Example: Meter data file, monthly operations report",
-    )
     if st.button(
         "Save monthly performance guarantee",
         type="primary",
@@ -399,8 +359,8 @@ def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=edit_reason,
-                source=source,
+                edit_reason=None,
+                source=None,
             )
         except Exception as exc:
             st.error(str(exc))

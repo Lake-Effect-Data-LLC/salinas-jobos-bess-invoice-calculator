@@ -15,10 +15,10 @@ Status labels:
 | Status | Item | Notes |
 | --- | --- | --- |
 | Todo | Add input guidelines or descriptions to data column headers or cells for clarity | Useful for contract/data-entry fields where abbreviations are not obvious. |
-| Todo | Keep `edit reason` field only for contract values; replace source/editor fields with notes for other input types | Contract values need stricter provenance. Other input tables can use simpler notes unless audit requirements change. |
+| Done | Keep `edit reason` field only for contract values; replace source/editor fields with notes for other input types | Non-contract input editors no longer show form-level edit reason/source fields. Operators should use row-level notes for context. Contract values remain read-only for now; when made editable, they should be the only table using required edit provenance fields. |
 | Todo | Add run history display at the top of the page | Should show latest run, previous runs, and easy report/download access. |
 | Todo | Build a dashboard section at the top of the page | Should show facility, dataset/scenario, most recent run stats, and recent activity. |
-| Todo | Move the project selector to a modal/popup instead of the sidebar | Reduces sidebar clutter and frees space for dataset/run controls. |
+| Done | Make the project/dataset sidebar less large | Keep selector controls in the sidebar for now, but use a slimmer panel so the input tables have more room. Revisit modal/popup only if sidebar selection still gets in the way. |
 | Todo | Change calculation output to show only the current/most recent month | Current output is broader than the main invoice-review workflow needs. |
 | Todo | Add CSV export for calculation outputs and save to MinIO or equivalent storage | MinIO remains future artifact storage, not source-of-truth data storage. |
 | Todo | Add a separate analytics/graphs page | Keep operational invoice workflow separate from exploratory reporting. |

@@ -12,8 +12,10 @@ Runtime app behavior:
 
 - Select facility: Salinas or Jobos.
 - Select dataset/scenario from the database.
+- Use a compact sidebar for facility and dataset/scenario selection.
 - Create new datasets/scenarios.
 - Edit input tables backed by Postgres.
+- Add row-level notes directly in non-contract input tables when recording context for manual edits.
 - Run calculations from database-backed inputs.
 - Download calculation outputs/report from the run result.
 
@@ -22,6 +24,12 @@ Removed runtime compatibility behavior:
 - The `CSV / local files` vs `Database` data-source toggle.
 - Drag-and-drop CSV input upload UI in the main Streamlit runtime.
 - CSV validation/run path inside `streamlit_app.py`.
+- Form-level `Edit reason` and `Source` inputs for yearly inputs, monthly inputs, monthly performance guarantee rows, and performance tests.
+
+Contract values:
+
+- Contract values are currently displayed read-only.
+- When contract values become editable, they should retain stricter provenance fields such as required edit reason/source because they represent contract/reference data.
 
 ## Technical Details
 
@@ -31,6 +39,12 @@ Primary runtime files:
 - `app/components/db_tables.py`
 - `app/db/readers.py`
 - `app/services/table_editor.py`
+
+Audit behavior:
+
+- Non-contract input saves do not require form-level audit metadata.
+- `row_edit_history` can still store nullable `edit_reason` and `source` values for these tables.
+- Row-level `notes` remain part of the input records and are included in inserted/updated row data.
 
 CSV support remains outside the runtime app:
 
