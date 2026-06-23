@@ -1,4 +1,9 @@
 __pycache__
+.venv/
 local
 test.txt
 output
+.env
+.env.*
+!.env.example
+!.env.docker.example

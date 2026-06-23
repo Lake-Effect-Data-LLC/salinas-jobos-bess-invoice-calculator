@@ -193,8 +193,49 @@ notebook environment uses `pandas==3.0.3`. Use a separate Python 3.13-or-earlier
 environment for Streamlit until that dependency conflict is resolved upstream.
 
 ```powershell
-pip install -r requirements-streamlit.txt
-streamlit run streamlit_app.py
+pip install -r requirements.txt
+streamlit run app/streamlit_app.py
+```
+
+Local Storage Services
+----------------------
+
+`docker-compose.yml` starts local Postgres and MinIO services for moving file
+handling from whole-file uploads to object storage plus row-level database
+edits. The host ports are shifted up by one from Docker defaults to avoid
+conflicts with another local stack:
+
+| Service | Host URL/Port | Container Default |
+| --- | --- | --- |
+| Postgres | `localhost:5433` | `5432` |
+| MinIO API | `http://localhost:9001` | `9000` |
+| MinIO Console | `http://localhost:9002` | `9001` |
+
+Create a local env file and start the services:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+docker compose --env-file .env.docker up -d
+```
+
+The Postgres init script creates starter tables for email-auth users, allowed
+users, projects, dataset configs, monthly snapshots, validation results, row
+edit history, object metadata, and the five editable input tables:
+`contract_values`, `yearly_inputs`, `monthly_inputs`,
+`monthly_performance_guarantee`, and `performance_tests`. MinIO creates the
+bucket from `MINIO_BUCKET` and enables object versioning.
+
+Application settings are loaded by `app/settings.py`. Environment variables
+take precedence for local Docker runs, with `st.secrets` used as the hosted
+Streamlit fallback for database, S3/MinIO, and email authentication settings.
+
+Import the existing CSV inputs into Postgres and verify DB-backed calculations
+against CSV-backed calculations:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://bess_app:bluedesk@localhost:5433/bess_invoice"
+python tools/import_csv_to_db.py
+python tools/verify_db_roundtrip.py
 ```
 
 
