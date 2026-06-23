@@ -19,7 +19,7 @@ from app.db import (
     get_engine,
     list_dataset_configs,
 )
-from app.db_reader import (
+from app.db.readers import (
     load_bess_inputs_from_db,
     load_monthly_performance_guarantee_inputs_from_db,
     load_performance_tests_from_db,
@@ -156,7 +156,7 @@ def render_database_flow(project_id, project_name):
 
     try:
         settings = load_settings()
-        engine = get_engine(settings=settings)
+        engine = get_engine(settings.database.url)
         check_connection(engine)
         datasets = list_dataset_configs(engine, project_id)
     except Exception as exc:

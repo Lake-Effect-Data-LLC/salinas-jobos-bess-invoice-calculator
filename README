@@ -200,10 +200,11 @@ streamlit run app/streamlit_app.py
 Local Storage Services
 ----------------------
 
-`docker-compose.yml` starts local Postgres and MinIO services for moving file
-handling from whole-file uploads to object storage plus row-level database
-edits. The host ports are shifted up by one from Docker defaults to avoid
-conflicts with another local stack:
+`docker-compose.yml` starts local Postgres and MinIO services. Postgres is the
+active database-backed app dependency. MinIO is available as future supporting
+file/artifact storage, but it is not currently used by the app runtime. The host
+ports are shifted up by one from Docker defaults to avoid conflicts with another
+local stack:
 
 | Service | Host URL/Port | Container Default |
 | --- | --- | --- |
@@ -218,16 +219,17 @@ Copy-Item .env.docker.example .env.docker
 docker compose --env-file .env.docker up -d
 ```
 
-The Postgres init script creates starter tables for email-auth users, allowed
-users, projects, dataset configs, monthly snapshots, validation results, row
-edit history, object metadata, and the five editable input tables:
+The Postgres init script creates starter tables for app users, projects,
+dataset configs, monthly snapshots, validation results, row edit history,
+object metadata, and the five editable input tables:
 `contract_values`, `yearly_inputs`, `monthly_inputs`,
 `monthly_performance_guarantee`, and `performance_tests`. MinIO creates the
-bucket from `MINIO_BUCKET` and enables object versioning.
+bucket from `MINIO_BUCKET` and enables object versioning for future artifact
+storage.
 
 Application settings are loaded by `app/settings.py`. Environment variables
 take precedence for local Docker runs, with `st.secrets` used as the hosted
-Streamlit fallback for database, S3/MinIO, and email authentication settings.
+Streamlit fallback for the database URL and minimal user-attribution settings.
 
 Import the existing CSV inputs into Postgres and verify DB-backed calculations
 against CSV-backed calculations:

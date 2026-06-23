@@ -1,6 +1,4 @@
-from sqlalchemy import create_engine, text
-
-from app.settings import load_settings
+from sqlalchemy import text
 
 
 INPUT_TABLES = (
@@ -12,23 +10,6 @@ INPUT_TABLES = (
 )
 
 DATASET_NAME_PATTERN = "lowercase letters, numbers, and underscores only"
-
-
-def get_engine(database_url=None, settings=None):
-    url = database_url
-    if url is None:
-        app_settings = settings or load_settings()
-        url = app_settings.database.url
-
-    if not url:
-        raise ValueError("DATABASE_URL is required to connect to Postgres.")
-
-    return create_engine(url, future=True)
-
-
-def check_connection(engine):
-    with engine.connect() as connection:
-        connection.execute(text("SELECT 1"))
 
 
 def list_dataset_configs(engine, project_id):

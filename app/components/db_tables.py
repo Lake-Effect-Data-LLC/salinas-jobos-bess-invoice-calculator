@@ -3,7 +3,7 @@ import streamlit as st
 from sqlalchemy import text
 
 from app.db import get_dataset_config_id
-from app.db_editor import (
+from app.services.table_editor import (
     save_monthly_inputs_edits,
     save_monthly_performance_guarantee_edits,
     save_performance_tests_edits,

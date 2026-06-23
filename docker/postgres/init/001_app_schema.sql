@@ -4,24 +4,8 @@ CREATE TABLE IF NOT EXISTS app_user (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     email text NOT NULL UNIQUE,
     display_name text,
-    email_verified_at timestamptz,
     created_at timestamptz NOT NULL DEFAULT now(),
     updated_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS allowed_user (
-    email text PRIMARY KEY,
-    created_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE TABLE IF NOT EXISTS auth_email_token (
-    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id uuid NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
-    token_hash text NOT NULL UNIQUE,
-    purpose text NOT NULL CHECK (purpose IN ('login', 'verify_email', 'password_reset')),
-    expires_at timestamptz NOT NULL,
-    used_at timestamptz,
-    created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS project (
@@ -220,7 +204,6 @@ VALUES
     ('jobos', 'actual', 'Current production input dataset', true)
 ON CONFLICT (project_id, name) DO NOTHING;
 
-CREATE INDEX IF NOT EXISTS idx_auth_email_token_user_id ON auth_email_token(user_id);
 CREATE INDEX IF NOT EXISTS idx_dataset_config_project_id ON dataset_config(project_id);
 CREATE INDEX IF NOT EXISTS idx_file_object_dataset_config_id ON file_object(dataset_config_id);
 CREATE INDEX IF NOT EXISTS idx_monthly_snapshot_dataset_month ON monthly_snapshot(dataset_config_id, snapshot_month);

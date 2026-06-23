@@ -7,12 +7,13 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT_DIR))
 
 from app.db import get_engine
-from app.db_import import import_project_csvs
-from app.db_reader import (
+from app.db.import_csv import import_project_csvs
+from app.db.readers import (
     load_bess_inputs_from_db,
     load_monthly_performance_guarantee_inputs_from_db,
     load_performance_tests_from_db,
 )
+from app.settings import load_settings
 from compensation_calculator import calculate_monthly_results
 from data_reader import (
     load_bess_inputs,
@@ -28,7 +29,8 @@ PROJECTS_CSV = Path("data") / "projects.csv"
 def main():
     args = parse_args()
     projects = load_projects(PROJECTS_CSV)
-    engine = get_engine()
+    settings = load_settings()
+    engine = get_engine(settings.database.url)
 
     selected_project_ids = [args.project_id] if args.project_id else sorted(projects)
     for project_id in selected_project_ids:
