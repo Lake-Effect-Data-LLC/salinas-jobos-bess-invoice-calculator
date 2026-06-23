@@ -10,7 +10,6 @@ if str(ROOT_DIR) not in sys.path:
 
 from app.components.banner import render_banner
 from app.components.db_tables import render_database_table_views
-from app.components.inputs import materialized_input_paths, render_csv_input_section
 from app.components.results import monthly_results_to_dataframe, render_results
 from app.db import (
     check_connection,
@@ -26,21 +25,15 @@ from app.db.readers import (
 )
 from app.settings import load_settings
 from compensation_calculator import calculate_monthly_results
-from data_reader import (
-    load_bess_inputs,
-    load_monthly_performance_guarantee_inputs,
-    load_performance_tests,
-)
-from error_checks import input_validation
 from main import load_projects
 from report import generate_bess_invoice_support_report
 
 
 PROJECTS_CSV = ROOT_DIR / "data" / "projects.csv"
 BANNER_IMAGE = ROOT_DIR / "assets" / "puerto_rico_flag_banner.png"
-DATA_SOURCE_CSV = "CSV / local files"
-DATA_SOURCE_DATABASE = "Database"
 CREATE_DATASET_OPTION = "+ Create Dataset / Scenario"
+START_WITH_CONTRACT_VALUES = "Start with contract values only"
+COPY_EXISTING_DATASET = "Copy existing dataset"
 
 ROW_COUNT_LABELS = {
     "contract_values": "Contract values",
@@ -105,50 +98,7 @@ def main():
     )
     project = projects[project_id]
     project_name = project["project_name"]
-    project_data_dir = Path(project.get("data_folder", ""))
-    data_source = st.sidebar.radio(
-        "Data source",
-        options=[DATA_SOURCE_CSV, DATA_SOURCE_DATABASE],
-        index=1,
-    )
-
-    if data_source == DATA_SOURCE_DATABASE:
-        render_database_flow(project_id, project_name)
-        return
-
-    render_csv_flow(project_id, project_data_dir, project_name)
-
-
-def render_csv_flow(project_id, project_data_dir, project_name):
-    if project_data_dir:
-        st.sidebar.caption(f"Default data folder: `{project_data_dir}`")
-    st.sidebar.caption("Uploaded CSVs override local defaults for this run.")
-
-    input_sources = render_csv_input_section(project_id, project_data_dir)
-
-    st.subheader("Run")
-    validate_clicked = st.button("Validate Inputs", type="secondary")
-    run_clicked = st.button("Run Calculation", type="primary")
-
-    if validate_clicked:
-        try:
-            with materialized_input_paths(input_sources) as paths:
-                validate_inputs(paths)
-        except ValueError as exc:
-            st.error(str(exc))
-        else:
-            st.success("Input files passed validation.")
-
-    if run_clicked:
-        try:
-            with materialized_input_paths(input_sources) as paths:
-                validate_inputs(paths)
-                results_df, report_text = run_calculation(paths, project_name)
-        except ValueError as exc:
-            st.error(str(exc))
-            return
-
-        render_results(results_df, report_text)
+    render_database_flow(project_id, project_name)
 
 
 def render_database_flow(project_id, project_name):
@@ -270,10 +220,14 @@ def render_create_dataset_panel(engine, project_id, datasets, force_visible=Fals
             dataset_name = st.text_input("Name", placeholder="testing")
             start_from = st.radio(
                 "Start from",
-                options=["Blank dataset", "Copy existing dataset"],
+                options=[START_WITH_CONTRACT_VALUES, COPY_EXISTING_DATASET],
+                help=(
+                    "New scenarios start with the facility's contract values so "
+                    "the Contract values table is populated immediately."
+                ),
             )
             base_dataset_name = None
-            if start_from == "Copy existing dataset":
+            if start_from == COPY_EXISTING_DATASET:
                 if not dataset_names:
                     st.warning("No existing datasets are available to copy.")
                 else:
@@ -286,7 +240,7 @@ def render_create_dataset_panel(engine, project_id, datasets, force_visible=Fals
         if not submitted:
             return
 
-        if start_from == "Copy existing dataset" and not base_dataset_name:
+        if start_from == COPY_EXISTING_DATASET and not base_dataset_name:
             st.error("Choose a base dataset before creating a copy.")
             return
 
@@ -300,12 +254,17 @@ def render_create_dataset_panel(engine, project_id, datasets, force_visible=Fals
                 ),
                 copy_from_dataset_name=base_dataset_name,
             )
+            row_counts = get_dataset_row_counts(engine, project_id, created_name)
         except ValueError as exc:
             st.error(str(exc))
         except Exception as exc:
             st.error(f"Could not create dataset / scenario: {exc}")
         else:
-            st.success(f"Created dataset / scenario `{created_name}`.")
+            contract_value_count = row_counts.get("contract_values", 0)
+            st.success(
+                f"Created dataset / scenario `{created_name}` with "
+                f"{contract_value_count} contract value rows."
+            )
             st.session_state[f"selected-dataset-{project_id}"] = created_name
             st.rerun()
 
@@ -326,31 +285,6 @@ def load_available_projects():
             "data_folder": "data/jobos",
         },
     }
-
-
-def validate_inputs(paths):
-    input_validation(*paths.values())
-
-
-def run_calculation(paths, project_name):
-    contract_values, yearly_inputs, monthly_inputs = load_bess_inputs(
-        paths["Contract values"],
-        paths["Yearly inputs"],
-        paths["Monthly inputs"],
-    )
-    monthly_performance_guarantee_inputs = load_monthly_performance_guarantee_inputs(
-        paths["Monthly performance guarantee"]
-    )
-    performance_tests = load_performance_tests(paths["Performance tests"])
-
-    return run_calculation_from_inputs(
-        contract_values,
-        yearly_inputs,
-        monthly_inputs,
-        performance_tests,
-        monthly_performance_guarantee_inputs,
-        project_name,
-    )
 
 
 def run_calculation_from_db(engine, project_id, dataset_name, project_name):

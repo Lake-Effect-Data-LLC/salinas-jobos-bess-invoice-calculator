@@ -87,19 +87,17 @@ def create_dataset_config(
             )
             _copy_input_tables(connection, source_dataset_id, new_dataset_id)
         else:
-            actual_dataset_id = connection.execute(
-                text(
-                    """
-                    SELECT id
-                    FROM dataset_config
-                    WHERE project_id = :project_id
-                      AND name = 'actual'
-                    """
-                ),
-                {"project_id": project_id},
-            ).scalar_one_or_none()
-            if actual_dataset_id is not None:
-                _copy_contract_values(connection, actual_dataset_id, new_dataset_id)
+            contract_seed_dataset_id = _get_contract_seed_dataset_id(
+                connection,
+                project_id,
+                new_dataset_id,
+            )
+            if contract_seed_dataset_id is not None:
+                _copy_contract_values(
+                    connection,
+                    contract_seed_dataset_id,
+                    new_dataset_id,
+                )
 
     return normalized_name
 
@@ -192,6 +190,33 @@ def _copy_input_tables(connection, source_dataset_id, new_dataset_id):
             text(statement),
             {"source_dataset_id": source_dataset_id, "new_dataset_id": new_dataset_id},
         )
+
+
+def _get_contract_seed_dataset_id(connection, project_id, new_dataset_id):
+    return connection.execute(
+        text(
+            """
+            SELECT dataset.id
+            FROM dataset_config dataset
+            WHERE dataset.project_id = :project_id
+              AND dataset.id <> :new_dataset_id
+              AND EXISTS (
+                  SELECT 1
+                  FROM contract_values contract
+                  WHERE contract.dataset_config_id = dataset.id
+              )
+            ORDER BY
+                CASE
+                    WHEN dataset.name = 'actual' THEN 0
+                    WHEN dataset.is_default THEN 1
+                    ELSE 2
+                END,
+                dataset.name
+            LIMIT 1
+            """
+        ),
+        {"project_id": project_id, "new_dataset_id": new_dataset_id},
+    ).scalar_one_or_none()
 
 
 def _copy_contract_values(connection, source_dataset_id, new_dataset_id):

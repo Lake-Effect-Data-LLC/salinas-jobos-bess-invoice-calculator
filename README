@@ -180,13 +180,13 @@ output/<project_id>/report.txt
 Streamlit App
 -------------
 
-`streamlit_app.py` provides a browser UI for the same standardized CSV inputs.
-It can select Salinas or Jobos, preview the five input files, accept drag-and-
-drop CSV inputs, validate inputs, run the calculation, and download the monthly
-results/report. When local project CSVs are present, they are used as defaults.
-Uploaded CSVs override those defaults for the current run. If local CSVs are not
-bundled with the app, such as in a Snowflake-hosted deployment, users must upload
-the required CSVs.
+`streamlit_app.py` provides a browser UI for the database-backed calculator
+workspace. It can select Salinas or Jobos, choose a dataset/scenario, edit input
+tables, run the calculation, and download the monthly results/report.
+
+CSV files are no longer the active Streamlit runtime data source. Use the import
+and roundtrip tools below to seed or verify database-backed datasets from the
+standardized CSV inputs.
 
 Current Streamlit releases require `pandas<3`, while the main Python 3.14
 notebook environment uses `pandas==3.0.3`. Use a separate Python 3.13-or-earlier
