@@ -64,7 +64,7 @@ def _render_previous_runs(runs):
         for run in runs:
             summary = _summary(run)
             with st.container(border=True):
-                month_col, metrics_col = st.columns([1.6, 5])
+                month_col, metrics_col = st.columns([2.2, 5])
                 with month_col:
                     st.markdown(f"**{_month_label(run['snapshot_month'])}**")
                     _render_downloads(run, f"previous-{run['snapshot_id']}")
