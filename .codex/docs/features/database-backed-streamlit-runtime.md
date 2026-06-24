@@ -34,7 +34,7 @@ Run-history behavior:
 - Each snapshot represents the most recent calculated month from that calculation.
 - The dashboard groups runs by `snapshot_month` and shows only the latest successful run for each month.
 - Latest Run shows the most recent month prominently.
-- Previous Runs shows the prior 12 months with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
+- Previous Runs shows the prior 12 months in a scrollable card list with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
 - Dashboard downloads use CSV/report text stored in `snapshot_data`; MinIO upload/download is intentionally not wired yet.
 - CSV artifact metadata can still be represented with `file_object` rows when MinIO is added later.
 

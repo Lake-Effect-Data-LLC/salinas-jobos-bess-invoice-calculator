@@ -29,7 +29,7 @@ def render_run_history_dashboard(engine, project_id, dataset_name):
     latest_run = runs[0]
     previous_runs = runs[1:]
 
-    latest_col, previous_col = st.columns([2, 3])
+    latest_col, previous_col = st.columns([2.6, 3])
     with latest_col:
         _render_latest_run(latest_run)
     with previous_col:
@@ -60,33 +60,34 @@ def _render_previous_runs(runs):
         st.caption("No previous monthly runs.")
         return
 
-    for run in runs:
-        summary = _summary(run)
-        with st.container(border=True):
-            month_col, metrics_col = st.columns([1.25, 5])
-            with month_col:
-                st.markdown(f"**{_month_label(run['snapshot_month'])}**")
-                _render_downloads(run, f"previous-{run['snapshot_id']}")
-            with metrics_col:
-                primary_cols = st.columns(2)
-                _render_metric_block(
-                    primary_cols[0],
-                    "MP",
-                    _currency(summary.get("MP")),
-                    primary=True,
-                )
-                _render_metric_block(
-                    primary_cols[1],
-                    "MFP",
-                    _currency(summary.get("MFP")),
-                    primary=True,
-                )
+    with st.container(height=420):
+        for run in runs:
+            summary = _summary(run)
+            with st.container(border=True):
+                month_col, metrics_col = st.columns([1.6, 5])
+                with month_col:
+                    st.markdown(f"**{_month_label(run['snapshot_month'])}**")
+                    _render_downloads(run, f"previous-{run['snapshot_id']}")
+                with metrics_col:
+                    primary_cols = st.columns(2)
+                    _render_metric_block(
+                        primary_cols[0],
+                        "MP",
+                        _currency(summary.get("MP")),
+                        primary=True,
+                    )
+                    _render_metric_block(
+                        primary_cols[1],
+                        "MFP",
+                        _currency(summary.get("MFP")),
+                        primary=True,
+                    )
 
-                basis_cols = st.columns(4)
-                _render_metric_block(basis_cols[0], "CPP", _currency(summary.get("CPP")))
-                _render_metric_block(basis_cols[1], "MCC", _number(summary.get("MCC")))
-                _render_metric_block(basis_cols[2], "FAA", _percent(summary.get("FAA")))
-                _render_metric_block(basis_cols[3], "PRA", _percent(summary.get("PRA")))
+                    basis_cols = st.columns(4)
+                    _render_metric_block(basis_cols[0], "CPP", _currency(summary.get("CPP")))
+                    _render_metric_block(basis_cols[1], "MCC", _number(summary.get("MCC")))
+                    _render_metric_block(basis_cols[2], "FAA", _percent(summary.get("FAA")))
+                    _render_metric_block(basis_cols[3], "PRA", _percent(summary.get("PRA")))
 
 
 def _render_metric_block(container, label, value, primary=False):
