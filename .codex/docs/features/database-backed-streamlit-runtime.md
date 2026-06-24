@@ -17,6 +17,8 @@ Runtime app behavior:
 - Render the banner as a viewport-width breakout above the main content.
 - Create new datasets/scenarios.
 - Edit input tables backed by Postgres.
+- Show concise contract-aware tooltips on input table column headers.
+- Show collapsed `Column Guide` expanders beneath editable input tables for nearby data-entry reference.
 - Add row-level notes directly in non-contract input tables when recording context for manual edits.
 - Run calculations from database-backed inputs.
 - Persist successful calculation runs to `monthly_snapshot`.
@@ -54,6 +56,7 @@ Primary runtime files:
 
 - `app/streamlit_app.py`
 - `app/components/db_tables.py`
+- `app/components/column_tooltips.py`
 - `app/components/run_dashboard.py`
 - `app/db/readers.py`
 - `app/db/run_history.py`

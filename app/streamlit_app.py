@@ -119,7 +119,6 @@ def main():
 
 
 def render_database_flow(project_id, project_name):
-    st.subheader("Source")
 
     try:
         settings = load_settings()
@@ -175,9 +174,9 @@ def render_database_flow(project_id, project_name):
         st.error(f"Could not read dataset status: {exc}")
         return
 
-    st.caption(f"Facility: `{project_id}` - Scenario: `{dataset_name}`")
     render_run_history_dashboard(engine, project_id, dataset_name)
 
+    st.subheader("Input Tables")
     st.dataframe(
         [
             {

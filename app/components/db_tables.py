@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from sqlalchemy import text
 
+from app.components.column_tooltips import INPUT_COLUMN_TOOLTIPS
 from app.db import get_dataset_config_id
 from app.services.table_editor import (
     save_monthly_inputs_edits,
@@ -111,8 +112,6 @@ TABLE_CONFIGS = {
 
 
 def render_database_table_views(engine, project_id, dataset_name):
-    st.subheader("Input Tables")
-
     table_names = list(TABLE_CONFIGS)
     tabs = st.tabs([TABLE_CONFIGS[table_name]["label"] for table_name in table_names])
     for tab, table_name in zip(tabs, table_names):
@@ -134,7 +133,12 @@ def render_database_table_views(engine, project_id, dataset_name):
             elif table_name == "performance_tests":
                 render_performance_tests_editor(engine, project_id, dataset_name, table)
             else:
-                st.dataframe(table, use_container_width=True, hide_index=True)
+                st.dataframe(
+                    table,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config=_base_column_config(table_name),
+                )
 
 
 def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
@@ -150,21 +154,24 @@ def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
         num_rows="dynamic",
         disabled=["id"],
         key=f"monthly-inputs-editor-{project_id}-{dataset_name}",
-        column_config={
+        column_config=_with_column_tooltips("monthly_inputs", {
             "id": None,
             "timestamp_month": st.column_config.DateColumn(
                 "timestamp_month",
                 format="YYYY-MM-DD",
                 required=True,
+                help=_column_help("monthly_inputs", "timestamp_month"),
             ),
             "agreement_year": st.column_config.NumberColumn(
                 "agreement_year",
                 min_value=1,
                 step=1,
                 required=True,
+                help=_column_help("monthly_inputs", "agreement_year"),
             ),
-        },
+        }),
     )
+    _render_column_guide("monthly_inputs")
 
     if st.button(
         "Save monthly inputs",
@@ -204,19 +211,32 @@ def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
         num_rows="dynamic",
         disabled=["id"],
         key=f"yearly-inputs-editor-{project_id}-{dataset_name}",
-        column_config={
+        column_config=_with_column_tooltips("yearly_inputs", {
             "id": None,
             "agreement_year": st.column_config.NumberColumn(
                 "agreement_year",
                 min_value=1,
                 step=1,
                 required=True,
+                help=_column_help("yearly_inputs", "agreement_year"),
             ),
-            "dde": st.column_config.NumberColumn("dde", required=True),
-            "tr": st.column_config.NumberColumn("tr", required=True),
-            "gc": st.column_config.NumberColumn("gc"),
-        },
+            "dde": st.column_config.NumberColumn(
+                "dde",
+                required=True,
+                help=_column_help("yearly_inputs", "dde"),
+            ),
+            "tr": st.column_config.NumberColumn(
+                "tr",
+                required=True,
+                help=_column_help("yearly_inputs", "tr"),
+            ),
+            "gc": st.column_config.NumberColumn(
+                "gc",
+                help=_column_help("yearly_inputs", "gc"),
+            ),
+        }),
     )
+    _render_column_guide("yearly_inputs")
 
     if st.button(
         "Save yearly inputs",
@@ -256,38 +276,55 @@ def render_performance_tests_editor(engine, project_id, dataset_name, table):
         num_rows="dynamic",
         disabled=["id"],
         key=f"performance-tests-editor-{project_id}-{dataset_name}",
-        column_config={
+        column_config=_with_column_tooltips("performance_tests", {
             "id": None,
             "agreement_year": st.column_config.NumberColumn(
                 "agreement_year",
                 min_value=1,
                 step=1,
                 required=True,
+                help=_column_help("performance_tests", "agreement_year"),
             ),
             "test_date": st.column_config.DateColumn(
                 "test_date",
                 format="YYYY-MM-DD",
                 required=True,
+                help=_column_help("performance_tests", "test_date"),
             ),
             "approval_date": st.column_config.DateColumn(
                 "approval_date",
                 format="YYYY-MM-DD",
+                help=_column_help("performance_tests", "approval_date"),
             ),
             "cure_or_retest_date": st.column_config.DateColumn(
                 "cure_or_retest_date",
                 format="YYYY-MM-DD",
+                help=_column_help("performance_tests", "cure_or_retest_date"),
             ),
-            "prepa_approved": st.column_config.CheckboxColumn("prepa_approved"),
+            "prepa_approved": st.column_config.CheckboxColumn(
+                "prepa_approved",
+                help=_column_help("performance_tests", "prepa_approved"),
+            ),
             "ramp_failure_caused_outage": st.column_config.CheckboxColumn(
-                "ramp_failure_caused_outage"
+                "ramp_failure_caused_outage",
+                help=_column_help("performance_tests", "ramp_failure_caused_outage"),
             ),
-            "tde": st.column_config.NumberColumn("tde", required=True),
-            "measured_ramp_rate": st.column_config.NumberColumn("measured_ramp_rate"),
+            "tde": st.column_config.NumberColumn(
+                "tde",
+                required=True,
+                help=_column_help("performance_tests", "tde"),
+            ),
+            "measured_ramp_rate": st.column_config.NumberColumn(
+                "measured_ramp_rate",
+                help=_column_help("performance_tests", "measured_ramp_rate"),
+            ),
             "outage_equivalent_unavhrs": st.column_config.NumberColumn(
-                "outage_equivalent_unavhrs"
+                "outage_equivalent_unavhrs",
+                help=_column_help("performance_tests", "outage_equivalent_unavhrs"),
             ),
-        },
+        }),
     )
+    _render_column_guide("performance_tests")
 
     if st.button(
         "Save performance tests",
@@ -327,25 +364,44 @@ def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name
         num_rows="dynamic",
         disabled=["id"],
         key=f"monthly-performance-editor-{project_id}-{dataset_name}",
-        column_config={
+        column_config=_with_column_tooltips("monthly_performance_guarantee", {
             "id": None,
             "timestamp_month": st.column_config.DateColumn(
                 "timestamp_month",
                 format="YYYY-MM-DD",
                 required=True,
+                help=_column_help("monthly_performance_guarantee", "timestamp_month"),
             ),
             "agreement_year": st.column_config.NumberColumn(
                 "agreement_year",
                 min_value=1,
                 step=1,
                 required=True,
+                help=_column_help("monthly_performance_guarantee", "agreement_year"),
             ),
-            "ce": st.column_config.NumberColumn("ce", required=True),
-            "de": st.column_config.NumberColumn("de", required=True),
-            "ae_beg": st.column_config.NumberColumn("ae_beg", required=True),
-            "ae_end": st.column_config.NumberColumn("ae_end", required=True),
-        },
+            "ce": st.column_config.NumberColumn(
+                "ce",
+                required=True,
+                help=_column_help("monthly_performance_guarantee", "ce"),
+            ),
+            "de": st.column_config.NumberColumn(
+                "de",
+                required=True,
+                help=_column_help("monthly_performance_guarantee", "de"),
+            ),
+            "ae_beg": st.column_config.NumberColumn(
+                "ae_beg",
+                required=True,
+                help=_column_help("monthly_performance_guarantee", "ae_beg"),
+            ),
+            "ae_end": st.column_config.NumberColumn(
+                "ae_end",
+                required=True,
+                help=_column_help("monthly_performance_guarantee", "ae_end"),
+            ),
+        }),
     )
+    _render_column_guide("monthly_performance_guarantee")
 
     if st.button(
         "Save monthly performance guarantee",
@@ -370,6 +426,33 @@ def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name
                 f"{result['inserted']} inserted, {result['updated']} updated."
             )
             st.rerun()
+
+
+def _base_column_config(table_name):
+    return {
+        column_name: st.column_config.Column(column_name, help=help_text)
+        for column_name, help_text in INPUT_COLUMN_TOOLTIPS.get(table_name, {}).items()
+    }
+
+
+def _with_column_tooltips(table_name, overrides):
+    column_config = _base_column_config(table_name)
+    column_config.update(overrides)
+    return column_config
+
+
+def _column_help(table_name, column_name):
+    return INPUT_COLUMN_TOOLTIPS.get(table_name, {}).get(column_name)
+
+
+def _render_column_guide(table_name):
+    tooltips = INPUT_COLUMN_TOOLTIPS.get(table_name, {})
+    if not tooltips:
+        return
+
+    with st.expander("Column Guide", expanded=False):
+        for column_name, description in tooltips.items():
+            st.markdown(f"- `{column_name}`: {description}")
 
 
 def load_database_table(engine, project_id, dataset_name, table_name):
