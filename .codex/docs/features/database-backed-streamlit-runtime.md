@@ -12,6 +12,7 @@ Runtime app behavior:
 
 - Select facility: Salinas or Jobos.
 - Select dataset/scenario from the database.
+- Preserve the selected facility and scenario in URL query params so browser reload keeps the same selection when valid.
 - Use a compact expanded sidebar for facility and dataset/scenario selection.
 - Use a full-width main content container so dashboard/table space responds when the sidebar is collapsed.
 - Render the banner as a full-width element within the main content area.

@@ -110,11 +110,16 @@ def main():
     st.title("BESS Invoice Calculator")
 
     projects = load_available_projects()
+    project_ids = list(projects)
+    project_index = _option_index(project_ids, _query_param_value("project"), 0)
     project_id = st.sidebar.radio(
         "Facility",
-        options=list(projects),
+        options=project_ids,
+        index=project_index,
         format_func=lambda value: projects[value]["project_name"],
+        key="facility-selector",
     )
+    _set_query_param("project", project_id)
     project = projects[project_id]
     project_name = project["project_name"]
     render_database_flow(project_id, project_name)
@@ -137,10 +142,11 @@ def render_database_flow(project_id, project_name):
         render_create_dataset_toggle(engine, project_id, datasets)
         return
 
-    preferred_dataset_name = st.session_state.pop(
+    created_dataset_name = st.session_state.pop(
         f"selected-dataset-{project_id}",
         None,
     )
+    preferred_dataset_name = created_dataset_name or _query_param_value("dataset")
     default_index = next(
         (
             index
@@ -162,6 +168,7 @@ def render_database_flow(project_id, project_name):
         " Scenario",
         options=[*dataset_names, CREATE_DATASET_OPTION],
         index=default_index,
+        key=f"dataset-selector-{project_id}",
     )
 
     if selected_dataset_option == CREATE_DATASET_OPTION:
@@ -169,6 +176,7 @@ def render_database_flow(project_id, project_name):
         return
 
     dataset_name = selected_dataset_option
+    _set_query_param("dataset", dataset_name)
 
     try:
         row_counts = get_dataset_row_counts(engine, project_id, dataset_name)
@@ -248,6 +256,25 @@ def _render_saved_run_output(engine, project_id, dataset_name):
 
     render_results(saved_output["results_df"], saved_output["report_text"])
     render_analytics_summary(engine, project_id, dataset_name)
+
+
+def _query_param_value(name):
+    value = st.query_params.get(name)
+    if isinstance(value, list):
+        return value[0] if value else None
+    return value
+
+
+def _set_query_param(name, value):
+    if _query_param_value(name) == value:
+        return
+    st.query_params[name] = value
+
+
+def _option_index(options, preferred_value, fallback_index):
+    if preferred_value in options:
+        return options.index(preferred_value)
+    return fallback_index
 
 
 def render_create_dataset_toggle(engine, project_id, datasets):
