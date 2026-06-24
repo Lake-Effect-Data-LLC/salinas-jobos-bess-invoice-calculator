@@ -23,7 +23,7 @@ def render_analytics_summary(engine, project_id, dataset_name):
     if financial_df.empty and generation_df.empty:
         return
 
-    with st.expander("Analytics & Trends", expanded=False):
+    with st.expander("Analytics & Trends", expanded=True):
         financial_col, generation_col = st.columns(2)
         with financial_col:
             st.markdown("**Financial Trend**")

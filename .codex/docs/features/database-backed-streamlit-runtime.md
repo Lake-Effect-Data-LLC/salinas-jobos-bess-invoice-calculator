@@ -24,6 +24,7 @@ Runtime app behavior:
 - Persist successful calculation runs to `monthly_snapshot`.
 - Show a run-history dashboard above the input tables.
 - Refresh the Latest Run dashboard after successful calculation runs while keeping the generated output visible.
+- Show a native `Analytics & Trends` section expanded by default after successful calculation output.
 - Download calculation outputs/report from the run result.
 
 Run-history behavior:
@@ -39,6 +40,13 @@ Run-history behavior:
 - Previous Runs shows the prior 12 months in a scrollable card list with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
 - Dashboard downloads use CSV/report text stored in `snapshot_data`; MinIO upload/download is intentionally not wired yet.
 - CSV artifact metadata can still be represented with `file_object` rows when MinIO is added later.
+
+Analytics behavior:
+
+- Analytics uses the same grouped monthly run snapshots as Run History.
+- Financial Trend charts `MP` and `MFP` over recent months.
+- Generation Trend charts available operational output metrics from the summary snapshot: `MCC`, `FAA %`, and `PRA %`.
+- Charts use native Streamlit line charts.
 
 Removed runtime compatibility behavior:
 
@@ -59,6 +67,7 @@ Primary runtime files:
 - `app/streamlit_app.py`
 - `app/components/db_tables.py`
 - `app/components/column_tooltips.py`
+- `app/components/analytics.py`
 - `app/components/run_dashboard.py`
 - `app/db/readers.py`
 - `app/db/run_history.py`

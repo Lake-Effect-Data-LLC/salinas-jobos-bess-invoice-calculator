@@ -27,16 +27,66 @@ Implement a lightweight native Streamlit analytics section using existing run-hi
 
 # Feature Changes
 
-Pending implementation.
+- Added a collapsed `Analytics & Trends` expander below the successful calculation output.
+- Added two native Streamlit line charts:
+  - Financial Trend: `MP` and `MFP` over recent months.
+  - Generation Trend: `MCC`, `FAA %`, and `PRA %` over recent months.
+- Analytics pulls from `monthly_snapshot` through the existing grouped latest-run-per-month run-history helper.
 
 ---
 
 # Files Changed
 
-Pending implementation.
+- `app/components/analytics.py`
+  - Added `render_analytics_summary(...)`.
+  - Added `build_analytics_trend_frames(...)` to convert run snapshots into chart dataframes.
+  - Uses `list_latest_calculation_runs_by_month(...)` with a 12-month limit.
+
+- `app/streamlit_app.py`
+  - Renders the analytics summary below saved calculation output after a successful run.
+
+- `tests/test_analytics.py`
+  - Added tests for chronological trend frame construction, financial metrics, operational metrics, and empty rows.
+
+- `.codex/docs/features/database-backed-streamlit-runtime.md`
+  - Documented the new analytics behavior.
 
 ---
 
 # Summary And Concerns
 
-Pending implementation.
+The analytics section stays lightweight and native to Streamlit. It uses the same run-history aggregation as the dashboard:
+
+```sql
+WITH ranked_runs AS (
+    SELECT
+        snapshot.id AS snapshot_id,
+        snapshot.snapshot_month,
+        snapshot.snapshot_name,
+        snapshot.snapshot_data,
+        snapshot.created_at,
+        row_number() OVER (
+            PARTITION BY snapshot.snapshot_month
+            ORDER BY snapshot.created_at DESC, snapshot.id DESC
+        ) AS run_rank
+    FROM monthly_snapshot snapshot
+    WHERE snapshot.dataset_config_id = :dataset_config_id
+      AND snapshot.snapshot_name LIKE 'calculation_run_%'
+)
+SELECT snapshot_month, snapshot_data
+FROM ranked_runs
+WHERE run_rank = 1
+ORDER BY snapshot_month DESC
+LIMIT :limit;
+```
+
+The component reverses those newest-first rows into chronological order before rendering line charts.
+
+Verification completed:
+
+- `python -m py_compile app/components/analytics.py app/streamlit_app.py`
+- `python -m unittest tests.test_analytics`
+
+Concern:
+
+- The existing run snapshot does not contain a field literally named `Generation`. The current implementation uses the available operational output metrics `MCC`, `FAA %`, and `PRA %`. If the product needs actual MWh generation/discharge trend lines, the snapshot payload should be expanded to include that source field explicitly.
