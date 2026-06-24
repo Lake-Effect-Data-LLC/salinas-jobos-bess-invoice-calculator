@@ -60,7 +60,7 @@ def _render_previous_runs(runs):
         st.caption("No previous monthly runs.")
         return
 
-    with st.container(height=420):
+    with st.container(height=315):
         for run in runs:
             summary = _summary(run)
             with st.container(border=True):

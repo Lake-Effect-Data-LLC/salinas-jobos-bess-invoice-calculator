@@ -143,6 +143,7 @@ def render_database_table_views(engine, project_id, dataset_name):
 
 def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
     st.caption("Edit existing rows or add a new row at the bottom. Deleting rows is not enabled yet.")
+    _render_column_guide("monthly_inputs")
     editable_table = table.copy()
     if "id" in editable_table:
         editable_table["id"] = editable_table["id"].astype(str)
@@ -171,8 +172,6 @@ def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
             ),
         }),
     )
-    _render_column_guide("monthly_inputs")
-
     if st.button(
         "Save monthly inputs",
         type="primary",
@@ -200,6 +199,7 @@ def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
 
 def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
     st.caption("Edit existing rows or add a new agreement year at the bottom. Deleting rows is not enabled yet.")
+    _render_column_guide("yearly_inputs")
     editable_table = table.copy()
     if "id" in editable_table:
         editable_table["id"] = editable_table["id"].astype(str)
@@ -236,8 +236,6 @@ def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
             ),
         }),
     )
-    _render_column_guide("yearly_inputs")
-
     if st.button(
         "Save yearly inputs",
         type="primary",
@@ -265,6 +263,7 @@ def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
 
 def render_performance_tests_editor(engine, project_id, dataset_name, table):
     st.caption("Edit existing performance test events or add a new event at the bottom. Deleting rows is not enabled yet.")
+    _render_column_guide("performance_tests")
     editable_table = table.copy()
     if "id" in editable_table:
         editable_table["id"] = editable_table["id"].astype(str)
@@ -324,8 +323,6 @@ def render_performance_tests_editor(engine, project_id, dataset_name, table):
             ),
         }),
     )
-    _render_column_guide("performance_tests")
-
     if st.button(
         "Save performance tests",
         type="primary",
@@ -353,6 +350,7 @@ def render_performance_tests_editor(engine, project_id, dataset_name, table):
 
 def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name, table):
     st.caption("Edit existing monthly performance guarantee rows or add a new month at the bottom. Deleting rows is not enabled yet.")
+    _render_column_guide("monthly_performance_guarantee")
     editable_table = table.copy()
     if "id" in editable_table:
         editable_table["id"] = editable_table["id"].astype(str)
@@ -401,8 +399,6 @@ def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name
             ),
         }),
     )
-    _render_column_guide("monthly_performance_guarantee")
-
     if st.button(
         "Save monthly performance guarantee",
         type="primary",
