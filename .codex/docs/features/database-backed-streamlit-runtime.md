@@ -14,7 +14,7 @@ Runtime app behavior:
 - Select dataset/scenario from the database.
 - Use a compact expanded sidebar for facility and dataset/scenario selection.
 - Use a full-width main content container so dashboard/table space responds when the sidebar is collapsed.
-- Render the banner as a viewport-width breakout above the main content.
+- Render the banner as a full-width element within the main content area.
 - Create new datasets/scenarios.
 - Edit input tables backed by Postgres.
 - Show concise contract-aware tooltips on input table column headers.
@@ -23,6 +23,7 @@ Runtime app behavior:
 - Run calculations from database-backed inputs.
 - Persist successful calculation runs to `monthly_snapshot`.
 - Show a run-history dashboard above the input tables.
+- Refresh the Latest Run dashboard after successful calculation runs while keeping the generated output visible.
 - Download calculation outputs/report from the run result.
 
 Run-history behavior:
@@ -31,6 +32,7 @@ Run-history behavior:
 - Run snapshots are children of `dataset_config`; they record that a specific dataset/scenario was calculated at a specific time.
 - Run snapshots are not separate datasets.
 - Each successful calculation creates a new `monthly_snapshot` row.
+- After a successful run is saved, the app reruns so Latest Run reloads from the database.
 - Each snapshot represents the most recent calculated month from that calculation.
 - The dashboard groups runs by `snapshot_month` and shows only the latest successful run for each month.
 - Latest Run shows the most recent month prominently.

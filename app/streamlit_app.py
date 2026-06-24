@@ -9,6 +9,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 from app.components.banner import render_banner
+from app.components.analytics import render_analytics_summary
 from app.components.db_tables import render_database_table_views
 from app.components.results import (
     build_run_snapshot_data,
@@ -38,6 +39,7 @@ from report import generate_bess_invoice_support_report
 PROJECTS_CSV = ROOT_DIR / "data" / "projects.csv"
 BANNER_IMAGE = ROOT_DIR / "assets" / "puerto_rico_flag_banner.png"
 CREATE_DATASET_OPTION = "+ Create Scenario"
+LAST_RUN_OUTPUT_KEY = "last-run-output"
 START_WITH_CONTRACT_VALUES = "Start with contract values only"
 COPY_EXISTING_DATASET = "Copy existing dataset"
 
@@ -73,6 +75,7 @@ st.markdown(
     }
 
     [data-testid="stMainBlockContainer"] {
+        box-sizing: border-box;
         max-width: none;
         width: 100%;
         padding-left: 2rem;
@@ -81,11 +84,10 @@ st.markdown(
 
     .app-banner {
         position: relative;
-        left: 50%;
-        width: 100vw;
+        width: calc(100% + 2rem);
         max-width: none;
         height: 8.25rem;
-        margin: -3rem 0 1.75rem -50vw;
+        margin: -3rem -1rem 1.75rem -1rem;
         overflow: hidden;
         border-radius: 0;
     }
@@ -197,6 +199,7 @@ def render_database_flow(project_id, project_name):
     st.subheader("Run")
     run_clicked = st.button("Run Calculation", type="primary")
     if not run_clicked:
+        _render_saved_run_output(engine, project_id, dataset_name)
         return
 
     try:
@@ -214,6 +217,7 @@ def render_database_flow(project_id, project_name):
             snapshot_month=snapshot_data["latest_month_summary"]["timestamp_month"],
             snapshot_data=snapshot_data,
         )
+        _save_run_output(project_id, dataset_name, results_df, report_text)
     except ValueError as exc:
         st.error(str(exc))
         return
@@ -221,7 +225,29 @@ def render_database_flow(project_id, project_name):
         st.error(f"Database calculation failed: {exc}")
         return
 
-    render_results(results_df, report_text)
+    st.rerun()
+
+
+def _save_run_output(project_id, dataset_name, results_df, report_text):
+    st.session_state[LAST_RUN_OUTPUT_KEY] = {
+        "project_id": project_id,
+        "dataset_name": dataset_name,
+        "results_df": results_df,
+        "report_text": report_text,
+    }
+
+
+def _render_saved_run_output(engine, project_id, dataset_name):
+    saved_output = st.session_state.get(LAST_RUN_OUTPUT_KEY)
+    if not saved_output:
+        return
+    if saved_output["project_id"] != project_id:
+        return
+    if saved_output["dataset_name"] != dataset_name:
+        return
+
+    render_results(saved_output["results_df"], saved_output["report_text"])
+    render_analytics_summary(engine, project_id, dataset_name)
 
 
 def render_create_dataset_toggle(engine, project_id, datasets):
