@@ -51,7 +51,7 @@ def create_dataset_config(
         ).scalar_one_or_none()
         if existing is not None:
             raise ValueError(
-                f"Dataset / Scenario '{normalized_name}' already exists for this facility."
+                f"Scenario '{normalized_name}' already exists for this facility."
             )
 
         new_dataset_id = connection.execute(
@@ -124,9 +124,9 @@ def get_dataset_row_counts(engine, project_id, dataset_name="actual"):
 def _normalize_dataset_name(dataset_name):
     normalized_name = dataset_name.strip().lower()
     if not normalized_name:
-        raise ValueError("Dataset / Scenario name is required.")
+        raise ValueError("Scenario name is required.")
     if " " in normalized_name or not normalized_name.replace("_", "").isalnum():
-        raise ValueError(f"Dataset / Scenario name must use {DATASET_NAME_PATTERN}.")
+        raise ValueError(f"Scenario name must use {DATASET_NAME_PATTERN}.")
     return normalized_name
 
 

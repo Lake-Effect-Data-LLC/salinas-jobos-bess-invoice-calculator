@@ -10,13 +10,19 @@ if str(ROOT_DIR) not in sys.path:
 
 from app.components.banner import render_banner
 from app.components.db_tables import render_database_table_views
-from app.components.results import monthly_results_to_dataframe, render_results
+from app.components.results import (
+    build_run_snapshot_data,
+    monthly_results_to_dataframe,
+    render_results,
+)
+from app.components.run_dashboard import render_run_history_dashboard
 from app.db import (
     check_connection,
     create_dataset_config,
     get_dataset_row_counts,
     get_engine,
     list_dataset_configs,
+    record_calculation_run,
 )
 from app.db.readers import (
     load_bess_inputs_from_db,
@@ -31,7 +37,7 @@ from report import generate_bess_invoice_support_report
 
 PROJECTS_CSV = ROOT_DIR / "data" / "projects.csv"
 BANNER_IMAGE = ROOT_DIR / "assets" / "puerto_rico_flag_banner.png"
-CREATE_DATASET_OPTION = "+ Create Dataset / Scenario"
+CREATE_DATASET_OPTION = "+ Create Scenario"
 START_WITH_CONTRACT_VALUES = "Start with contract values only"
 COPY_EXISTING_DATASET = "Copy existing dataset"
 
@@ -54,26 +60,32 @@ st.markdown(
     <style>
     :root {
         --app-sidebar-width: 16rem;
-        --app-sidebar-half-width: 8rem;
     }
 
-    [data-testid="stSidebar"] {
+    [data-testid="stSidebar"][aria-expanded="true"] {
         min-width: var(--app-sidebar-width);
         width: var(--app-sidebar-width);
     }
 
-    [data-testid="stSidebar"] > div:first-child {
+    [data-testid="stSidebar"][aria-expanded="true"] > div:first-child {
         min-width: var(--app-sidebar-width);
         width: var(--app-sidebar-width);
+    }
+
+    [data-testid="stMainBlockContainer"] {
+        max-width: none;
+        width: 100%;
+        padding-left: 2rem;
+        padding-right: 2rem;
     }
 
     .app-banner {
         position: relative;
         left: 50%;
-        width: calc(100vw - var(--app-sidebar-width) - 4rem);
+        width: 100vw;
         max-width: none;
-        height: 11rem;
-        margin: -1.25rem 0 1.75rem calc(-50vw + var(--app-sidebar-half-width) + 2rem);
+        height: 8.25rem;
+        margin: -3rem 0 1.75rem -50vw;
         overflow: hidden;
         border-radius: 0;
     }
@@ -82,7 +94,7 @@ st.markdown(
         width: 100%;
         height: 100%;
         object-fit: cover;
-        object-position: center 44%;
+        object-position: center 68%;
         display: block;
     }
     </style>
@@ -107,7 +119,7 @@ def main():
 
 
 def render_database_flow(project_id, project_name):
-    st.subheader("Database Source")
+    st.subheader("Source")
 
     try:
         settings = load_settings()
@@ -138,15 +150,15 @@ def render_database_flow(project_id, project_name):
     )
     if default_index is None:
         default_index = next(
-        (
-            index
-            for index, dataset in enumerate(datasets)
-            if dataset.get("is_default")
-        ),
-        0,
-    )
+            (
+                index
+                for index, dataset in enumerate(datasets)
+                if dataset.get("is_default")
+            ),
+            0,
+        )
     selected_dataset_option = st.sidebar.selectbox(
-        "Dataset / Scenario",
+        " Scenario",
         options=[*dataset_names, CREATE_DATASET_OPTION],
         index=default_index,
     )
@@ -163,7 +175,9 @@ def render_database_flow(project_id, project_name):
         st.error(f"Could not read dataset status: {exc}")
         return
 
-    st.caption(f"Facility: `{project_id}` · Dataset / Scenario: `{dataset_name}`")
+    st.caption(f"Facility: `{project_id}` - Scenario: `{dataset_name}`")
+    render_run_history_dashboard(engine, project_id, dataset_name)
+
     st.dataframe(
         [
             {
@@ -193,6 +207,14 @@ def render_database_flow(project_id, project_name):
             dataset_name,
             project_name,
         )
+        snapshot_data = build_run_snapshot_data(results_df, report_text)
+        record_calculation_run(
+            engine=engine,
+            project_id=project_id,
+            dataset_name=dataset_name,
+            snapshot_month=snapshot_data["latest_month_summary"]["timestamp_month"],
+            snapshot_data=snapshot_data,
+        )
     except ValueError as exc:
         st.error(str(exc))
         return
@@ -204,7 +226,10 @@ def render_database_flow(project_id, project_name):
 
 
 def render_create_dataset_toggle(engine, project_id, datasets):
-    if st.sidebar.button("+ Create Dataset / Scenario", key=f"show-create-dataset-{project_id}"):
+    if st.sidebar.button(
+        "+ Create Scenario",
+        key=f"show-create-dataset-{project_id}",
+    ):
         st.session_state[f"create-dataset-visible-{project_id}"] = True
     render_create_dataset_panel(engine, project_id, datasets)
 
@@ -216,7 +241,7 @@ def render_create_dataset_panel(engine, project_id, datasets, force_visible=Fals
 
     dataset_names = [dataset["name"] for dataset in datasets]
     with st.sidebar.container(border=True):
-        st.markdown("**Create Dataset / Scenario**")
+        st.markdown("**Create Scenario**")
         st.caption(
             "A dataset is a named version of a facility's inputs, such as "
             "`actual`, `testing`, or `scenario_1`."
@@ -263,11 +288,11 @@ def render_create_dataset_panel(engine, project_id, datasets, force_visible=Fals
         except ValueError as exc:
             st.error(str(exc))
         except Exception as exc:
-            st.error(f"Could not create dataset / scenario: {exc}")
+            st.error(f"Could not create scenario: {exc}")
         else:
             contract_value_count = row_counts.get("contract_values", 0)
             st.success(
-                f"Created dataset / scenario `{created_name}` with "
+                f"Created scenario `{created_name}` with "
                 f"{contract_value_count} contract value rows."
             )
             st.session_state[f"selected-dataset-{project_id}"] = created_name

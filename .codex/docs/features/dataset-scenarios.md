@@ -1,12 +1,32 @@
-# Dataset / Scenario Creation
+# Scenario Creation
 
 ## Overview
 
 Database-backed runs are organized by facility and dataset:
 
 - Facility maps to `project`, such as `salinas` or `jobos`.
-- Dataset / Scenario maps to `dataset_config`, such as `actual`, `testing`, or `scenario_1`.
+- Scenario maps to `dataset_config`, such as `actual`, `testing`, or `scenario_1`.
 - Input rows belong to a dataset through `dataset_config_id`.
+
+Working structure:
+
+```text
+project
+  -> dataset_config
+    -> input rows
+    -> run snapshots
+      -> output file metadata
+```
+
+Meaning:
+
+- `project` is the facility.
+- `dataset_config` is the named input version/scenario for that facility.
+- The five input tables are scoped to `dataset_config`.
+- A run snapshot is a record that a specific `dataset_config` was calculated at a specific time.
+- Output file metadata is stored separately and can be linked to the run snapshot.
+
+Run snapshots should not be treated as datasets. They are children of a dataset/scenario.
 
 ## Feature Behavior
 
@@ -37,6 +57,16 @@ Primary code:
 
 - `app/streamlit_app.py`
   - `render_create_dataset_panel()`
+
+Run-history model:
+
+- `monthly_snapshot.dataset_config_id` links a calculation run snapshot to the dataset/scenario that produced it.
+- `monthly_snapshot.snapshot_month` identifies the most recent or representative calculation month for that run and is stored as the first day of the month.
+- `monthly_snapshot.snapshot_name` should be unique per run, such as a timestamped `calculation_run_...` name.
+- `monthly_snapshot.snapshot_data` stores the run summary payload.
+- Current no-MinIO dashboard snapshots store `latest_month_summary`, `csv_text`, and `report_text` in `snapshot_data`.
+- `monthly_snapshot.source_file_object_id` can link the run to downloadable output metadata in `file_object`.
+- `file_object.dataset_config_id` links output file metadata back to the dataset/scenario.
 
 Contract-value seed selection:
 

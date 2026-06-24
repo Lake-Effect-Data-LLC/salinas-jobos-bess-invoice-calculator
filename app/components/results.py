@@ -26,6 +26,19 @@ def render_results(results_df, report_text):
         )
 
 
+def build_run_snapshot_data(results_df, report_text):
+    if results_df.empty:
+        raise ValueError("Cannot create a run snapshot from empty calculation results.")
+
+    sorted_results = results_df.sort_values("timestamp_month")
+    latest_row = sorted_results.iloc[-1].to_dict()
+    return {
+        "latest_month_summary": _json_ready_record(latest_row),
+        "csv_text": results_df.to_csv(index=False),
+        "report_text": report_text,
+    }
+
+
 def monthly_results_to_dataframe(monthly_results):
     rows = []
     for result in monthly_results:
@@ -49,3 +62,18 @@ def monthly_results_to_dataframe(monthly_results):
             }
         )
     return pd.DataFrame(rows, columns=BESS_MONTHLY_RESULT_COLUMNS)
+
+
+def _json_ready_record(record):
+    return {
+        key: _json_ready_value(value)
+        for key, value in record.items()
+    }
+
+
+def _json_ready_value(value):
+    if pd.isna(value):
+        return None
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return value

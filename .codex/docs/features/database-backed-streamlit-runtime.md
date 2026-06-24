@@ -12,12 +12,29 @@ Runtime app behavior:
 
 - Select facility: Salinas or Jobos.
 - Select dataset/scenario from the database.
-- Use a compact sidebar for facility and dataset/scenario selection.
+- Use a compact expanded sidebar for facility and dataset/scenario selection.
+- Use a full-width main content container so dashboard/table space responds when the sidebar is collapsed.
+- Render the banner as a viewport-width breakout above the main content.
 - Create new datasets/scenarios.
 - Edit input tables backed by Postgres.
 - Add row-level notes directly in non-contract input tables when recording context for manual edits.
 - Run calculations from database-backed inputs.
+- Persist successful calculation runs to `monthly_snapshot`.
+- Show a run-history dashboard above the input tables.
 - Download calculation outputs/report from the run result.
+
+Run-history behavior:
+
+- Calculation run summaries are represented with `monthly_snapshot` rows.
+- Run snapshots are children of `dataset_config`; they record that a specific dataset/scenario was calculated at a specific time.
+- Run snapshots are not separate datasets.
+- Each successful calculation creates a new `monthly_snapshot` row.
+- Each snapshot represents the most recent calculated month from that calculation.
+- The dashboard groups runs by `snapshot_month` and shows only the latest successful run for each month.
+- Latest Run shows the most recent month prominently.
+- Previous Runs shows the prior 12 months with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
+- Dashboard downloads use CSV/report text stored in `snapshot_data`; MinIO upload/download is intentionally not wired yet.
+- CSV artifact metadata can still be represented with `file_object` rows when MinIO is added later.
 
 Removed runtime compatibility behavior:
 
@@ -37,7 +54,9 @@ Primary runtime files:
 
 - `app/streamlit_app.py`
 - `app/components/db_tables.py`
+- `app/components/run_dashboard.py`
 - `app/db/readers.py`
+- `app/db/run_history.py`
 - `app/services/table_editor.py`
 
 Audit behavior:
