@@ -29,7 +29,7 @@ def render_run_history_dashboard(engine, project_id, dataset_name):
     latest_run = runs[0]
     previous_runs = runs[1:]
 
-    latest_col, previous_col = st.columns([2.6, 3])
+    latest_col, previous_col = st.columns([3, 2.4])
     with latest_col:
         _render_latest_run(latest_run)
     with previous_col:
@@ -67,7 +67,11 @@ def _render_previous_runs(runs):
                 month_col, metrics_col = st.columns([1.6, 5])
                 with month_col:
                     st.markdown(f"**{_month_label(run['snapshot_month'])}**")
-                    _render_downloads(run, f"previous-{run['snapshot_id']}")
+                    _render_downloads(
+                        run,
+                        f"previous-{run['snapshot_id']}",
+                        report_label="TXT",
+                    )
                 with metrics_col:
                     primary_cols = st.columns(2)
                     _render_metric_block(
@@ -110,7 +114,7 @@ def _render_metric_block(container, label, value, primary=False):
     )
 
 
-def _render_downloads(run, key_prefix):
+def _render_downloads(run, key_prefix, csv_label="CSV", report_label="Report"):
     snapshot_data = run.get("snapshot_data") or {}
     csv_text = snapshot_data.get("csv_text")
     report_text = snapshot_data.get("report_text")
@@ -119,7 +123,7 @@ def _render_downloads(run, key_prefix):
     with col1:
         if csv_text:
             st.download_button(
-                "CSV",
+                csv_label,
                 data=csv_text.encode("utf-8"),
                 file_name=f"bess_results_{month}.csv",
                 mime="text/csv",
@@ -128,7 +132,7 @@ def _render_downloads(run, key_prefix):
     with col2:
         if report_text:
             st.download_button(
-                "Report",
+                report_label,
                 data=report_text.encode("utf-8"),
                 file_name=f"bess_report_{month}.txt",
                 mime="text/plain",
