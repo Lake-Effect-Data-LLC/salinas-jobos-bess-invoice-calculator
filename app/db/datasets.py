@@ -121,6 +121,47 @@ def get_dataset_row_counts(engine, project_id, dataset_name="actual"):
     return counts
 
 
+def delete_dataset_config(engine, project_id, dataset_name):
+    with engine.begin() as connection:
+        dataset_config_id = get_dataset_config_id(connection, project_id, dataset_name)
+        connection.execute(
+            text(
+                """
+                DELETE FROM file_object
+                WHERE dataset_config_id = :dataset_config_id
+                """
+            ),
+            {"dataset_config_id": dataset_config_id},
+        )
+        connection.execute(
+            text(
+                """
+                DELETE FROM dataset_config
+                WHERE id = :dataset_config_id
+                  AND project_id = :project_id
+                """
+            ),
+            {
+                "dataset_config_id": dataset_config_id,
+                "project_id": project_id,
+            },
+        )
+        next_dataset_name = connection.execute(
+            text(
+                """
+                SELECT name
+                FROM dataset_config
+                WHERE project_id = :project_id
+                ORDER BY is_default DESC, name
+                LIMIT 1
+                """
+            ),
+            {"project_id": project_id},
+        ).scalar_one_or_none()
+
+    return next_dataset_name
+
+
 def _normalize_dataset_name(dataset_name):
     normalized_name = dataset_name.strip().lower()
     if not normalized_name:

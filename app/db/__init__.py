@@ -1,6 +1,7 @@
 from app.db.connection import check_connection, get_engine
 from app.db.datasets import (
     create_dataset_config,
+    delete_dataset_config,
     ensure_project_and_dataset,
     get_dataset_config_id,
     get_dataset_row_counts,
@@ -22,6 +23,7 @@ __all__ = [
     "create_calculation_snapshot",
     "create_dataset_config",
     "create_csv_export_file_object",
+    "delete_dataset_config",
     "ensure_project_and_dataset",
     "generate_calculation_snapshot_name",
     "get_dataset_config_id",

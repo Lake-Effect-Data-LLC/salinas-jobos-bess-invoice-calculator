@@ -32,6 +32,8 @@ Run snapshots should not be treated as datasets. They are children of a dataset/
 
 Users can create a new dataset/scenario from the Streamlit sidebar while using the database data source.
 
+Users can also delete a selected dataset/scenario from the Streamlit sidebar. Deletion is destructive and requires confirmation in a native Streamlit dialog.
+
 Creation modes:
 
 - **Start with contract values only**
@@ -45,18 +47,30 @@ Creation modes:
 
 After creation, the app selects the new dataset and reruns so the user can immediately see the seeded data in the input tables.
 
+After deletion, the app selects the default or first available remaining scenario for the same facility and reruns. If no scenarios remain, the app clears the selected scenario and returns to the no-datasets state.
+
 ## Technical Details
 
 Primary code:
 
 - `app/db/datasets.py`
   - `create_dataset_config()`
+  - `delete_dataset_config()`
   - `_get_contract_seed_dataset_id()`
   - `_copy_contract_values()`
   - `_copy_input_tables()`
 
 - `app/streamlit_app.py`
   - `render_create_dataset_panel()`
+  - `render_delete_scenario_dialog()`
+
+Delete behavior:
+
+1. Delete `file_object` rows for the selected `dataset_config_id`.
+2. Delete the `dataset_config` row for the selected facility and scenario.
+3. Let `ON DELETE CASCADE` remove child input rows, run snapshots, row edit history, and validation rows.
+
+`file_object` is explicitly deleted first because its foreign key to `dataset_config` is `ON DELETE SET NULL`; without the explicit delete, file metadata would remain detached from the deleted scenario.
 
 Run-history model:
 
@@ -87,3 +101,4 @@ Covered cases:
 
 - New dataset copies contract values from `actual`.
 - New dataset can fall back to another dataset with contract values when `actual` has none.
+- Deleting a dataset removes scenario-owned file metadata and cascades child scenario rows.

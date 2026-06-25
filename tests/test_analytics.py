@@ -1,6 +1,10 @@
 import unittest
 
-from app.components.analytics import build_analytics_trend_frames
+from app.components.analytics import (
+    build_analytics_trend_frames,
+    build_summary_delta_text,
+    build_summary_comparison_frame,
+)
 
 
 class AnalyticsTrendFrameTest(unittest.TestCase):
@@ -58,6 +62,90 @@ class AnalyticsTrendFrameTest(unittest.TestCase):
 
         self.assertTrue(financial_df.empty)
         self.assertTrue(generation_df.empty)
+
+    def test_summary_comparison_excludes_latest_from_average(self):
+        runs = [
+            {
+                "snapshot_month": "2026-03-01",
+                "snapshot_data": {"latest_month_summary": {"MP": 300}},
+            },
+            {
+                "snapshot_month": "2026-02-01",
+                "snapshot_data": {"latest_month_summary": {"MP": 100}},
+            },
+            {
+                "snapshot_month": "2026-01-01",
+                "snapshot_data": {"latest_month_summary": {"MP": 200}},
+            },
+        ]
+
+        comparison_df = build_summary_comparison_frame(runs, "MP")
+
+        self.assertEqual(
+            list(comparison_df["Comparison"]),
+            ["Latest Run", "Previous Runs Average"],
+        )
+        self.assertEqual(comparison_df.loc[0, "Value"], 300.0)
+        self.assertEqual(comparison_df.loc[1, "Value"], 150.0)
+
+    def test_summary_comparison_normalizes_percent_metrics(self):
+        runs = [
+            {
+                "snapshot_month": "2026-03-01",
+                "snapshot_data": {"latest_month_summary": {"FAA": 0.95}},
+            },
+            {
+                "snapshot_month": "2026-02-01",
+                "snapshot_data": {"latest_month_summary": {"FAA": 0.85}},
+            },
+        ]
+
+        comparison_df = build_summary_comparison_frame(runs, "FAA %")
+
+        self.assertEqual(comparison_df.loc[0, "Value"], 95.0)
+        self.assertEqual(comparison_df.loc[1, "Value"], 85.0)
+
+    def test_summary_delta_text_describes_currency_difference(self):
+        runs = [
+            {
+                "snapshot_month": "2026-03-01",
+                "snapshot_data": {"latest_month_summary": {"MP": 300}},
+            },
+            {
+                "snapshot_month": "2026-02-01",
+                "snapshot_data": {"latest_month_summary": {"MP": 100}},
+            },
+            {
+                "snapshot_month": "2026-01-01",
+                "snapshot_data": {"latest_month_summary": {"MP": 200}},
+            },
+        ]
+
+        comparison_df = build_summary_comparison_frame(runs, "MP")
+
+        self.assertEqual(
+            build_summary_delta_text(comparison_df, "MP"),
+            "Latest is $150 higher than previous runs average (+100.0%).",
+        )
+
+    def test_summary_delta_text_describes_percent_difference(self):
+        runs = [
+            {
+                "snapshot_month": "2026-03-01",
+                "snapshot_data": {"latest_month_summary": {"FAA": 0.80}},
+            },
+            {
+                "snapshot_month": "2026-02-01",
+                "snapshot_data": {"latest_month_summary": {"FAA": 0.90}},
+            },
+        ]
+
+        comparison_df = build_summary_comparison_frame(runs, "FAA %")
+
+        self.assertEqual(
+            build_summary_delta_text(comparison_df, "FAA %"),
+            "Latest is 10.00 percentage points lower than previous runs average (-11.1%).",
+        )
 
 
 if __name__ == "__main__":

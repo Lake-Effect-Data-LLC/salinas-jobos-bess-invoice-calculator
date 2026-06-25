@@ -20,6 +20,7 @@ from app.components.run_dashboard import render_run_history_dashboard
 from app.db import (
     check_connection,
     create_dataset_config,
+    delete_dataset_config,
     get_dataset_row_counts,
     get_engine,
     list_dataset_configs,
@@ -99,6 +100,33 @@ st.markdown(
         object-position: center 68%;
         display: block;
     }
+
+    .project-heading {
+        color: #00CC00;
+    }
+
+    @media (max-width: 900px) {
+        [data-testid="stMainBlockContainer"] {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+
+        .app-banner {
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        [data-testid="stHorizontalBlock"] {
+            flex-direction: column;
+        }
+
+        [data-testid="stHorizontalBlock"] > div {
+            width: 100% !important;
+            min-width: 100% !important;
+            flex: 1 1 100% !important;
+        }
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -106,8 +134,25 @@ st.markdown(
 
 
 def main():
+
+    st.html("""
+        <style>
+            header.stAppHeader::before {
+                content: "Invoice Calculator";
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+                top: 8px;
+                font-weight: bold;
+                color: var(--text-color);
+                font-size: 35px;
+                z-index: 999999;
+                pointer-events: none;
+            }
+        </style>
+    """)
+
     render_banner(BANNER_IMAGE)
-    st.title("BESS Invoice Calculator")
 
     projects = load_available_projects()
     project_ids = list(projects)
@@ -123,6 +168,7 @@ def main():
     project = projects[project_id]
     project_name = project["project_name"]
     render_database_flow(project_id, project_name)
+    
 
 
 def render_database_flow(project_id, project_name):
@@ -170,13 +216,30 @@ def render_database_flow(project_id, project_name):
         index=default_index,
         key=f"dataset-selector-{project_id}",
     )
-
     if selected_dataset_option == CREATE_DATASET_OPTION:
         render_create_dataset_panel(engine, project_id, datasets, force_visible=True)
         return
 
     dataset_name = selected_dataset_option
+    override_mode = st.sidebar.toggle(
+        "Override Mode",
+        value=False,
+        help=(
+            "Unlock existing rows for audited edits/deletes. "
+            "Leave this off for normal new-row entry."
+        ),
+        key=f"override-mode-{project_id}-{dataset_name}",
+    )
+    st.sidebar.divider()
+    if st.sidebar.button(
+        "Delete Current Scenario",
+        type="primary",
+        key=f"delete-scenario-button-{project_id}-{dataset_name}",
+    ):
+        render_delete_scenario_dialog(engine, project_id, dataset_name)
+
     _set_query_param("dataset", dataset_name)
+    st.markdown(f'<h1 class="project-heading">{project_name}</h1>', unsafe_allow_html=True)
 
     try:
         row_counts = get_dataset_row_counts(engine, project_id, dataset_name)
@@ -202,7 +265,7 @@ def render_database_flow(project_id, project_name):
     if any(row_count == 0 for row_count in row_counts.values()):
         st.warning("One or more input tables are empty for this dataset.")
 
-    render_database_table_views(engine, project_id, dataset_name)
+    render_database_table_views(engine, project_id, dataset_name, override_mode)
 
     st.subheader("Run")
     run_clicked = st.button("Run Calculation", type="primary")
@@ -348,6 +411,48 @@ def render_create_dataset_panel(engine, project_id, datasets, force_visible=Fals
                 f"{contract_value_count} contract value rows."
             )
             st.session_state[f"selected-dataset-{project_id}"] = created_name
+            st.rerun()
+
+
+@st.dialog("Delete Scenario")
+def render_delete_scenario_dialog(engine, project_id, dataset_name):
+    st.warning(
+        "Are you sure? This will permanently delete the entire scenario and all "
+        "of its associated inputs and past runs from the database."
+    )
+    st.caption(f"Scenario: `{dataset_name}`")
+
+    confirm_col, cancel_col = st.columns(2)
+    with confirm_col:
+        if st.button(
+            "Delete permanently",
+            type="primary",
+            key=f"confirm-delete-scenario-{project_id}-{dataset_name}",
+        ):
+            try:
+                next_dataset_name = delete_dataset_config(
+                    engine,
+                    project_id,
+                    dataset_name,
+                )
+            except Exception as exc:
+                st.error(f"Could not delete scenario: {exc}")
+                return
+
+            if next_dataset_name:
+                st.session_state[f"selected-dataset-{project_id}"] = next_dataset_name
+                st.query_params["dataset"] = next_dataset_name
+            else:
+                st.session_state.pop(f"selected-dataset-{project_id}", None)
+                if "dataset" in st.query_params:
+                    del st.query_params["dataset"]
+            st.rerun()
+
+    with cancel_col:
+        if st.button(
+            "Cancel",
+            key=f"cancel-delete-scenario-{project_id}-{dataset_name}",
+        ):
             st.rerun()
 
 

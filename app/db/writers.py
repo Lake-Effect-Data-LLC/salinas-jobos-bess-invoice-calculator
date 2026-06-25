@@ -55,6 +55,10 @@ def _update_monthly_performance_guarantee(connection, record):
     )
 
 
+def _delete_monthly_performance_guarantee(connection, row_id):
+    _delete_row(connection, "monthly_performance_guarantee", row_id)
+
+
 def _insert_performance_test(connection, dataset_config_id, record):
     return connection.execute(
         text(
@@ -139,6 +143,10 @@ def _update_performance_test(connection, record):
     )
 
 
+def _delete_performance_test(connection, row_id):
+    _delete_row(connection, "performance_tests", row_id)
+
+
 def _insert_yearly_input(connection, dataset_config_id, record):
     return connection.execute(
         text(
@@ -185,6 +193,10 @@ def _update_yearly_input(connection, record):
         ),
         record,
     )
+
+
+def _delete_yearly_input(connection, row_id):
+    _delete_row(connection, "yearly_inputs", row_id)
 
 
 def _insert_monthly_input(connection, dataset_config_id, record):
@@ -250,6 +262,26 @@ def _update_monthly_input(connection, record):
             """
         ),
         record,
+    )
+
+
+def _delete_monthly_input(connection, row_id):
+    _delete_row(connection, "monthly_inputs", row_id)
+
+
+def _delete_contract_value(connection, row_id):
+    _delete_row(connection, "contract_values", row_id)
+
+
+def _delete_row(connection, table_name, row_id):
+    connection.execute(
+        text(
+            f"""
+            DELETE FROM {table_name}
+            WHERE id = :id
+            """
+        ),
+        {"id": row_id},
     )
 
 

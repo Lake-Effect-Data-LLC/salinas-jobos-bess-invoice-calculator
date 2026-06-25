@@ -12,18 +12,23 @@ Runtime app behavior:
 
 - Select facility: Salinas or Jobos.
 - Select dataset/scenario from the database.
+- Show a dynamic page title based on the selected facility and scenario.
 - Preserve the selected facility and scenario in URL query params so browser reload keeps the same selection when valid.
 - Use a compact expanded sidebar for facility and dataset/scenario selection.
 - Use a full-width main content container so dashboard/table space responds when the sidebar is collapsed.
+- Stack horizontal metric/chart/control rows on narrower screens to reduce squished layouts.
 - Render the banner as a full-width element within the main content area.
 - Create new datasets/scenarios.
 - Edit input tables backed by Postgres.
+- Keep existing input rows locked by default; normal mode shows existing rows read-only and provides a separate new-row entry grid.
+- Use a sidebar `Override Mode` toggle to unlock existing-row edits/deletes; the main input-table area shows the warning and mandatory override editor when the toggle is active.
+- In Override Mode, each table's save action is grouped in a native bordered container with a warning, override edit reason text area, and Save button.
 - Show concise contract-aware tooltips on input table column headers.
-- Show collapsed `Column Guide` expanders above editable input tables for nearby data-entry reference.
+- Show collapsed `Column Guide` expanders above editable input tables with a reminder that headers also support hover tooltips.
 - Add row-level notes directly in non-contract input tables when recording context for manual edits.
 - Run calculations from database-backed inputs.
 - Persist successful calculation runs to `monthly_snapshot`.
-- Show a run-history dashboard above the input tables.
+- Show a two-column run dashboard above the input tables, with Latest Run on the left and Summary Comparison plus Previous Runs on the right.
 - Refresh the Latest Run dashboard after successful calculation runs while keeping the generated output visible.
 - Show a native `Analytics & Trends` section expanded by default after successful calculation output.
 - Download calculation outputs/report from the run result.
@@ -38,16 +43,18 @@ Run-history behavior:
 - Each snapshot represents the most recent calculated month from that calculation.
 - The dashboard groups runs by `snapshot_month` and shows only the latest successful run for each month.
 - Latest Run shows the most recent month prominently.
-- Previous Runs shows the prior 12 months in a scrollable card list with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
+- Previous Runs is collapsed by default in the right side of the top run dashboard and shows the prior 12 months in a scrollable card list with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
 - Dashboard downloads use CSV/report text stored in `snapshot_data`; MinIO upload/download is intentionally not wired yet.
 - CSV artifact metadata can still be represented with `file_object` rows when MinIO is added later.
 
 Analytics behavior:
 
 - Analytics uses the same grouped monthly run snapshots as Run History.
+- Summary Comparison sits in the right side of the top run dashboard and lets the user select `MP`, `MFP`, `MCC`, `FAA %`, or `PRA %`.
+- Summary Comparison shows a two-bar Altair chart comparing the latest run to the average of previous runs only, with readable horizontal labels, value labels, and a short delta sentence.
 - Financial Trend charts `MP` and `MFP` over recent months.
 - Generation Trend charts available operational output metrics from the summary snapshot: `MCC`, `FAA %`, and `PRA %`.
-- Charts use native Streamlit line charts.
+- Charts render through `st.altair_chart` with explicit axis labels.
 
 Removed runtime compatibility behavior:
 
@@ -58,8 +65,9 @@ Removed runtime compatibility behavior:
 
 Contract values:
 
-- Contract values are currently displayed read-only.
-- When contract values become editable, they should retain stricter provenance fields such as required edit reason/source because they represent contract/reference data.
+- Contract values are displayed read-only in normal mode.
+- Contract values can only be deleted in Override Mode; inserting and editing contract-value rows remains blocked.
+- Contract-value deletes require override editor identity, edit reason, and audit logging because they represent contract/reference data.
 
 ## Technical Details
 
@@ -79,6 +87,9 @@ Audit behavior:
 - Non-contract input saves do not require form-level audit metadata.
 - `row_edit_history` can still store nullable `edit_reason` and `source` values for these tables.
 - Row-level `notes` remain part of the input records and are included in inserted/updated row data.
+- Existing-row updates/deletes require Override Mode, an override editor value stored in audit `source`, and an edit reason.
+- Deletes are hard deletes from the input table after a `row_edit_history` row is written in the same transaction.
+- `row_edit_history.created_at` supplies the audit timestamp. `edited_by` remains nullable until authenticated app users are wired into the runtime.
 
 CSV support remains outside the runtime app:
 

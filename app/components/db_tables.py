@@ -5,6 +5,7 @@ from sqlalchemy import text
 from app.components.column_tooltips import INPUT_COLUMN_TOOLTIPS
 from app.db import get_dataset_config_id
 from app.services.table_editor import (
+    save_contract_value_deletes,
     save_monthly_inputs_edits,
     save_monthly_performance_guarantee_edits,
     save_performance_tests_edits,
@@ -111,7 +112,13 @@ TABLE_CONFIGS = {
 }
 
 
-def render_database_table_views(engine, project_id, dataset_name):
+def render_database_table_views(engine, project_id, dataset_name, override_mode=False):
+    override_source = None
+    if override_mode:
+        st.warning(
+            "Override Mode is on. Existing rows can be edited or deleted, "
+            "and an edit reason is required before saving."
+        )
     table_names = list(TABLE_CONFIGS)
     tabs = st.tabs([TABLE_CONFIGS[table_name]["label"] for table_name in table_names])
     for tab, table_name in zip(tabs, table_names):
@@ -119,43 +126,125 @@ def render_database_table_views(engine, project_id, dataset_name):
             config = TABLE_CONFIGS[table_name]
             st.caption(config["guidance"])
             table = load_database_table(engine, project_id, dataset_name, table_name)
-            if table_name == "monthly_inputs":
-                render_monthly_inputs_editor(engine, project_id, dataset_name, table)
+            if table_name == "contract_values":
+                render_contract_values_editor(
+                    engine,
+                    project_id,
+                    dataset_name,
+                    table,
+                    override_mode,
+                    override_source,
+                )
+            elif table_name == "monthly_inputs":
+                render_monthly_inputs_editor(
+                    engine,
+                    project_id,
+                    dataset_name,
+                    table,
+                    override_mode,
+                    override_source,
+                )
             elif table_name == "yearly_inputs":
-                render_yearly_inputs_editor(engine, project_id, dataset_name, table)
+                render_yearly_inputs_editor(
+                    engine,
+                    project_id,
+                    dataset_name,
+                    table,
+                    override_mode,
+                    override_source,
+                )
             elif table_name == "monthly_performance_guarantee":
                 render_monthly_performance_guarantee_editor(
                     engine,
                     project_id,
                     dataset_name,
                     table,
+                    override_mode,
+                    override_source,
                 )
             elif table_name == "performance_tests":
-                render_performance_tests_editor(engine, project_id, dataset_name, table)
-            else:
-                st.dataframe(
+                render_performance_tests_editor(
+                    engine,
+                    project_id,
+                    dataset_name,
                     table,
-                    use_container_width=True,
-                    hide_index=True,
-                    column_config=_base_column_config(table_name),
+                    override_mode,
+                    override_source,
                 )
 
 
-def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
-    st.caption("Edit existing rows or add a new row at the bottom. Deleting rows is not enabled yet.")
-    _render_column_guide("monthly_inputs")
-    editable_table = table.copy()
-    if "id" in editable_table:
-        editable_table["id"] = editable_table["id"].astype(str)
+def render_contract_values_editor(
+    engine,
+    project_id,
+    dataset_name,
+    table,
+    override_mode=False,
+    override_source=None,
+):
+    st.caption(
+        "Contract values are reference data. They are read-only unless Override Mode "
+        "is on, and Override Mode only allows audited deletes."
+    )
+    _render_column_guide("contract_values")
+    editable_table = _prepare_editable_table(table)
+    column_config = _with_column_tooltips("contract_values", {"id": None})
+
+    if not override_mode:
+        st.dataframe(
+            editable_table,
+            use_container_width=True,
+            hide_index=True,
+            column_config=column_config,
+        )
+        return
 
     edited_table = st.data_editor(
         editable_table,
         use_container_width=True,
         hide_index=True,
         num_rows="dynamic",
-        disabled=["id"],
-        key=f"monthly-inputs-editor-{project_id}-{dataset_name}",
-        column_config=_with_column_tooltips("monthly_inputs", {
+        disabled=list(editable_table.columns),
+        key=f"contract-values-override-editor-{project_id}-{dataset_name}",
+        column_config=column_config,
+    )
+    edit_reason, save_clicked = _render_save_controls(
+        "Save contract value edits or deletes",
+        key=f"contract-values-save-{project_id}-{dataset_name}",
+        override_mode=override_mode,
+    )
+    if save_clicked:
+        try:
+            result = save_contract_value_deletes(
+                engine=engine,
+                project_id=project_id,
+                dataset_name=dataset_name,
+                original_df=table,
+                edited_df=edited_table,
+                edit_reason=edit_reason,
+                source=override_source,
+                allow_existing_row_changes=override_mode,
+            )
+        except Exception as exc:
+            st.error(str(exc))
+        else:
+            st.success(f"Saved contract values: {result['deleted']} deleted.")
+            st.rerun()
+
+
+def render_monthly_inputs_editor(
+    engine,
+    project_id,
+    dataset_name,
+    table,
+    override_mode=False,
+    override_source=None,
+):
+    st.caption(_guarded_editor_guidance())
+    _render_column_guide("monthly_inputs")
+    editable_table = _prepare_editable_table(table)
+    column_config = _with_column_tooltips(
+        "monthly_inputs",
+        {
             "id": None,
             "timestamp_month": st.column_config.DateColumn(
                 "timestamp_month",
@@ -170,13 +259,22 @@ def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
                 required=True,
                 help=_column_help("monthly_inputs", "agreement_year"),
             ),
-        }),
+        },
     )
-    if st.button(
+    edited_table = _render_guarded_editor(
+        editable_table,
+        table_name="monthly_inputs",
+        project_id=project_id,
+        dataset_name=dataset_name,
+        override_mode=override_mode,
+        column_config=column_config,
+    )
+    edit_reason, save_clicked = _render_save_controls(
         "Save monthly inputs",
-        type="primary",
         key=f"monthly-inputs-save-{project_id}-{dataset_name}",
-    ):
+        override_mode=override_mode,
+    )
+    if save_clicked:
         try:
             result = save_monthly_inputs_edits(
                 engine=engine,
@@ -184,34 +282,31 @@ def render_monthly_inputs_editor(engine, project_id, dataset_name, table):
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=None,
-                source=None,
+                edit_reason=edit_reason,
+                source=override_source,
+                allow_existing_row_changes=override_mode,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
-            st.success(
-                "Saved monthly inputs: "
-                f"{result['inserted']} inserted, {result['updated']} updated."
-            )
+            st.success(_save_message("monthly inputs", result))
             st.rerun()
 
 
-def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
-    st.caption("Edit existing rows or add a new agreement year at the bottom. Deleting rows is not enabled yet.")
+def render_yearly_inputs_editor(
+    engine,
+    project_id,
+    dataset_name,
+    table,
+    override_mode=False,
+    override_source=None,
+):
+    st.caption(_guarded_editor_guidance())
     _render_column_guide("yearly_inputs")
-    editable_table = table.copy()
-    if "id" in editable_table:
-        editable_table["id"] = editable_table["id"].astype(str)
-
-    edited_table = st.data_editor(
-        editable_table,
-        use_container_width=True,
-        hide_index=True,
-        num_rows="dynamic",
-        disabled=["id"],
-        key=f"yearly-inputs-editor-{project_id}-{dataset_name}",
-        column_config=_with_column_tooltips("yearly_inputs", {
+    editable_table = _prepare_editable_table(table)
+    column_config = _with_column_tooltips(
+        "yearly_inputs",
+        {
             "id": None,
             "agreement_year": st.column_config.NumberColumn(
                 "agreement_year",
@@ -234,13 +329,22 @@ def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
                 "gc",
                 help=_column_help("yearly_inputs", "gc"),
             ),
-        }),
+        },
     )
-    if st.button(
+    edited_table = _render_guarded_editor(
+        editable_table,
+        table_name="yearly_inputs",
+        project_id=project_id,
+        dataset_name=dataset_name,
+        override_mode=override_mode,
+        column_config=column_config,
+    )
+    edit_reason, save_clicked = _render_save_controls(
         "Save yearly inputs",
-        type="primary",
         key=f"yearly-inputs-save-{project_id}-{dataset_name}",
-    ):
+        override_mode=override_mode,
+    )
+    if save_clicked:
         try:
             result = save_yearly_inputs_edits(
                 engine=engine,
@@ -248,34 +352,31 @@ def render_yearly_inputs_editor(engine, project_id, dataset_name, table):
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=None,
-                source=None,
+                edit_reason=edit_reason,
+                source=override_source,
+                allow_existing_row_changes=override_mode,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
-            st.success(
-                "Saved yearly inputs: "
-                f"{result['inserted']} inserted, {result['updated']} updated."
-            )
+            st.success(_save_message("yearly inputs", result))
             st.rerun()
 
 
-def render_performance_tests_editor(engine, project_id, dataset_name, table):
-    st.caption("Edit existing performance test events or add a new event at the bottom. Deleting rows is not enabled yet.")
+def render_performance_tests_editor(
+    engine,
+    project_id,
+    dataset_name,
+    table,
+    override_mode=False,
+    override_source=None,
+):
+    st.caption(_guarded_editor_guidance())
     _render_column_guide("performance_tests")
-    editable_table = table.copy()
-    if "id" in editable_table:
-        editable_table["id"] = editable_table["id"].astype(str)
-
-    edited_table = st.data_editor(
-        editable_table,
-        use_container_width=True,
-        hide_index=True,
-        num_rows="dynamic",
-        disabled=["id"],
-        key=f"performance-tests-editor-{project_id}-{dataset_name}",
-        column_config=_with_column_tooltips("performance_tests", {
+    editable_table = _prepare_editable_table(table)
+    column_config = _with_column_tooltips(
+        "performance_tests",
+        {
             "id": None,
             "agreement_year": st.column_config.NumberColumn(
                 "agreement_year",
@@ -321,13 +422,22 @@ def render_performance_tests_editor(engine, project_id, dataset_name, table):
                 "outage_equivalent_unavhrs",
                 help=_column_help("performance_tests", "outage_equivalent_unavhrs"),
             ),
-        }),
+        },
     )
-    if st.button(
+    edited_table = _render_guarded_editor(
+        editable_table,
+        table_name="performance_tests",
+        project_id=project_id,
+        dataset_name=dataset_name,
+        override_mode=override_mode,
+        column_config=column_config,
+    )
+    edit_reason, save_clicked = _render_save_controls(
         "Save performance tests",
-        type="primary",
         key=f"performance-tests-save-{project_id}-{dataset_name}",
-    ):
+        override_mode=override_mode,
+    )
+    if save_clicked:
         try:
             result = save_performance_tests_edits(
                 engine=engine,
@@ -335,34 +445,31 @@ def render_performance_tests_editor(engine, project_id, dataset_name, table):
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=None,
-                source=None,
+                edit_reason=edit_reason,
+                source=override_source,
+                allow_existing_row_changes=override_mode,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
-            st.success(
-                "Saved performance tests: "
-                f"{result['inserted']} inserted, {result['updated']} updated."
-            )
+            st.success(_save_message("performance tests", result))
             st.rerun()
 
 
-def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name, table):
-    st.caption("Edit existing monthly performance guarantee rows or add a new month at the bottom. Deleting rows is not enabled yet.")
+def render_monthly_performance_guarantee_editor(
+    engine,
+    project_id,
+    dataset_name,
+    table,
+    override_mode=False,
+    override_source=None,
+):
+    st.caption(_guarded_editor_guidance())
     _render_column_guide("monthly_performance_guarantee")
-    editable_table = table.copy()
-    if "id" in editable_table:
-        editable_table["id"] = editable_table["id"].astype(str)
-
-    edited_table = st.data_editor(
-        editable_table,
-        use_container_width=True,
-        hide_index=True,
-        num_rows="dynamic",
-        disabled=["id"],
-        key=f"monthly-performance-editor-{project_id}-{dataset_name}",
-        column_config=_with_column_tooltips("monthly_performance_guarantee", {
+    editable_table = _prepare_editable_table(table)
+    column_config = _with_column_tooltips(
+        "monthly_performance_guarantee",
+        {
             "id": None,
             "timestamp_month": st.column_config.DateColumn(
                 "timestamp_month",
@@ -397,13 +504,22 @@ def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name
                 required=True,
                 help=_column_help("monthly_performance_guarantee", "ae_end"),
             ),
-        }),
+        },
     )
-    if st.button(
+    edited_table = _render_guarded_editor(
+        editable_table,
+        table_name="monthly_performance_guarantee",
+        project_id=project_id,
+        dataset_name=dataset_name,
+        override_mode=override_mode,
+        column_config=column_config,
+    )
+    edit_reason, save_clicked = _render_save_controls(
         "Save monthly performance guarantee",
-        type="primary",
         key=f"monthly-performance-save-{project_id}-{dataset_name}",
-    ):
+        override_mode=override_mode,
+    )
+    if save_clicked:
         try:
             result = save_monthly_performance_guarantee_edits(
                 engine=engine,
@@ -411,17 +527,90 @@ def render_monthly_performance_guarantee_editor(engine, project_id, dataset_name
                 dataset_name=dataset_name,
                 original_df=table,
                 edited_df=edited_table,
-                edit_reason=None,
-                source=None,
+                edit_reason=edit_reason,
+                source=override_source,
+                allow_existing_row_changes=override_mode,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
-            st.success(
-                "Saved monthly performance guarantee: "
-                f"{result['inserted']} inserted, {result['updated']} updated."
-            )
+            st.success(_save_message("monthly performance guarantee", result))
             st.rerun()
+
+
+def _render_guarded_editor(
+    editable_table,
+    table_name,
+    project_id,
+    dataset_name,
+    override_mode,
+    column_config,
+):
+    if override_mode:
+        return st.data_editor(
+            editable_table,
+            use_container_width=True,
+            hide_index=True,
+            num_rows="dynamic",
+            disabled=["id"],
+            key=f"{table_name}-override-editor-{project_id}-{dataset_name}",
+            column_config=column_config,
+        )
+
+    st.dataframe(
+        editable_table,
+        use_container_width=True,
+        hide_index=True,
+        column_config=column_config,
+    )
+    st.caption("Add new rows below. Existing rows are locked unless Override Mode is on.")
+    new_rows = st.data_editor(
+        editable_table.iloc[0:0].copy(),
+        use_container_width=True,
+        hide_index=True,
+        num_rows="dynamic",
+        disabled=["id"],
+        key=f"{table_name}-new-rows-editor-{project_id}-{dataset_name}",
+        column_config=column_config,
+    )
+    return pd.concat([editable_table, new_rows], ignore_index=True)
+
+
+def _render_save_controls(label, key, override_mode):
+    if not override_mode:
+        return None, st.button(label, type="primary", key=key)
+
+    with st.container(border=True):
+        st.warning(" Please provide a detailed reason for modifying historical reference data.")
+        edit_reason = st.text_area(
+            "Override edit reason",
+            key=f"{key}-override-reason",
+            placeholder="Describe what changed and why this historical/reference data is being modified.",
+        )
+        save_clicked = st.button(label, type="primary", key=key)
+
+    return edit_reason, save_clicked
+
+
+def _prepare_editable_table(table):
+    editable_table = table.copy()
+    if "id" in editable_table:
+        editable_table["id"] = editable_table["id"].astype(str)
+    return editable_table
+
+
+def _guarded_editor_guidance():
+    return (
+        "Normal mode locks existing rows and lets you add new rows. "
+        "Override Mode unlocks audited edits/deletes."
+    )
+
+
+def _save_message(label, result):
+    return (
+        f"Saved {label}: {result['inserted']} inserted, "
+        f"{result['updated']} updated, {result['deleted']} deleted."
+    )
 
 
 def _base_column_config(table_name):
@@ -447,6 +636,7 @@ def _render_column_guide(table_name):
         return
 
     with st.expander("Column Guide", expanded=False):
+        st.caption("You can also hover over the table headers for quick tooltips.")
         for column_name, description in tooltips.items():
             st.markdown(f"- `{column_name}`: {description}")
 
@@ -457,6 +647,7 @@ def load_database_table(engine, project_id, dataset_name, table_name):
 
     config = TABLE_CONFIGS[table_name]
     editable_tables = {
+        "contract_values",
         "monthly_inputs",
         "yearly_inputs",
         "monthly_performance_guarantee",

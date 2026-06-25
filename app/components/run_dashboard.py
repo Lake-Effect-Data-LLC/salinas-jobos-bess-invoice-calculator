@@ -2,6 +2,7 @@ from datetime import date, datetime
 
 import streamlit as st
 
+from app.components.analytics import render_summary_comparison_from_runs
 from app.db import list_latest_calculation_runs_by_month
 
 
@@ -29,11 +30,13 @@ def render_run_history_dashboard(engine, project_id, dataset_name):
     latest_run = runs[0]
     previous_runs = runs[1:]
 
-    latest_col, previous_col = st.columns([2.6, 3])
+    latest_col, stats_col = st.columns([1, 1])
     with latest_col:
         _render_latest_run(latest_run)
-    with previous_col:
-        _render_previous_runs(previous_runs)
+    with stats_col:
+        render_summary_comparison_from_runs(runs, project_id, dataset_name)
+        with st.expander("Previous Runs", expanded=False):
+            _render_previous_runs(previous_runs)
 
 
 def _render_latest_run(run):
@@ -55,7 +58,6 @@ def _render_latest_run(run):
 
 
 def _render_previous_runs(runs):
-    st.markdown("**Previous Runs**")
     if not runs:
         st.caption("No previous monthly runs.")
         return

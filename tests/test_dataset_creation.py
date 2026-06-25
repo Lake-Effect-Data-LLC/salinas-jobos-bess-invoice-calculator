@@ -2,13 +2,18 @@ import unittest
 
 from sqlalchemy import create_engine, text
 
-from app.db.datasets import create_dataset_config, get_dataset_row_counts
+from app.db.datasets import (
+    create_dataset_config,
+    delete_dataset_config,
+    get_dataset_row_counts,
+)
 
 
 class DatasetCreationTest(unittest.TestCase):
     def setUp(self):
         self.engine = create_engine("sqlite+pysqlite:///:memory:", future=True)
         with self.engine.begin() as connection:
+            connection.execute(text("PRAGMA foreign_keys = ON"))
             _create_minimal_schema(connection)
             _seed_project_and_actual_dataset(connection)
             _seed_contract_value(connection, "actual-id", agreement_year=1)
@@ -50,6 +55,65 @@ class DatasetCreationTest(unittest.TestCase):
         row_counts = get_dataset_row_counts(self.engine, "salinas", "scenario_1")
         self.assertEqual(row_counts["contract_values"], 1)
 
+    def test_delete_dataset_removes_scenario_artifacts_and_cascades_children(self):
+        created_name = create_dataset_config(
+            self.engine,
+            project_id="salinas",
+            dataset_name="testing",
+        )
+        with self.engine.begin() as connection:
+            connection.execute(text("PRAGMA foreign_keys = ON"))
+            dataset_id = connection.execute(
+                text(
+                    """
+                    SELECT id
+                    FROM dataset_config
+                    WHERE project_id = 'salinas'
+                      AND name = 'testing'
+                    """
+                )
+            ).scalar_one()
+            _seed_file_object(connection, dataset_id)
+            _seed_monthly_snapshot(connection, dataset_id)
+            _seed_row_edit_history(connection, dataset_id)
+            _seed_validation_result(connection, dataset_id)
+
+        next_dataset_name = delete_dataset_config(
+            self.engine,
+            project_id="salinas",
+            dataset_name=created_name,
+        )
+
+        self.assertEqual(next_dataset_name, "actual")
+        with self.engine.begin() as connection:
+            connection.execute(text("PRAGMA foreign_keys = ON"))
+            self.assertEqual(
+                connection.execute(
+                    text("SELECT count(*) FROM dataset_config WHERE name = 'testing'")
+                ).scalar_one(),
+                0,
+            )
+            for table_name in (
+                "contract_values",
+                "file_object",
+                "monthly_snapshot",
+                "row_edit_history",
+                "validation_result",
+            ):
+                self.assertEqual(
+                    connection.execute(
+                        text(
+                            f"""
+                            SELECT count(*)
+                            FROM {table_name}
+                            WHERE dataset_config_id = :dataset_id
+                            """
+                        ),
+                        {"dataset_id": dataset_id},
+                    ).scalar_one(),
+                    0,
+                )
+
 
 def _create_minimal_schema(connection):
     connection.execute(
@@ -67,7 +131,7 @@ def _create_minimal_schema(connection):
             """
             CREATE TABLE dataset_config (
                 id text PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-                project_id text NOT NULL,
+                project_id text NOT NULL REFERENCES project(id) ON DELETE CASCADE,
                 name text NOT NULL,
                 description text,
                 is_default boolean NOT NULL DEFAULT false,
@@ -81,7 +145,7 @@ def _create_minimal_schema(connection):
             """
             CREATE TABLE contract_values (
                 id text PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-                dataset_config_id text NOT NULL,
+                dataset_config_id text NOT NULL REFERENCES dataset_config(id) ON DELETE CASCADE,
                 agreement_year integer NOT NULL,
                 cppf numeric(14, 2) NOT NULL,
                 cpppif numeric(14, 2) NOT NULL,
@@ -115,11 +179,63 @@ def _create_minimal_schema(connection):
                 f"""
                 CREATE TABLE {table_name} (
                     id text PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-                    dataset_config_id text NOT NULL
+                    dataset_config_id text NOT NULL REFERENCES dataset_config(id) ON DELETE CASCADE
                 )
                 """
             )
         )
+    connection.execute(
+        text(
+            """
+            CREATE TABLE file_object (
+                id text PRIMARY KEY,
+                dataset_config_id text REFERENCES dataset_config(id) ON DELETE SET NULL,
+                object_type text NOT NULL,
+                original_filename text NOT NULL,
+                storage_bucket text NOT NULL,
+                storage_key text NOT NULL
+            )
+            """
+        )
+    )
+    connection.execute(
+        text(
+            """
+            CREATE TABLE monthly_snapshot (
+                id text PRIMARY KEY,
+                dataset_config_id text NOT NULL REFERENCES dataset_config(id) ON DELETE CASCADE,
+                snapshot_month text NOT NULL,
+                snapshot_name text NOT NULL,
+                snapshot_data text NOT NULL,
+                source_file_object_id text REFERENCES file_object(id) ON DELETE SET NULL
+            )
+            """
+        )
+    )
+    connection.execute(
+        text(
+            """
+            CREATE TABLE row_edit_history (
+                id text PRIMARY KEY,
+                dataset_config_id text NOT NULL REFERENCES dataset_config(id) ON DELETE CASCADE,
+                table_name text NOT NULL,
+                row_id text NOT NULL,
+                action text NOT NULL
+            )
+            """
+        )
+    )
+    connection.execute(
+        text(
+            """
+            CREATE TABLE validation_result (
+                id text PRIMARY KEY,
+                dataset_config_id text NOT NULL REFERENCES dataset_config(id) ON DELETE CASCADE,
+                code text NOT NULL
+            )
+            """
+        )
+    )
 
 
 def _seed_project_and_actual_dataset(connection):
@@ -157,6 +273,70 @@ def _seed_contract_value(connection, dataset_config_id, agreement_year):
             "dataset_config_id": dataset_config_id,
             "agreement_year": agreement_year,
         },
+    )
+
+
+def _seed_file_object(connection, dataset_config_id):
+    connection.execute(
+        text(
+            """
+            INSERT INTO file_object (
+                id, dataset_config_id, object_type, original_filename,
+                storage_bucket, storage_key
+            )
+            VALUES (
+                'file-object-id', :dataset_config_id, 'csv_export',
+                'testing.csv', 'bucket', 'testing.csv'
+            )
+            """
+        ),
+        {"dataset_config_id": dataset_config_id},
+    )
+
+
+def _seed_monthly_snapshot(connection, dataset_config_id):
+    connection.execute(
+        text(
+            """
+            INSERT INTO monthly_snapshot (
+                id, dataset_config_id, snapshot_month, snapshot_name,
+                snapshot_data, source_file_object_id
+            )
+            VALUES (
+                'snapshot-id', :dataset_config_id, '2026-01-01',
+                'calculation_run_test', '{}', 'file-object-id'
+            )
+            """
+        ),
+        {"dataset_config_id": dataset_config_id},
+    )
+
+
+def _seed_row_edit_history(connection, dataset_config_id):
+    connection.execute(
+        text(
+            """
+            INSERT INTO row_edit_history (
+                id, dataset_config_id, table_name, row_id, action
+            )
+            VALUES (
+                'edit-id', :dataset_config_id, 'yearly_inputs', 'row-id', 'insert'
+            )
+            """
+        ),
+        {"dataset_config_id": dataset_config_id},
+    )
+
+
+def _seed_validation_result(connection, dataset_config_id):
+    connection.execute(
+        text(
+            """
+            INSERT INTO validation_result (id, dataset_config_id, code)
+            VALUES ('validation-id', :dataset_config_id, 'test-code')
+            """
+        ),
+        {"dataset_config_id": dataset_config_id},
     )
 
 

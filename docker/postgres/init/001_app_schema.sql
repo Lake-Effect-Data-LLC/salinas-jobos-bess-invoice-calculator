@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS file_object (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id text REFERENCES project(id) ON DELETE SET NULL,
     dataset_config_id uuid REFERENCES dataset_config(id) ON DELETE SET NULL,
-    object_type text NOT NULL CHECK (object_type IN ('source_upload', 'csv_export', 'calculation_package', 'report')),
+    object_type text NOT NULL CHECK (object_type IN ('source_upload', 'csv_export', 'report')),
     original_filename text NOT NULL,
     content_type text,
     storage_bucket text NOT NULL,

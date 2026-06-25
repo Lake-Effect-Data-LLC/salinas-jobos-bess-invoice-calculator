@@ -6,6 +6,11 @@ from sqlalchemy import text
 
 from app.db import get_dataset_config_id
 from app.db.writers import (
+    _delete_contract_value,
+    _delete_monthly_input,
+    _delete_monthly_performance_guarantee,
+    _delete_performance_test,
+    _delete_yearly_input,
     _insert_monthly_input,
     _insert_monthly_performance_guarantee,
     _insert_performance_test,
@@ -96,6 +101,41 @@ MONTHLY_PERFORMANCE_GUARANTEE_NUMERIC_COLUMNS = [
     "ae_end",
 ]
 
+CONTRACT_VALUE_COLUMNS = [
+    "agreement_year",
+    "cppf",
+    "cpppif",
+    "ddd",
+    "ta",
+    "rer",
+    "ge",
+    "design_dmax",
+    "design_duration_energy",
+    "annual_duration_energy_degradation_rate",
+    "design_charge_energy",
+    "grid_system_waiting_period_hours",
+    "force_majeure_waiting_period_hours",
+    "scheduled_maintenance_allowance_hours",
+    "source_reference",
+    "notes",
+]
+
+CONTRACT_VALUE_NUMERIC_COLUMNS = [
+    "cppf",
+    "cpppif",
+    "ddd",
+    "ta",
+    "rer",
+    "ge",
+    "design_dmax",
+    "design_duration_energy",
+    "annual_duration_energy_degradation_rate",
+    "design_charge_energy",
+    "grid_system_waiting_period_hours",
+    "force_majeure_waiting_period_hours",
+    "scheduled_maintenance_allowance_hours",
+]
+
 
 def save_monthly_inputs_edits(
     engine,
@@ -105,6 +145,7 @@ def save_monthly_inputs_edits(
     edited_df,
     edit_reason,
     source,
+    allow_existing_row_changes=False,
 ):
     return _save_table_edits(
         engine,
@@ -119,7 +160,9 @@ def save_monthly_inputs_edits(
         table_name="monthly_inputs",
         insert_fn=_insert_monthly_input,
         update_fn=_update_monthly_input,
+        delete_fn=_delete_monthly_input,
         unknown_id_label="monthly input",
+        allow_existing_row_changes=allow_existing_row_changes,
     )
 
 
@@ -131,6 +174,7 @@ def save_yearly_inputs_edits(
     edited_df,
     edit_reason,
     source,
+    allow_existing_row_changes=False,
 ):
     return _save_table_edits(
         engine,
@@ -145,7 +189,9 @@ def save_yearly_inputs_edits(
         table_name="yearly_inputs",
         insert_fn=_insert_yearly_input,
         update_fn=_update_yearly_input,
+        delete_fn=_delete_yearly_input,
         unknown_id_label="yearly input",
+        allow_existing_row_changes=allow_existing_row_changes,
     )
 
 
@@ -157,6 +203,7 @@ def save_performance_tests_edits(
     edited_df,
     edit_reason,
     source,
+    allow_existing_row_changes=False,
 ):
     return _save_table_edits(
         engine,
@@ -171,7 +218,9 @@ def save_performance_tests_edits(
         table_name="performance_tests",
         insert_fn=_insert_performance_test,
         update_fn=_update_performance_test,
+        delete_fn=_delete_performance_test,
         unknown_id_label="performance test",
+        allow_existing_row_changes=allow_existing_row_changes,
     )
 
 
@@ -183,6 +232,7 @@ def save_monthly_performance_guarantee_edits(
     edited_df,
     edit_reason,
     source,
+    allow_existing_row_changes=False,
 ):
     return _save_table_edits(
         engine,
@@ -197,7 +247,40 @@ def save_monthly_performance_guarantee_edits(
         table_name="monthly_performance_guarantee",
         insert_fn=_insert_monthly_performance_guarantee,
         update_fn=_update_monthly_performance_guarantee,
+        delete_fn=_delete_monthly_performance_guarantee,
         unknown_id_label="monthly performance guarantee",
+        allow_existing_row_changes=allow_existing_row_changes,
+    )
+
+
+def save_contract_value_deletes(
+    engine,
+    project_id,
+    dataset_name,
+    original_df,
+    edited_df,
+    edit_reason,
+    source,
+    allow_existing_row_changes=False,
+):
+    return _save_table_edits(
+        engine,
+        project_id,
+        dataset_name,
+        original_df,
+        edited_df,
+        edit_reason,
+        source,
+        normalize_fn=_normalize_contract_values_df,
+        validate_fn=_validate_no_duplicate_agreement_years,
+        table_name="contract_values",
+        insert_fn=None,
+        update_fn=None,
+        delete_fn=_delete_contract_value,
+        unknown_id_label="contract value",
+        allow_existing_row_changes=allow_existing_row_changes,
+        allow_inserts=False,
+        allow_updates=False,
     )
 
 
@@ -214,8 +297,12 @@ def _save_table_edits(
     table_name,
     insert_fn,
     update_fn,
+    delete_fn,
     unknown_id_label,
     require_edit_metadata=False,
+    allow_existing_row_changes=False,
+    allow_inserts=True,
+    allow_updates=True,
 ):
     edit_reason = _optional_audit_text(edit_reason)
     source = _optional_audit_text(source)
@@ -237,6 +324,7 @@ def _save_table_edits(
     }
     inserted = []
     updated = []
+    edited_ids = set()
 
     for record in edited_records:
         row_id = record.get("id")
@@ -244,6 +332,7 @@ def _save_table_edits(
             inserted.append(record)
             continue
 
+        edited_ids.add(str(row_id))
         previous_record = original_by_id.get(str(row_id))
         if previous_record is None:
             raise ValueError(f"Unknown {unknown_id_label} row id '{row_id}'.")
@@ -253,8 +342,27 @@ def _save_table_edits(
         if comparable_previous != comparable_current:
             updated.append((previous_record, record))
 
-    if not inserted and not updated:
-        return {"inserted": 0, "updated": 0}
+    deleted = [
+        record
+        for row_id, record in original_by_id.items()
+        if row_id not in edited_ids
+    ]
+
+    if inserted and not allow_inserts:
+        raise ValueError(f"New {unknown_id_label} rows are not enabled.")
+    if updated and not allow_updates:
+        raise ValueError(f"Editing existing {unknown_id_label} rows is not enabled.")
+
+    existing_row_changes = updated or deleted
+    if existing_row_changes and not allow_existing_row_changes:
+        raise ValueError("Turn on Override Mode before editing or deleting existing rows.")
+    if existing_row_changes and edit_reason is None:
+        raise ValueError("An edit reason is required when Override Mode changes existing rows.")
+    if existing_row_changes and source is None:
+        raise ValueError("An override editor is required when Override Mode changes existing rows.")
+
+    if not inserted and not updated and not deleted:
+        return {"inserted": 0, "updated": 0, "deleted": 0}
 
     with engine.begin() as connection:
         dataset_config_id = get_dataset_config_id(connection, project_id, dataset_name)
@@ -287,7 +395,21 @@ def _save_table_edits(
                 source=source,
             )
 
-    return {"inserted": len(inserted), "updated": len(updated)}
+        for previous_record in deleted:
+            _insert_audit_record(
+                connection,
+                dataset_config_id,
+                table_name=table_name,
+                row_id=previous_record["id"],
+                action="delete",
+                previous_data=previous_record,
+                new_data=None,
+                edit_reason=edit_reason,
+                source=source,
+            )
+            delete_fn(connection, previous_record["id"])
+
+    return {"inserted": len(inserted), "updated": len(updated), "deleted": len(deleted)}
 
 
 def _insert_audit_record(
@@ -443,6 +565,26 @@ def _normalize_monthly_performance_guarantee_df(df, require_id):
         record["timestamp_month"] = _month_start(row.get("timestamp_month"), row_index)
         record["agreement_year"] = _required_int(row, "agreement_year", row_index)
         for column in MONTHLY_PERFORMANCE_GUARANTEE_NUMERIC_COLUMNS:
+            record[column] = _required_float(row, column, row_index)
+        record["source_reference"] = _optional_text(row.get("source_reference"))
+        record["notes"] = _optional_text(row.get("notes"))
+        records.append(record)
+
+    return records
+
+
+def _normalize_contract_values_df(df, require_id):
+    records = []
+    for row_index, row in df.reset_index(drop=True).iterrows():
+        if _is_empty_row(row, CONTRACT_VALUE_COLUMNS):
+            continue
+        if not require_id and _is_incomplete_new_row(row, "id", ["agreement_year"]):
+            continue
+
+        record = {"id": _extract_id(row, row_index, require_id)}
+
+        record["agreement_year"] = _required_int(row, "agreement_year", row_index)
+        for column in CONTRACT_VALUE_NUMERIC_COLUMNS:
             record[column] = _required_float(row, column, row_index)
         record["source_reference"] = _optional_text(row.get("source_reference"))
         record["notes"] = _optional_text(row.get("notes"))
@@ -624,6 +766,10 @@ def _restore_existing_ids(original_df, edited_df):
     original_ids = list(original_df["id"]) if "id" in original_df else []
 
     if "id" not in restored_df:
+        if len(restored_df) != len(original_df):
+            raise ValueError(
+                "Could not safely identify changed rows. Refresh the page and try again."
+            )
         restored_df.insert(0, "id", None)
 
     for row_index, original_id in enumerate(original_ids):
