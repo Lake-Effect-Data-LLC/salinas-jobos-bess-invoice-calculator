@@ -4,13 +4,14 @@ import streamlit as st
 
 from app.components.analytics import render_summary_comparison_from_runs
 from app.db import list_latest_calculation_runs_by_month
+from app.storage import get_presigned_download_url, get_storage_client_from_settings
 
 
 PREVIOUS_RUN_LIMIT = 12
 RUN_FETCH_LIMIT = PREVIOUS_RUN_LIMIT + 1
 
 
-def render_run_history_dashboard(engine, project_id, dataset_name):
+def render_run_history_dashboard(engine, project_id, dataset_name, settings=None):
     st.subheader("Run History")
     try:
         runs = list_latest_calculation_runs_by_month(
@@ -27,19 +28,20 @@ def render_run_history_dashboard(engine, project_id, dataset_name):
         st.info("No runs yet")
         return
 
+    storage_client = _try_get_storage_client(settings)
     latest_run = runs[0]
     previous_runs = runs[1:]
 
     latest_col, stats_col = st.columns([1, 1])
     with latest_col:
-        _render_latest_run(latest_run)
+        _render_latest_run(latest_run, storage_client)
     with stats_col:
         render_summary_comparison_from_runs(runs, project_id, dataset_name)
         with st.expander("Previous Runs", expanded=False):
-            _render_previous_runs(previous_runs)
+            _render_previous_runs(previous_runs, storage_client)
 
 
-def _render_latest_run(run):
+def _render_latest_run(run, storage_client=None):
     summary = _summary(run)
     st.markdown("**Latest Run**")
     st.caption(_month_label(run["snapshot_month"]))
@@ -54,10 +56,10 @@ def _render_latest_run(run):
     basis_cols[2].metric("FAA", _percent(summary.get("FAA")))
     basis_cols[3].metric("PRA", _percent(summary.get("PRA")))
 
-    _render_downloads(run, "latest")
+    _render_downloads(run, "latest", storage_client)
 
 
-def _render_previous_runs(runs):
+def _render_previous_runs(runs, storage_client=None):
     if not runs:
         st.caption("No previous monthly runs.")
         return
@@ -69,7 +71,7 @@ def _render_previous_runs(runs):
                 month_col, metrics_col = st.columns([2.2, 5])
                 with month_col:
                     st.markdown(f"**{_month_label(run['snapshot_month'])}**")
-                    _render_downloads(run, f"previous-{run['snapshot_id']}")
+                    _render_downloads(run, f"previous-{run['snapshot_id']}", storage_client)
                 with metrics_col:
                     primary_cols = st.columns(2)
                     _render_metric_block(
@@ -112,14 +114,19 @@ def _render_metric_block(container, label, value, primary=False):
     )
 
 
-def _render_downloads(run, key_prefix):
+def _render_downloads(run, key_prefix, storage_client=None):
     snapshot_data = run.get("snapshot_data") or {}
     csv_text = snapshot_data.get("csv_text")
     report_text = snapshot_data.get("report_text")
+    csv_artifact = run.get("csv_artifact")
     month = _month_slug(run["snapshot_month"])
+
     col1, col2 = st.columns(2)
     with col1:
-        if csv_text:
+        csv_url = _presigned_csv_url(storage_client, csv_artifact)
+        if csv_url:
+            st.link_button("CSV", csv_url)
+        elif csv_text:
             st.download_button(
                 "CSV",
                 data=csv_text.encode("utf-8"),
@@ -136,6 +143,28 @@ def _render_downloads(run, key_prefix):
                 mime="text/plain",
                 key=f"{key_prefix}-report-download",
             )
+
+
+def _try_get_storage_client(settings):
+    if settings is None:
+        return None
+    try:
+        return get_storage_client_from_settings(settings)
+    except Exception:
+        return None
+
+
+def _presigned_csv_url(storage_client, csv_artifact):
+    if storage_client is None or not csv_artifact:
+        return None
+    try:
+        return get_presigned_download_url(
+            storage_client,
+            csv_artifact["storage_bucket"],
+            csv_artifact["storage_key"],
+        )
+    except Exception:
+        return None
 
 
 def _summary(run):

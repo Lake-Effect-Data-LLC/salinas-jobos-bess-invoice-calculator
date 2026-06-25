@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 
@@ -13,6 +13,16 @@ class DatabaseSettings:
 
 
 @dataclass(frozen=True)
+class ObjectStorageSettings:
+    endpoint_url: str | None
+    access_key_id: str | None
+    secret_access_key: str | None
+    bucket: str | None
+    region: str
+    force_path_style: bool
+
+
+@dataclass(frozen=True)
 class AuthSettings:
     email_from: str | None
 
@@ -20,11 +30,18 @@ class AuthSettings:
 @dataclass(frozen=True)
 class AppSettings:
     database: DatabaseSettings
+    object_storage: ObjectStorageSettings
     auth: AuthSettings
 
 
 SECRET_SECTIONS = {
     "DATABASE_URL": ("database", "url"),
+    "S3_ENDPOINT_URL": ("object_storage", "endpoint_url"),
+    "S3_ACCESS_KEY_ID": ("object_storage", "access_key_id"),
+    "S3_SECRET_ACCESS_KEY": ("object_storage", "secret_access_key"),
+    "S3_BUCKET": ("object_storage", "bucket"),
+    "S3_REGION": ("object_storage", "region"),
+    "S3_FORCE_PATH_STYLE": ("object_storage", "force_path_style"),
     "AUTH_EMAIL_FROM": ("auth", "email_from"),
 }
 
@@ -34,17 +51,23 @@ def load_settings(environ=None, secrets=None, dotenv_path=LOCAL_ENV_FILE):
     dotenv_values = _load_dotenv_values(dotenv_path)
     streamlit_secrets = _load_streamlit_secrets() if secrets is None else secrets
 
+    def get(key, default=None):
+        return _get_setting(key, env, dotenv_values, streamlit_secrets, default=default)
+
     return AppSettings(
         database=DatabaseSettings(
-            url=_get_setting("DATABASE_URL", env, dotenv_values, streamlit_secrets),
+            url=get("DATABASE_URL"),
+        ),
+        object_storage=ObjectStorageSettings(
+            endpoint_url=get("S3_ENDPOINT_URL"),
+            access_key_id=get("S3_ACCESS_KEY_ID"),
+            secret_access_key=get("S3_SECRET_ACCESS_KEY"),
+            bucket=get("S3_BUCKET"),
+            region=get("S3_REGION", default="us-east-1"),
+            force_path_style=_parse_bool(get("S3_FORCE_PATH_STYLE", default="true")),
         ),
         auth=AuthSettings(
-            email_from=_get_setting(
-                "AUTH_EMAIL_FROM",
-                env,
-                dotenv_values,
-                streamlit_secrets,
-            ),
+            email_from=get("AUTH_EMAIL_FROM"),
         ),
     )
 
@@ -123,3 +146,11 @@ def _load_streamlit_secrets():
         return st.secrets
     except Exception:
         return None
+
+
+def _parse_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"true", "1", "yes"}
+    return bool(value)

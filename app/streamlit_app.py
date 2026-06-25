@@ -21,6 +21,7 @@ from app.db import (
     check_connection,
     create_dataset_config,
     delete_dataset_config,
+    generate_calculation_snapshot_name,
     get_dataset_row_counts,
     get_engine,
     list_dataset_configs,
@@ -28,10 +29,16 @@ from app.db import (
 )
 from app.db.readers import (
     load_bess_inputs_from_db,
+    load_inputs_snapshot,
     load_monthly_performance_guarantee_inputs_from_db,
     load_performance_tests_from_db,
 )
 from app.settings import load_settings
+from app.storage import (
+    build_run_artifact_key,
+    get_storage_client_from_settings,
+    upload_bytes,
+)
 from compensation_calculator import calculate_monthly_results
 from main import load_projects
 from report import generate_bess_invoice_support_report
@@ -247,7 +254,7 @@ def render_database_flow(project_id, project_name):
         st.error(f"Could not read dataset status: {exc}")
         return
 
-    render_run_history_dashboard(engine, project_id, dataset_name)
+    render_run_history_dashboard(engine, project_id, dataset_name, settings=settings)
 
     st.subheader("Input Tables")
     st.dataframe(
@@ -280,13 +287,26 @@ def render_database_flow(project_id, project_name):
             dataset_name,
             project_name,
         )
-        snapshot_data = build_run_snapshot_data(results_df, report_text)
+        inputs = load_inputs_snapshot(engine, project_id, dataset_name)
+        snapshot_data = build_run_snapshot_data(results_df, report_text, inputs=inputs)
+        snapshot_month = snapshot_data["latest_month_summary"]["timestamp_month"]
+        snapshot_name = generate_calculation_snapshot_name()
+        csv_artifact = _upload_run_csv(
+            settings,
+            project_id,
+            dataset_name,
+            snapshot_month,
+            snapshot_name,
+            snapshot_data,
+        )
         record_calculation_run(
             engine=engine,
             project_id=project_id,
             dataset_name=dataset_name,
-            snapshot_month=snapshot_data["latest_month_summary"]["timestamp_month"],
+            snapshot_month=snapshot_month,
             snapshot_data=snapshot_data,
+            snapshot_name=snapshot_name,
+            csv_artifact=csv_artifact,
         )
         _save_run_output(project_id, dataset_name, results_df, report_text)
     except ValueError as exc:
@@ -306,6 +326,24 @@ def _save_run_output(project_id, dataset_name, results_df, report_text):
         "results_df": results_df,
         "report_text": report_text,
     }
+
+
+def _upload_run_csv(settings, project_id, dataset_name, snapshot_month, snapshot_name, snapshot_data):
+    try:
+        client = get_storage_client_from_settings(settings)
+        bucket = settings.object_storage.bucket
+        key = build_run_artifact_key(
+            project_id, dataset_name, snapshot_month, snapshot_name, "csv"
+        )
+        csv_text = snapshot_data.get("csv_text", "")
+        meta = upload_bytes(client, bucket, key, csv_text, content_type="text/csv")
+        month_slug = (snapshot_month or "unknown")[:7].replace("-", "")
+        return {
+            "original_filename": f"bess_results_{month_slug}.csv",
+            **meta,
+        }
+    except Exception:
+        return None
 
 
 def _render_saved_run_output(engine, project_id, dataset_name):

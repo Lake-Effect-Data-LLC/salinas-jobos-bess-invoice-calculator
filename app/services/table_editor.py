@@ -358,8 +358,6 @@ def _save_table_edits(
         raise ValueError("Turn on Override Mode before editing or deleting existing rows.")
     if existing_row_changes and edit_reason is None:
         raise ValueError("An edit reason is required when Override Mode changes existing rows.")
-    if existing_row_changes and source is None:
-        raise ValueError("An override editor is required when Override Mode changes existing rows.")
 
     if not inserted and not updated and not deleted:
         return {"inserted": 0, "updated": 0, "deleted": 0}

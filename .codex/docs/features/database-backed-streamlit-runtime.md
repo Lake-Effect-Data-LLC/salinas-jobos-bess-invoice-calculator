@@ -44,8 +44,10 @@ Run-history behavior:
 - The dashboard groups runs by `snapshot_month` and shows only the latest successful run for each month.
 - Latest Run shows the most recent month prominently.
 - Previous Runs is collapsed by default in the right side of the top run dashboard and shows the prior 12 months in a scrollable card list with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
-- Dashboard downloads use CSV/report text stored in `snapshot_data`; MinIO upload/download is intentionally not wired yet.
-- CSV artifact metadata can still be represented with `file_object` rows when MinIO is added later.
+- After a successful run, the CSV is uploaded to MinIO at `run_history/{project_id}/{dataset_name}/{YYYY-MM}/{snapshot_name}.csv` and a `file_object` row is created and linked to the snapshot via `source_file_object_id`.
+- CSV downloads in the run dashboard use a presigned MinIO URL (`st.link_button`) when a `file_object` is linked; older runs without a MinIO artifact fall back to `st.download_button` using text in `snapshot_data`.
+- Report downloads always use `snapshot_data`; the report is not uploaded to MinIO.
+- MinIO upload failures are non-fatal — the run and database snapshot succeed regardless.
 
 Analytics behavior:
 

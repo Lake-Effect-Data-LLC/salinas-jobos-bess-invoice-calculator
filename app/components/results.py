@@ -26,17 +26,20 @@ def render_results(results_df, report_text):
         )
 
 
-def build_run_snapshot_data(results_df, report_text):
+def build_run_snapshot_data(results_df, report_text, inputs=None):
     if results_df.empty:
         raise ValueError("Cannot create a run snapshot from empty calculation results.")
 
     sorted_results = results_df.sort_values("timestamp_month")
     latest_row = sorted_results.iloc[-1].to_dict()
-    return {
+    snapshot = {
         "latest_month_summary": _json_ready_record(latest_row),
         "csv_text": results_df.to_csv(index=False),
         "report_text": report_text,
     }
+    if inputs is not None:
+        snapshot["inputs"] = inputs
+    return snapshot
 
 
 def monthly_results_to_dataframe(monthly_results):

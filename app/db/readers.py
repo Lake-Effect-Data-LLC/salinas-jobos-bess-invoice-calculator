@@ -1,3 +1,7 @@
+import math
+from datetime import date, datetime
+from decimal import Decimal
+
 import pandas as pd
 from sqlalchemy import text
 
@@ -206,6 +210,58 @@ def load_performance_tests_from_db(engine, project_id, dataset_name="actual"):
         )
         for row in df.itertuples(index=False)
     ]
+
+
+def load_inputs_snapshot(engine, project_id, dataset_name):
+    with engine.connect() as connection:
+        dataset_config_id = get_dataset_config_id(connection, project_id, dataset_name)
+
+        def load(table, order_by):
+            df = pd.read_sql_query(
+                text(
+                    f"""
+                    SELECT *
+                    FROM {table}
+                    WHERE dataset_config_id = :dataset_config_id
+                    ORDER BY {order_by}
+                    """
+                ),
+                connection,
+                params={"dataset_config_id": dataset_config_id},
+            )
+            return _df_to_records(df)
+
+        return {
+            "contract_values": load("contract_values", "agreement_year"),
+            "yearly_inputs": load("yearly_inputs", "agreement_year"),
+            "monthly_inputs": load("monthly_inputs", "agreement_year, timestamp_month"),
+            "monthly_performance_guarantee": load(
+                "monthly_performance_guarantee", "agreement_year, timestamp_month"
+            ),
+            "performance_tests": load(
+                "performance_tests", "agreement_year, test_date, test_id"
+            ),
+        }
+
+
+def _df_to_records(df):
+    return [
+        {col: _json_safe_value(val) for col, val in row.items()}
+        for row in df.to_dict(orient="records")
+    ]
+
+
+def _json_safe_value(value):
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, Decimal):
+        return float(value)
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    return value
 
 
 def _optional_text(row, field_name):
