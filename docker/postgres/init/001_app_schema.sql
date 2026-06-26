@@ -173,11 +173,15 @@ CREATE TABLE IF NOT EXISTS row_edit_history (
     ),
     row_id uuid NOT NULL,
     action text NOT NULL CHECK (action IN ('insert', 'update', 'delete')),
+    audit_event_id text,
     previous_data jsonb,
     new_data jsonb,
     edited_by uuid REFERENCES app_user(id) ON DELETE SET NULL,
     edit_reason text,
     source text,
+    artifact_bucket text,
+    artifact_csv_key text,
+    artifact_json_key text,
     created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -213,4 +217,5 @@ CREATE INDEX IF NOT EXISTS idx_monthly_inputs_dataset_month ON monthly_inputs(da
 CREATE INDEX IF NOT EXISTS idx_monthly_performance_dataset_month ON monthly_performance_guarantee(dataset_config_id, timestamp_month);
 CREATE INDEX IF NOT EXISTS idx_performance_tests_dataset ON performance_tests(dataset_config_id);
 CREATE INDEX IF NOT EXISTS idx_row_edit_history_dataset_table ON row_edit_history(dataset_config_id, table_name);
+CREATE INDEX IF NOT EXISTS idx_row_edit_history_audit_event_id ON row_edit_history(audit_event_id);
 CREATE INDEX IF NOT EXISTS idx_validation_result_dataset_severity ON validation_result(dataset_config_id, severity);

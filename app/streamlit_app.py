@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+from datetime import datetime, timezone
 from tempfile import TemporaryDirectory
 
 import streamlit as st
@@ -8,10 +9,16 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+from app.artifacts import (
+    artifact_to_json_bytes,
+    build_calculation_package_artifact,
+    build_scenario_state_artifact,
+)
 from app.components.banner import render_banner
 from app.components.analytics import render_analytics_summary
 from app.components.db_tables import render_database_table_views
 from app.components.results import (
+    build_inputs_csv_text,
     build_run_snapshot_data,
     monthly_results_to_dataframe,
     render_results,
@@ -27,6 +34,7 @@ from app.db import (
     list_dataset_configs,
     record_calculation_run,
 )
+from app.db.audit import update_audit_event_artifacts
 from app.db.readers import (
     load_bess_inputs_from_db,
     load_inputs_snapshot,
@@ -36,6 +44,7 @@ from app.db.readers import (
 from app.settings import load_settings
 from app.storage import (
     build_run_artifact_key,
+    build_scenario_state_key,
     get_storage_client_from_settings,
     upload_bytes,
 )
@@ -64,6 +73,63 @@ st.set_page_config(
     page_title="BESS Invoice Calculator",
     layout="wide",
 )
+
+
+def current_user_email():
+    user_info = st.user.to_dict()
+    return (
+        user_info.get("email")
+        or user_info.get("preferred_username")
+        or user_info.get("upn")
+    )
+
+
+def is_logged_in():
+    return bool(st.user.to_dict().get("is_logged_in", False))
+
+
+def auth_is_configured():
+    auth_config = st.secrets.get("auth", {})
+    required_keys = (
+        "redirect_uri",
+        "cookie_secret",
+        "client_id",
+        "client_secret",
+        "server_metadata_url",
+    )
+    for key in required_keys:
+        value = str(auth_config.get(key, "")).strip()
+        if not value or value.startswith("replace-with-"):
+            return False
+    return True
+
+
+def require_login():
+    if is_logged_in():
+        return
+
+    st.title("BESS Invoice Calculator")
+    if not auth_is_configured():
+        st.error("Authentication is not configured yet.")
+        st.info(
+            "Update `.streamlit/secrets.toml` with the real OIDC client ID, "
+            "client secret, cookie secret, redirect URI, and metadata URL."
+        )
+        st.stop()
+
+    st.button("Log in", on_click=st.login)
+    st.stop()
+
+
+def render_authenticated_user_sidebar():
+    user_email = current_user_email()
+    if user_email:
+        st.sidebar.caption(f"Signed in as {user_email}")
+    if st.sidebar.button("Log out"):
+        st.logout()
+
+
+require_login()
 
 st.markdown(
     """
@@ -141,11 +207,12 @@ st.markdown(
 
 
 def main():
+    render_authenticated_user_sidebar()
 
     st.html("""
         <style>
             header.stAppHeader::before {
-                content: "Invoice Calculator";
+                content: "LUMA Invoice Calculator";
                 position: absolute;
                 left: 50%;
                 transform: translateX(-50%);
@@ -181,8 +248,8 @@ def main():
 def render_database_flow(project_id, project_name):
 
     try:
-        settings = load_settings()
-        engine = get_engine(settings.database.url)
+        settings = get_cached_settings()
+        engine = get_cached_engine(settings.database.url)
         check_connection(engine)
         datasets = list_dataset_configs(engine, project_id)
     except Exception as exc:
@@ -272,7 +339,19 @@ def render_database_flow(project_id, project_name):
     if any(row_count == 0 for row_count in row_counts.values()):
         st.warning("One or more input tables are empty for this dataset.")
 
-    render_database_table_views(engine, project_id, dataset_name, override_mode)
+    render_database_table_views(
+        engine,
+        project_id,
+        dataset_name,
+        override_mode,
+        on_saved=lambda change_context: _record_scenario_state_artifacts(
+            settings,
+            engine,
+            project_id,
+            dataset_name,
+            change_context,
+        ),
+    )
 
     st.subheader("Run")
     run_clicked = st.button("Run Calculation", type="primary")
@@ -292,6 +371,14 @@ def render_database_flow(project_id, project_name):
         snapshot_month = snapshot_data["latest_month_summary"]["timestamp_month"]
         snapshot_name = generate_calculation_snapshot_name()
         csv_artifact = _upload_run_csv(
+            settings,
+            project_id,
+            dataset_name,
+            snapshot_month,
+            snapshot_name,
+            snapshot_data,
+        )
+        _upload_run_package(
             settings,
             project_id,
             dataset_name,
@@ -319,6 +406,16 @@ def render_database_flow(project_id, project_name):
     st.rerun()
 
 
+@st.cache_resource
+def get_cached_settings():
+    return load_settings()
+
+
+@st.cache_resource
+def get_cached_engine(database_url):
+    return get_engine(database_url)
+
+
 def _save_run_output(project_id, dataset_name, results_df, report_text):
     st.session_state[LAST_RUN_OUTPUT_KEY] = {
         "project_id": project_id,
@@ -344,6 +441,132 @@ def _upload_run_csv(settings, project_id, dataset_name, snapshot_month, snapshot
         }
     except Exception:
         return None
+
+
+def _upload_run_package(
+    settings,
+    project_id,
+    dataset_name,
+    snapshot_month,
+    snapshot_name,
+    snapshot_data,
+):
+    try:
+        client = get_storage_client_from_settings(settings)
+        bucket = settings.object_storage.bucket
+        key = build_run_artifact_key(
+            project_id,
+            dataset_name,
+            snapshot_month,
+            snapshot_name,
+            "package.json",
+        )
+        artifact = build_calculation_package_artifact(
+            project_id=project_id,
+            dataset_name=dataset_name,
+            snapshot_month=snapshot_month,
+            snapshot_name=snapshot_name,
+            snapshot_data=snapshot_data,
+        )
+        upload_bytes(
+            client,
+            bucket,
+            key,
+            artifact_to_json_bytes(artifact),
+            content_type="application/json",
+        )
+    except Exception:
+        return None
+
+
+def _upload_scenario_state(
+    settings,
+    engine,
+    project_id,
+    dataset_name,
+    change_context=None,
+):
+    try:
+        client = get_storage_client_from_settings(settings)
+        bucket = settings.object_storage.bucket
+        artifact_name = (
+            (change_context or {}).get("audit_event_id")
+            or _timestamped_artifact_name("scenario_state")
+        )
+        inputs = load_inputs_snapshot(engine, project_id, dataset_name)
+
+        csv_key = build_scenario_state_key(
+            project_id,
+            dataset_name,
+            artifact_name,
+            "csv",
+        )
+        upload_bytes(
+            client,
+            bucket,
+            csv_key,
+            build_inputs_csv_text(inputs, change_context=change_context),
+            content_type="text/csv",
+        )
+
+        json_key = build_scenario_state_key(
+            project_id,
+            dataset_name,
+            artifact_name,
+            "json",
+        )
+        artifact = build_scenario_state_artifact(
+            project_id=project_id,
+            dataset_name=dataset_name,
+            inputs=inputs,
+            change_context=change_context,
+        )
+        upload_bytes(
+            client,
+            bucket,
+            json_key,
+            artifact_to_json_bytes(artifact),
+            content_type="application/json",
+        )
+        return {
+            "artifact_bucket": bucket,
+            "artifact_csv_key": csv_key,
+            "artifact_json_key": json_key,
+        }
+    except Exception:
+        return None
+
+
+def _record_scenario_state_artifacts(
+    settings,
+    engine,
+    project_id,
+    dataset_name,
+    change_context=None,
+):
+    artifact_meta = _upload_scenario_state(
+        settings,
+        engine,
+        project_id,
+        dataset_name,
+        change_context,
+    )
+    audit_event_id = (change_context or {}).get("audit_event_id")
+    if not artifact_meta or not audit_event_id:
+        return
+
+    update_audit_event_artifacts(
+        engine=engine,
+        audit_event_id=audit_event_id,
+        artifact_bucket=artifact_meta["artifact_bucket"],
+        artifact_csv_key=artifact_meta["artifact_csv_key"],
+        artifact_json_key=artifact_meta["artifact_json_key"],
+    )
+
+
+def _timestamped_artifact_name(prefix):
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+    return f"{prefix}_{timestamp}"
 
 
 def _render_saved_run_output(engine, project_id, dataset_name):
@@ -399,26 +622,34 @@ def render_create_dataset_panel(engine, project_id, datasets, force_visible=Fals
             "A dataset is a named version of a facility's inputs, such as "
             "`actual`, `testing`, or `scenario_1`."
         )
-        with st.form(f"create-dataset-{project_id}"):
-            dataset_name = st.text_input("Name", placeholder="testing")
-            start_from = st.radio(
-                "Start from",
-                options=[START_WITH_CONTRACT_VALUES, COPY_EXISTING_DATASET],
-                help=(
-                    "New scenarios start with the facility's contract values so "
-                    "the Contract values table is populated immediately."
-                ),
-            )
-            base_dataset_name = None
-            if start_from == COPY_EXISTING_DATASET:
-                if not dataset_names:
-                    st.warning("No existing datasets are available to copy.")
-                else:
-                    base_dataset_name = st.selectbox(
-                        "Base dataset",
-                        options=dataset_names,
-                    )
-            submitted = st.form_submit_button("Create")
+        dataset_name = st.text_input(
+            "Name",
+            placeholder="testing",
+            key=f"create-dataset-name-{project_id}",
+        )
+        start_from = st.radio(
+            "Start from",
+            options=[START_WITH_CONTRACT_VALUES, COPY_EXISTING_DATASET],
+            help=(
+                "New scenarios start with the facility's contract values so "
+                "the Contract values table is populated immediately."
+            ),
+            key=f"create-dataset-start-from-{project_id}",
+        )
+        base_dataset_name = None
+        if start_from == COPY_EXISTING_DATASET:
+            if not dataset_names:
+                st.warning("No existing datasets are available to copy.")
+            else:
+                base_dataset_name = st.selectbox(
+                    "Base dataset",
+                    options=dataset_names,
+                    key=f"create-dataset-base-{project_id}",
+                )
+        submitted = st.button(
+            "Create",
+            key=f"create-dataset-submit-{project_id}",
+        )
 
         if not submitted:
             return

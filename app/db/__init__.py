@@ -1,3 +1,4 @@
+from app.db.audit import update_audit_event_artifacts
 from app.db.connection import check_connection, get_engine
 from app.db.datasets import (
     create_dataset_config,
@@ -35,4 +36,5 @@ __all__ = [
     "list_dataset_configs",
     "list_recent_calculation_runs",
     "record_calculation_run",
+    "update_audit_event_artifacts",
 ]

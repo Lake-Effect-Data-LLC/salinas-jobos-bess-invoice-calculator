@@ -12,6 +12,8 @@ Runtime app behavior:
 
 - Select facility: Salinas or Jobos.
 - Select dataset/scenario from the database.
+- Cache settings and SQLAlchemy engine creation with Streamlit resource caching so reruns reuse the same database engine/pool.
+- Run a lightweight database connection check on every render so connection errors still surface promptly.
 - Show a dynamic page title based on the selected facility and scenario.
 - Preserve the selected facility and scenario in URL query params so browser reload keeps the same selection when valid.
 - Use a compact expanded sidebar for facility and dataset/scenario selection.
@@ -20,9 +22,12 @@ Runtime app behavior:
 - Render the banner as a full-width element within the main content area.
 - Create new datasets/scenarios.
 - Edit input tables backed by Postgres.
-- Keep existing input rows locked by default; normal mode shows existing rows read-only and provides a separate new-row entry grid.
+- Use one input grid in normal mode so users can add new rows at the bottom of the existing table. Existing-row edits/deletes are still rejected at save time unless Override Mode is on.
 - Use a sidebar `Override Mode` toggle to unlock existing-row edits/deletes; the main input-table area shows the warning and mandatory override editor when the toggle is active.
 - In Override Mode, each table's save action is grouped in a native bordered container with a warning, override edit reason text area, and Save button.
+- After a successful input-table save that inserts, updates, or deletes rows, the app generates one `audit_event_id` for the save action and writes it to every `row_edit_history` row created by that save.
+- After a successful input-table save that inserts, updates, or deletes rows, the app exports the complete current scenario state to MinIO under `scenario_state/{project_id}/{dataset_name}/{audit_event_id}.csv` and `.json`. The artifacts include the audit event ID, changed table name, inserted/updated/deleted counts, override edit reason when provided, and sections for all five input tables.
+- When the scenario-state MinIO upload succeeds, the matching `row_edit_history` rows are updated with the artifact bucket, CSV key, and JSON key so DBeaver can point directly to the related snapshot files.
 - Show concise contract-aware tooltips on input table column headers.
 - Show collapsed `Column Guide` expanders above editable input tables with a reminder that headers also support hover tooltips.
 - Add row-level notes directly in non-contract input tables when recording context for manual edits.
@@ -44,7 +49,8 @@ Run-history behavior:
 - The dashboard groups runs by `snapshot_month` and shows only the latest successful run for each month.
 - Latest Run shows the most recent month prominently.
 - Previous Runs is collapsed by default in the right side of the top run dashboard and shows the prior 12 months in a scrollable card list with `MP`, `MFP`, `CPP`, `MCC`, `FAA`, and `PRA`; CSV/report downloads sit under the month label for each previous run.
-- After a successful run, the CSV is uploaded to MinIO at `run_history/{project_id}/{dataset_name}/{YYYY-MM}/{snapshot_name}.csv` and a `file_object` row is created and linked to the snapshot via `source_file_object_id`.
+- After a successful run, a run audit CSV is uploaded to MinIO at `run_history/{project_id}/{dataset_name}/{YYYY-MM}/{snapshot_name}.csv` and a `file_object` row is created and linked to the snapshot via `source_file_object_id`. The CSV starts with monthly results and then includes sections for all five input tables used for the run.
+- After a successful run, a companion JSON calculation package is also uploaded to MinIO at `run_history/{project_id}/{dataset_name}/{YYYY-MM}/{snapshot_name}.package.json`; it includes the latest-month summary, monthly results CSV text, report text, and all five input tables used for the run.
 - CSV downloads in the run dashboard use a presigned MinIO URL (`st.link_button`) when a `file_object` is linked; older runs without a MinIO artifact fall back to `st.download_button` using text in `snapshot_data`.
 - Report downloads always use `snapshot_data`; the report is not uploaded to MinIO.
 - MinIO upload failures are non-fatal — the run and database snapshot succeed regardless.
@@ -69,7 +75,7 @@ Contract values:
 
 - Contract values are displayed read-only in normal mode.
 - Contract values can only be deleted in Override Mode; inserting and editing contract-value rows remains blocked.
-- Contract-value deletes require override editor identity, edit reason, and audit logging because they represent contract/reference data.
+- Contract-value deletes require Override Mode, edit reason, and audit logging because they represent contract/reference data.
 
 ## Technical Details
 
@@ -86,12 +92,14 @@ Primary runtime files:
 
 Audit behavior:
 
+- One input-table save action maps to one `audit_event_id`; multiple row inserts/updates/deletes from that save share the same ID.
 - Non-contract input saves do not require form-level audit metadata.
 - `row_edit_history` can still store nullable `edit_reason` and `source` values for these tables.
 - Row-level `notes` remain part of the input records and are included in inserted/updated row data.
-- Existing-row updates/deletes require Override Mode, an override editor value stored in audit `source`, and an edit reason.
+- Existing-row updates/deletes require Override Mode and an edit reason. Audit `source` remains nullable until an explicit editor/source field or authenticated user identity is wired in.
 - Deletes are hard deletes from the input table after a `row_edit_history` row is written in the same transaction.
 - `row_edit_history.created_at` supplies the audit timestamp. `edited_by` remains nullable until authenticated app users are wired into the runtime.
+- `row_edit_history.artifact_bucket`, `artifact_csv_key`, and `artifact_json_key` are nullable because DB saves are allowed to succeed even if MinIO upload fails.
 
 CSV support remains outside the runtime app:
 

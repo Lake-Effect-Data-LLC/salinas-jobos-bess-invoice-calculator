@@ -1,12 +1,11 @@
 import hashlib
 import io
 
-import boto3
 import streamlit as st
-from botocore.config import Config
 
 
 RUN_HISTORY_PREFIX = "run_history"
+SCENARIO_STATE_PREFIX = "scenario_state"
 
 
 @st.cache_resource
@@ -17,6 +16,9 @@ def get_storage_client(
     region,
     force_path_style,
 ):
+    import boto3
+    from botocore.config import Config
+
     return boto3.client(
         "s3",
         endpoint_url=endpoint_url,
@@ -53,6 +55,10 @@ def ensure_bucket_exists(client, bucket):
 def build_run_artifact_key(project_id, dataset_name, snapshot_month, snapshot_name, extension):
     month_prefix = snapshot_month[:7] if snapshot_month else "unknown"
     return f"{RUN_HISTORY_PREFIX}/{project_id}/{dataset_name}/{month_prefix}/{snapshot_name}.{extension}"
+
+
+def build_scenario_state_key(project_id, dataset_name, artifact_name, extension="json"):
+    return f"{SCENARIO_STATE_PREFIX}/{project_id}/{dataset_name}/{artifact_name}.{extension}"
 
 
 def upload_bytes(client, bucket, key, data, content_type="application/octet-stream"):

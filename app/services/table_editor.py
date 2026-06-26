@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from decimal import Decimal
 
 import pandas as pd
@@ -146,6 +147,7 @@ def save_monthly_inputs_edits(
     edit_reason,
     source,
     allow_existing_row_changes=False,
+    audit_event_id=None,
 ):
     return _save_table_edits(
         engine,
@@ -163,6 +165,7 @@ def save_monthly_inputs_edits(
         delete_fn=_delete_monthly_input,
         unknown_id_label="monthly input",
         allow_existing_row_changes=allow_existing_row_changes,
+        audit_event_id=audit_event_id,
     )
 
 
@@ -175,6 +178,7 @@ def save_yearly_inputs_edits(
     edit_reason,
     source,
     allow_existing_row_changes=False,
+    audit_event_id=None,
 ):
     return _save_table_edits(
         engine,
@@ -192,6 +196,7 @@ def save_yearly_inputs_edits(
         delete_fn=_delete_yearly_input,
         unknown_id_label="yearly input",
         allow_existing_row_changes=allow_existing_row_changes,
+        audit_event_id=audit_event_id,
     )
 
 
@@ -204,6 +209,7 @@ def save_performance_tests_edits(
     edit_reason,
     source,
     allow_existing_row_changes=False,
+    audit_event_id=None,
 ):
     return _save_table_edits(
         engine,
@@ -221,6 +227,7 @@ def save_performance_tests_edits(
         delete_fn=_delete_performance_test,
         unknown_id_label="performance test",
         allow_existing_row_changes=allow_existing_row_changes,
+        audit_event_id=audit_event_id,
     )
 
 
@@ -233,6 +240,7 @@ def save_monthly_performance_guarantee_edits(
     edit_reason,
     source,
     allow_existing_row_changes=False,
+    audit_event_id=None,
 ):
     return _save_table_edits(
         engine,
@@ -250,6 +258,7 @@ def save_monthly_performance_guarantee_edits(
         delete_fn=_delete_monthly_performance_guarantee,
         unknown_id_label="monthly performance guarantee",
         allow_existing_row_changes=allow_existing_row_changes,
+        audit_event_id=audit_event_id,
     )
 
 
@@ -262,6 +271,7 @@ def save_contract_value_deletes(
     edit_reason,
     source,
     allow_existing_row_changes=False,
+    audit_event_id=None,
 ):
     return _save_table_edits(
         engine,
@@ -281,6 +291,7 @@ def save_contract_value_deletes(
         allow_existing_row_changes=allow_existing_row_changes,
         allow_inserts=False,
         allow_updates=False,
+        audit_event_id=audit_event_id,
     )
 
 
@@ -303,6 +314,7 @@ def _save_table_edits(
     allow_existing_row_changes=False,
     allow_inserts=True,
     allow_updates=True,
+    audit_event_id=None,
 ):
     edit_reason = _optional_audit_text(edit_reason)
     source = _optional_audit_text(source)
@@ -362,6 +374,8 @@ def _save_table_edits(
     if not inserted and not updated and not deleted:
         return {"inserted": 0, "updated": 0, "deleted": 0}
 
+    audit_event_id = audit_event_id or generate_audit_event_id()
+
     with engine.begin() as connection:
         dataset_config_id = get_dataset_config_id(connection, project_id, dataset_name)
         for record in inserted:
@@ -377,6 +391,7 @@ def _save_table_edits(
                 new_data=new_record,
                 edit_reason=edit_reason,
                 source=source,
+                audit_event_id=audit_event_id,
             )
 
         for previous_record, record in updated:
@@ -391,6 +406,7 @@ def _save_table_edits(
                 new_data=record,
                 edit_reason=edit_reason,
                 source=source,
+                audit_event_id=audit_event_id,
             )
 
         for previous_record in deleted:
@@ -404,10 +420,24 @@ def _save_table_edits(
                 new_data=None,
                 edit_reason=edit_reason,
                 source=source,
+                audit_event_id=audit_event_id,
             )
             delete_fn(connection, previous_record["id"])
 
-    return {"inserted": len(inserted), "updated": len(updated), "deleted": len(deleted)}
+    return {
+        "inserted": len(inserted),
+        "updated": len(updated),
+        "deleted": len(deleted),
+        "audit_event_id": audit_event_id,
+    }
+
+
+def generate_audit_event_id(timestamp=None):
+    timestamp = timestamp or datetime.now(timezone.utc)
+    if timestamp.tzinfo is None:
+        timestamp = timestamp.replace(tzinfo=timezone.utc)
+    timestamp = timestamp.astimezone(timezone.utc)
+    return f"audit_event_{timestamp.strftime('%Y%m%dT%H%M%S%fZ')}"
 
 
 def _insert_audit_record(
@@ -420,6 +450,7 @@ def _insert_audit_record(
     new_data,
     edit_reason,
     source,
+    audit_event_id,
 ):
     connection.execute(
         text(
@@ -429,6 +460,7 @@ def _insert_audit_record(
                 table_name,
                 row_id,
                 action,
+                audit_event_id,
                 previous_data,
                 new_data,
                 edit_reason,
@@ -439,6 +471,7 @@ def _insert_audit_record(
                 :table_name,
                 :row_id,
                 :action,
+                :audit_event_id,
                 CAST(:previous_data AS jsonb),
                 CAST(:new_data AS jsonb),
                 :edit_reason,
@@ -451,6 +484,7 @@ def _insert_audit_record(
             "table_name": table_name,
             "row_id": row_id,
             "action": action,
+            "audit_event_id": audit_event_id,
             "previous_data": _to_json(previous_data),
             "new_data": _to_json(new_data),
             "edit_reason": edit_reason,

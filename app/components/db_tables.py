@@ -5,6 +5,7 @@ from sqlalchemy import text
 from app.components.column_tooltips import INPUT_COLUMN_TOOLTIPS
 from app.db import get_dataset_config_id
 from app.services.table_editor import (
+    generate_audit_event_id,
     save_contract_value_deletes,
     save_monthly_inputs_edits,
     save_monthly_performance_guarantee_edits,
@@ -112,7 +113,13 @@ TABLE_CONFIGS = {
 }
 
 
-def render_database_table_views(engine, project_id, dataset_name, override_mode=False):
+def render_database_table_views(
+    engine,
+    project_id,
+    dataset_name,
+    override_mode=False,
+    on_saved=None,
+):
     override_source = None
     if override_mode:
         st.warning(
@@ -134,6 +141,7 @@ def render_database_table_views(engine, project_id, dataset_name, override_mode=
                     table,
                     override_mode,
                     override_source,
+                    on_saved,
                 )
             elif table_name == "monthly_inputs":
                 render_monthly_inputs_editor(
@@ -143,6 +151,7 @@ def render_database_table_views(engine, project_id, dataset_name, override_mode=
                     table,
                     override_mode,
                     override_source,
+                    on_saved,
                 )
             elif table_name == "yearly_inputs":
                 render_yearly_inputs_editor(
@@ -152,6 +161,7 @@ def render_database_table_views(engine, project_id, dataset_name, override_mode=
                     table,
                     override_mode,
                     override_source,
+                    on_saved,
                 )
             elif table_name == "monthly_performance_guarantee":
                 render_monthly_performance_guarantee_editor(
@@ -161,6 +171,7 @@ def render_database_table_views(engine, project_id, dataset_name, override_mode=
                     table,
                     override_mode,
                     override_source,
+                    on_saved,
                 )
             elif table_name == "performance_tests":
                 render_performance_tests_editor(
@@ -170,6 +181,7 @@ def render_database_table_views(engine, project_id, dataset_name, override_mode=
                     table,
                     override_mode,
                     override_source,
+                    on_saved,
                 )
 
 
@@ -180,6 +192,7 @@ def render_contract_values_editor(
     table,
     override_mode=False,
     override_source=None,
+    on_saved=None,
 ):
     st.caption(
         "Contract values are reference data. They are read-only unless Override Mode "
@@ -213,6 +226,7 @@ def render_contract_values_editor(
         override_mode=override_mode,
     )
     if save_clicked:
+        audit_event_id = generate_audit_event_id()
         try:
             result = save_contract_value_deletes(
                 engine=engine,
@@ -223,11 +237,13 @@ def render_contract_values_editor(
                 edit_reason=edit_reason,
                 source=override_source,
                 allow_existing_row_changes=override_mode,
+                audit_event_id=audit_event_id,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
             st.success(f"Saved contract values: {result['deleted']} deleted.")
+            _run_on_saved(on_saved, "contract_values", result, edit_reason)
             st.rerun()
 
 
@@ -238,6 +254,7 @@ def render_monthly_inputs_editor(
     table,
     override_mode=False,
     override_source=None,
+    on_saved=None,
 ):
     st.caption(_guarded_editor_guidance())
     _render_column_guide("monthly_inputs")
@@ -275,6 +292,7 @@ def render_monthly_inputs_editor(
         override_mode=override_mode,
     )
     if save_clicked:
+        audit_event_id = generate_audit_event_id()
         try:
             result = save_monthly_inputs_edits(
                 engine=engine,
@@ -285,11 +303,13 @@ def render_monthly_inputs_editor(
                 edit_reason=edit_reason,
                 source=override_source,
                 allow_existing_row_changes=override_mode,
+                audit_event_id=audit_event_id,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
             st.success(_save_message("monthly inputs", result))
+            _run_on_saved(on_saved, "monthly_inputs", result, edit_reason)
             st.rerun()
 
 
@@ -300,6 +320,7 @@ def render_yearly_inputs_editor(
     table,
     override_mode=False,
     override_source=None,
+    on_saved=None,
 ):
     st.caption(_guarded_editor_guidance())
     _render_column_guide("yearly_inputs")
@@ -345,6 +366,7 @@ def render_yearly_inputs_editor(
         override_mode=override_mode,
     )
     if save_clicked:
+        audit_event_id = generate_audit_event_id()
         try:
             result = save_yearly_inputs_edits(
                 engine=engine,
@@ -355,11 +377,13 @@ def render_yearly_inputs_editor(
                 edit_reason=edit_reason,
                 source=override_source,
                 allow_existing_row_changes=override_mode,
+                audit_event_id=audit_event_id,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
             st.success(_save_message("yearly inputs", result))
+            _run_on_saved(on_saved, "yearly_inputs", result, edit_reason)
             st.rerun()
 
 
@@ -370,6 +394,7 @@ def render_performance_tests_editor(
     table,
     override_mode=False,
     override_source=None,
+    on_saved=None,
 ):
     st.caption(_guarded_editor_guidance())
     _render_column_guide("performance_tests")
@@ -438,6 +463,7 @@ def render_performance_tests_editor(
         override_mode=override_mode,
     )
     if save_clicked:
+        audit_event_id = generate_audit_event_id()
         try:
             result = save_performance_tests_edits(
                 engine=engine,
@@ -448,11 +474,13 @@ def render_performance_tests_editor(
                 edit_reason=edit_reason,
                 source=override_source,
                 allow_existing_row_changes=override_mode,
+                audit_event_id=audit_event_id,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
             st.success(_save_message("performance tests", result))
+            _run_on_saved(on_saved, "performance_tests", result, edit_reason)
             st.rerun()
 
 
@@ -463,6 +491,7 @@ def render_monthly_performance_guarantee_editor(
     table,
     override_mode=False,
     override_source=None,
+    on_saved=None,
 ):
     st.caption(_guarded_editor_guidance())
     _render_column_guide("monthly_performance_guarantee")
@@ -520,6 +549,7 @@ def render_monthly_performance_guarantee_editor(
         override_mode=override_mode,
     )
     if save_clicked:
+        audit_event_id = generate_audit_event_id()
         try:
             result = save_monthly_performance_guarantee_edits(
                 engine=engine,
@@ -530,11 +560,18 @@ def render_monthly_performance_guarantee_editor(
                 edit_reason=edit_reason,
                 source=override_source,
                 allow_existing_row_changes=override_mode,
+                audit_event_id=audit_event_id,
             )
         except Exception as exc:
             st.error(str(exc))
         else:
             st.success(_save_message("monthly performance guarantee", result))
+            _run_on_saved(
+                on_saved,
+                "monthly_performance_guarantee",
+                result,
+                edit_reason,
+            )
             st.rerun()
 
 
@@ -557,23 +594,18 @@ def _render_guarded_editor(
             column_config=column_config,
         )
 
-    st.dataframe(
-        editable_table,
-        use_container_width=True,
-        hide_index=True,
-        column_config=column_config,
+    st.caption(
+        "Add new rows at the bottom. Existing row changes require Override Mode to save."
     )
-    st.caption("Add new rows below. Existing rows are locked unless Override Mode is on.")
-    new_rows = st.data_editor(
-        editable_table.iloc[0:0].copy(),
+    return st.data_editor(
+        editable_table,
         use_container_width=True,
         hide_index=True,
         num_rows="dynamic",
         disabled=["id"],
-        key=f"{table_name}-new-rows-editor-{project_id}-{dataset_name}",
+        key=f"{table_name}-normal-editor-{project_id}-{dataset_name}",
         column_config=column_config,
     )
-    return pd.concat([editable_table, new_rows], ignore_index=True)
 
 
 def _render_save_controls(label, key, override_mode):
@@ -592,6 +624,26 @@ def _render_save_controls(label, key, override_mode):
     return edit_reason, save_clicked
 
 
+def _run_on_saved(on_saved, table_name, result, edit_reason):
+    if on_saved is not None and _has_saved_changes(result):
+        on_saved(
+            {
+                "audit_event_id": result.get("audit_event_id"),
+                "table_name": table_name,
+                "change_result": {
+                    "inserted": result.get("inserted", 0),
+                    "updated": result.get("updated", 0),
+                    "deleted": result.get("deleted", 0),
+                },
+                "edit_reason": edit_reason,
+            }
+        )
+
+
+def _has_saved_changes(result):
+    return any(result.get(key, 0) for key in ("inserted", "updated", "deleted"))
+
+
 def _prepare_editable_table(table):
     editable_table = table.copy()
     if "id" in editable_table:
@@ -601,8 +653,8 @@ def _prepare_editable_table(table):
 
 def _guarded_editor_guidance():
     return (
-        "Normal mode locks existing rows and lets you add new rows. "
-        "Override Mode unlocks audited edits/deletes."
+        "Normal mode lets you add rows in the table. "
+        "Existing row changes require Override Mode to save."
     )
 
 

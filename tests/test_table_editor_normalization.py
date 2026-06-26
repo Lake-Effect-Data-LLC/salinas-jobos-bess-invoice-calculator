@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pandas as pd
 
 from app.services.table_editor import (
+    generate_audit_event_id,
     _normalize_monthly_inputs_df,
     _normalize_monthly_performance_guarantee_df,
     _normalize_yearly_inputs_df,
@@ -213,23 +214,6 @@ class TableEditorNormalizationTest(unittest.TestCase):
                 allow_existing_row_changes=True,
             )
 
-    def test_override_update_requires_editor_identity(self):
-        original_df = _yearly_input_df()
-        edited_df = original_df.copy()
-        edited_df.loc[0, "dde"] = 401
-
-        with self.assertRaisesRegex(ValueError, "override editor"):
-            save_yearly_inputs_edits(
-                engine=None,
-                project_id="salinas",
-                dataset_name="actual",
-                original_df=original_df,
-                edited_df=edited_df,
-                edit_reason="Correct source data",
-                source=None,
-                allow_existing_row_changes=True,
-            )
-
     def test_override_update_is_audited(self):
         original_df = _yearly_input_df()
         edited_df = original_df.copy()
@@ -251,17 +235,31 @@ class TableEditorNormalizationTest(unittest.TestCase):
                 original_df=original_df,
                 edited_df=edited_df,
                 edit_reason="Correct source data",
-                source="Override Mode",
+                source=None,
                 allow_existing_row_changes=True,
+                audit_event_id="audit_event_test",
             )
 
-        self.assertEqual(result, {"inserted": 0, "updated": 1, "deleted": 0})
+        self.assertEqual(
+            result,
+            {
+                "inserted": 0,
+                "updated": 1,
+                "deleted": 0,
+                "audit_event_id": "audit_event_test",
+            },
+        )
         self.assertEqual(updated_records[0]["dde"], 401.0)
         self.assertEqual(engine.connection.executions[0]["action"], "update")
+        self.assertEqual(
+            engine.connection.executions[0]["audit_event_id"],
+            "audit_event_test",
+        )
         self.assertEqual(
             engine.connection.executions[0]["edit_reason"],
             "Correct source data",
         )
+        self.assertIsNone(engine.connection.executions[0]["source"])
 
     def test_override_delete_is_audited(self):
         original_df = _yearly_input_df()
@@ -283,14 +281,35 @@ class TableEditorNormalizationTest(unittest.TestCase):
                 original_df=original_df,
                 edited_df=edited_df,
                 edit_reason="Remove duplicate year",
-                source="Override Mode",
+                source=None,
                 allow_existing_row_changes=True,
+                audit_event_id="audit_event_delete_test",
             )
 
-        self.assertEqual(result, {"inserted": 0, "updated": 0, "deleted": 1})
+        self.assertEqual(
+            result,
+            {
+                "inserted": 0,
+                "updated": 0,
+                "deleted": 1,
+                "audit_event_id": "audit_event_delete_test",
+            },
+        )
         self.assertEqual(deleted_ids, ["row-1"])
         self.assertEqual(engine.connection.executions[0]["action"], "delete")
+        self.assertEqual(
+            engine.connection.executions[0]["audit_event_id"],
+            "audit_event_delete_test",
+        )
         self.assertEqual(engine.connection.executions[0]["new_data"], None)
+        self.assertIsNone(engine.connection.executions[0]["source"])
+
+    def test_generate_audit_event_id_uses_utc_timestamp(self):
+        audit_event_id = generate_audit_event_id(
+            pd.Timestamp("2026-06-26T14:30:22.123456Z").to_pydatetime()
+        )
+
+        self.assertEqual(audit_event_id, "audit_event_20260626T143022123456Z")
 
     def test_contract_values_are_delete_only(self):
         original_df = _contract_value_df()

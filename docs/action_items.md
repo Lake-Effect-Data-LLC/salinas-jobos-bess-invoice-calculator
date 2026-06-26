@@ -20,7 +20,7 @@ Status labels:
 | Done | Build a dashboard section at the top of the page | Dashboard appears above input tables and shows latest run stats plus previous monthly runs for the selected facility/dataset. |
 | Done | Make the project/dataset sidebar less large | Keep selector controls in the sidebar for now, but use a slimmer panel so the input tables have more room. Revisit modal/popup only if sidebar selection still gets in the way. |
 | Todo | Change calculation output to show only the current/most recent month | Current output is broader than the main invoice-review workflow needs. |
-| Partial | Add CSV export for calculation outputs and save to MinIO or equivalent storage | Successful runs now store CSV text in `monthly_snapshot.snapshot_data` for dashboard downloads. MinIO upload/download remains intentionally unwired. |
+| Done | Add CSV export for calculation outputs and save to MinIO or equivalent storage | Successful runs upload a run audit CSV to MinIO for dashboard downloads; it includes monthly results plus all five input tables. A companion JSON package and scenario-state JSON snapshots are also uploaded. |
 | Todo | Add a separate analytics/graphs page | Keep operational invoice workflow separate from exploratory reporting. |
 
 ---
