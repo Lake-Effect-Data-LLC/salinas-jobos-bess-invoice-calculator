@@ -1,0 +1,136 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "BESS: 1 Setup Dev Environment",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\scripts\\setup-dev.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "BESS: 2 Start Local Services",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\scripts\\start-services.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "BESS: 3 Seed DB and Verify",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\scripts\\seed-and-verify-db.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "BESS: 4 Launch Streamlit App",
+            "type": "shell",
+            "command": "powershell",
+            "args": [
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}\\scripts\\start-streamlit.ps1"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "isBackground": true,
+            "problemMatcher": []
+        },
+        {
+            "label": "BESS: Full Setup",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "BESS: 1 Setup Dev Environment",
+                "BESS: 2 Start Local Services",
+                "BESS: 3 Seed DB and Verify"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "BESS: Run CLI Salinas",
+            "type": "shell",
+            "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+            "args": [
+                "${workspaceFolder}\\main.py",
+                "salinas"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "BESS: Run CLI Jobos",
+            "type": "shell",
+            "command": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+            "args": [
+                "${workspaceFolder}\\main.py",
+                "jobos"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "clear": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

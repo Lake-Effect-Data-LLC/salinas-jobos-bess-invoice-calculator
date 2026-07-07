@@ -8,6 +8,85 @@ The current calculator is built around Appendix F monthly compensation, with
 Appendix P values reported separately so they can be reviewed before deciding
 whether they should be netted through `ADJ` or invoice presentation.
 
+Clickable Local Setup
+---------------------
+
+GitHub README pages do not safely execute local shell commands directly. This
+repo provides two GUI-friendly local options instead: VS Code tasks and
+double-clickable Windows launchers.
+
+### Option A: VS Code task runner
+
+Open the repo in VS Code, then use **Terminal > Run Task...** and choose one of
+the BESS tasks:
+
+| Task | What it does |
+| --- | --- |
+| `BESS: Full Setup` | Creates the Python environment, installs dependencies, starts local services, imports CSV data, and verifies DB-backed calculations |
+| `BESS: 1 Setup Dev Environment` | Creates `.venv`, installs requirements, and creates `.env.docker` if needed |
+| `BESS: 2 Start Local Services` | Starts local Postgres and MinIO through Docker Compose |
+| `BESS: 3 Seed DB and Verify` | Imports CSV inputs into Postgres and verifies DB-backed calculation output |
+| `BESS: 4 Launch Streamlit App` | Starts the Streamlit app at `http://localhost:8501` |
+| `BESS: Run CLI Salinas` | Runs the CLI calculator for Salinas |
+| `BESS: Run CLI Jobos` | Runs the CLI calculator for Jobos |
+
+Docker Desktop must be running before starting local services.
+
+
+### Option B: manual PowerShell chunks
+
+If you want to test each setup step manually, run these chunks from the repo
+root.
+
+Create and activate a local virtual environment:
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Create local service configuration:
+
+```powershell
+Copy-Item .env.docker.example .env.docker
+```
+
+Start local Postgres and MinIO:
+
+```powershell
+docker compose --env-file .env.docker up -d
+```
+
+Seed the database from CSV inputs and verify the round trip:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://bess_app:bluedesk@localhost:5433/bess_invoice"
+python tools/import_csv_to_db.py
+python tools/verify_db_roundtrip.py
+```
+
+Launch the Streamlit app:
+
+```powershell
+$env:DATABASE_URL = "postgresql+psycopg://bess_app:bluedesk@localhost:5433/bess_invoice"
+streamlit run app/streamlit_app.py
+```
+
+Then open:
+
+```text
+http://localhost:8501
+```
+
+Run the CLI calculator without Streamlit:
+
+```powershell
+python .\main.py salinas
+python .\main.py jobos
+```
+
 
 What It Calculates
 ------------------
@@ -100,15 +179,6 @@ The calculator keeps these three concepts separate:
 | `TDE` | Event input in `Performance_Tests.csv` | Actual tested duration energy from a Performance Test |
 | `TR` | Yearly input supplied from PREPA or another authoritative source | Year-start Tested Result used when no same-year Performance Test is yet effective |
 
-`DDE` is currently a yearly input with a contract-derived validation check.
-
-Contractually, Degraded Duration Energy means Design Duration Energy adjusted
-downward by the applicable Energy Degradation Factor and adjusted upward by
-qualifying Performance Tests after maintenance or technology upgrades, capped
-at Design Duration Energy. Appendix J currently states Annual Duration Energy
-Degradation Rate is `0%` per Agreement Year, so current Salinas/Jobos DDE
-should equal Design Duration Energy unless a documented qualifying upgrade/test
-adjustment applies.
 
 The calculator still reads `DDE` from `bess_yearly_inputs_template.csv`, but it
 now derives an expected DDE from `design_duration_energy` and
@@ -117,7 +187,7 @@ an error if the yearly input does not match.
 
 `TDE` is the performance-test source value. `TR` is a separate yearly input.
 The calculator does not derive annual `TR` from `TDE` or prior Performance Test
-history because the contract does not provide a standalone derivation rule.
+history because the contract does not provide a standalone derivation rule I believe.
 
 Approved Performance Tests can affect `MCC`. The adjustment starts on the first
 day of the Billing Period after the Billing Period in which the Performance Test
@@ -133,31 +203,6 @@ Current MCC behavior:
 
 Main validation concern: `TR` should be populated from PREPA or another
 documented source of truth before relying on annual MCC results.
-
-
-Questions To Confirm With PREPA
--------------------------------
-
-These are the questions most likely to matter before relying on known-example
-validation or submitting an invoice:
-
-1. For annual MCC, what PREPA document or process supplies the explicit
-   year-start `TR` value?
-2. When a Performance Test changes MCC, which date controls the first affected
-   Billing Period: test completion date, PREPA approval date, certified report
-   date, or another formal acceptance date?
-3. For CLD, does the damages clock start on the failed test date, approval date,
-   or certified report date?
-4. For CLD cure/retest allocation, is the passing test or cure date included in
-   damages, or is it the first non-damages day?
-5. If a failed Performance Test remains open at month end, should CLD accrue
-   through the current Billing Period end before a cure is known?
-6. Should calculated `ALD`, `CLD`, and `ELD` be netted through Appendix F `ADJ`
-   in monthly payment, or shown separately without reducing `MP` until PREPA
-   confirms the credit?
-7. Should ramp-rate outage hours from `Performance_Tests.csv` automatically
-   increase monthly `UNAVHRS`, or should they only be included when already
-   reflected in the monthly input file?
 
 
 Run It
@@ -241,37 +286,6 @@ python tools/verify_db_roundtrip.py
 ```
 
 
-Report Structure Target
------------------------
-
-Section 10.1 gives the practical checklist for the future written invoice or
-`report.txt`. Each Billing Period report should include, as applicable:
-
-- Monthly Fixed Payment
-- Other Payment Adjustments
-- Discharge Energy
-- Charge Energy
-- Ancillary Services
-- Green Credits
-- Balance
-- information necessary to determine Facility performance
-- insurance payments
-- credits or payments owing to PREPA
-- itemized statement of all other charges under the Agreement
-
-That means the current result columns should eventually be presented as an
-invoice-style report, not only a calculation table. A useful first structure is:
-
-1. Billing Period and Agreement Year
-2. Monthly Fixed Payment calculation: `CPP`, `MCC`, `FAA`, `PRA`, `MFP`
-3. Other Payment Adjustments and Monthly Payment: `Other_ADJ`, `ALD`, `CLD`, `ELD`, `ADJ_Total`, `MP`
-4. Metered performance data: `CE`, `DE`, `Actual_Efficiency`
-5. Performance guarantee items: `ALD`, `CLD`, and `ELD`
-6. PREPA credits/payments and itemized charges
-7. Net invoice presentation, once treatment of LDs versus `ADJ` is settled
-
-
-
 Modeled contract-specific differences:
 
 - Appendix J design operating characteristics are now confirmed for Jobos and
@@ -297,13 +311,6 @@ Remaining validation gaps:
 - `TR` is a yearly input used for annual MCC. The calculator does not infer it
   from prior Performance Test history; it should come from PREPA or another
   documented source of truth.
-- Performance Test MCC currently uses only `prepa_approved = TRUE` tests and
-  applies the MCC change from the first Billing Period after `test_date`. This
-  follows the Section 6.9 approval process, but Appendix F Section 3(c) says the
-  adjustment continues until another Performance Test is completed. Confirm
-  whether MCC and CLD cure timing should be triggered by test completion date,
-  PREPA approval date, or certified report date before relying on months where
-  those dates differ.
 - Annual adjustment replacement is modeled by Agreement Year. If an annual
   adjustment can occur mid-Agreement-Year, that timing is not yet represented.
 - `FAA` at exactly `70%` is interpreted as the last non-zero point, producing
