@@ -15,7 +15,6 @@ Use this order when sources conflict:
 
 1. Latest executed amendment with readable contract text.
 2. Original ESSA, when the amendment does not replace or alter the section.
-3. Monthly payment DOCX files as navigation/support notes only.
 
 Current controlling readable sources:
 
@@ -57,14 +56,6 @@ Current implementation:
 | `calculations.calculate_monthly_payment` | Implemented as `MFP - ADJ` |
 | `compensation_calculator.calculate_monthly_results` | Uses `ADJ_Total` |
 | `classes.BessMonthlyResult` | Stores `other_adj`, `ald`, `cld`, `eld`, `adj_total`, `mp` |
-
-Open issue:
-
-- `ALD`, `CLD`, and `ELD` are currently included in `ADJ_Total`. The monthly
-  input column is named `Other_ADJ` to signal that operator-entered adjustments
-  must exclude calculated LDs. Input validation warns whenever `Other_ADJ` is
-  non-zero so the reviewer confirms it does not duplicate calculator-generated
-  liquidated damages.
 
 ## Monthly Fixed Payment
 

@@ -312,8 +312,6 @@ Remaining validation gaps:
 - `ALD`, `CLD`, and `ELD` are folded into `ADJ_Total` under the current working
   assumption. The monthly input column is named `Other_ADJ` as a naming guard
   against entering a calculated LD there. The validator warns whenever
-  `Other_ADJ` is non-zero so reviewers confirm it excludes calculated LDs
-  before submission.
 - `CLD` defaults `GC` to `DDE` under the working interpretation that Guaranteed
   Capability equals Degraded Duration Energy. An optional `GC` column has been
   added to `bess_yearly_inputs_template.csv` for use if a future contract defines

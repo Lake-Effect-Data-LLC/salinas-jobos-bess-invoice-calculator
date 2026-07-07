@@ -1,6 +1,5 @@
 # BESS Input Data Starting Point
 
-This repo should move from solar/PPOA inputs to BESS compensation inputs before the calculation functions are rewritten.
 
 The current source of truth for input design is the "All Data Required to Make Calculations" inventory from Appendix F:
 
