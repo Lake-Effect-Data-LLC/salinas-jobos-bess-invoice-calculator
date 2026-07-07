@@ -308,23 +308,12 @@ Remaining validation gaps:
 - `FAA` at exactly `70%` is interpreted as the last non-zero point, producing
   `44%`. The contract table has a boundary gap because the middle band is
   greater than `70%` while the zero band is less than `70%`.
-- `ALD`, `CLD`, and `ELD` are folded into `ADJ_Total` under the current working
-  assumption. The monthly input column is named `Other_ADJ` as a naming guard
-  against entering a calculated LD there. The validator warns whenever
-- `CLD` defaults `GC` to `DDE` under the working interpretation that Guaranteed
-  Capability equals Degraded Duration Energy. An optional `GC` column has been
-  added to `bess_yearly_inputs_template.csv` for use if a future contract defines
-  Guaranteed Capability separately from `DDE`.
 - `CLD` is allocated from failed test date up to, but not including, the next
   approved passing test date or explicit cure/retest date. If no passing
   test/cure date has occurred yet, CLD accrues through the current Billing
   Period end. The cure-day boundary is unconfirmed; verify against a worked
   invoice before relying on a month where including or excluding the cure day
   changes the charge.
-- `CLD` currently requires `prepa_approved = TRUE` for failed tests and for
-  passing retests/cures that stop accrual. Approved failed tests still accrue
-  from the test date. Confirm whether the LD clock and cure date should instead
-  use approval date, certified report date, or test completion date.
 - Ramp-rate failure belongs in `Performance_Tests.csv`. The file now captures
   optional outage detail with `ramp_failure_caused_outage`, `outage_start`,
   `outage_end`, and `outage_equivalent_unavhrs`. These fields are validated
