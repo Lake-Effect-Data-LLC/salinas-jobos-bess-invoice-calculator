@@ -16,7 +16,8 @@ repo provides two GUI-friendly local options instead: VS Code tasks and
 double-clickable Windows launchers.
 
 ### Option A: VS Code task runner
-
+make sure to have docker desktop running
+Make sure Python 3.13 is downloaded to the right path as well
 Open the repo in VS Code, then use **Terminal > Run Task...** and choose one of
 the BESS tasks:
 
@@ -41,10 +42,25 @@ root.
 Create and activate a local virtual environment:
 
 ```powershell
+winget install Python.Python.3.13
+```
+
+```powershell
 py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+```
+if your venv starts running on the wrong Python, make sure that Python 3.13 is installed and restart the venv with the following
+```powershell
+py -3.13 --version
+```
+if that prints Python 3.13, run
+```powershell
+Remove-Item -Recurse -Force .venv
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
 Create local service configuration:
@@ -112,28 +128,6 @@ Performance guarantee reporting:
 `MP` is currently reduced by `ALD`, `CLD`, and `ELD` through `ADJ_Total`, based
 on the working assumption that Appendix F `ADJ` includes other credits or
 amounts to which PREPA has a right under the Agreement.
-
-
-Contract Source Map
--------------------
-
-Use `docs/contract_index.md` as the detailed contract trace. It maps each major
-formula to extracted contract text and to the code that implements it.
-
-High-level code map:
-
-| Area | Primary File |
-| --- | --- |
-| Main project flow | `main.py` |
-| Calculation orchestration | `compensation_calculator.py` |
-| Formula helpers | `calculations.py` |
-| Input loading | `data_reader.py` |
-| Input validation | `error_checks.py` |
-| Monthly CSV output | `data_writer.py` |
-| Invoice support report | `report.py` |
-
-For notebook-specific troubleshooting, see
-`JUPYTER_TROUBLESHOOTING_GUIDE.md`.
 
 
 Input Files
@@ -205,23 +199,6 @@ Main validation concern: `TR` should be populated from PREPA or another
 documented source of truth before relying on annual MCC results.
 
 
-Run It
-------
-
-```powershell
-python .\main.py salinas
-python .\main.py jobos
-```
-
-If no project id is provided, `main.py` defaults to `salinas`.
-
-Outputs are written to:
-
-```text
-output/<project_id>/bess_monthly_results.csv
-output/<project_id>/report.txt
-```
-
 Streamlit App
 -------------
 
@@ -246,10 +223,22 @@ Local Storage Services
 ----------------------
 
 `docker-compose.yml` starts local Postgres and MinIO services. Postgres is the
-active database-backed app dependency. MinIO is available as future supporting
-file/artifact storage, but it is not currently used by the app runtime. The host
-ports are shifted up by one from Docker defaults to avoid conflicts with another
-local stack:
+active database-backed app dependency. MinIO is the local S3-compatible artifact
+store.
+
+Current app behavior:
+
+- Calculation inputs and run snapshots are stored in Postgres.
+- When a calculation run completes, the app tries to upload the monthly-results
+  CSV to MinIO and records the object metadata in `file_object`.
+- If MinIO upload is unavailable, the calculation still succeeds and the run
+  snapshot remains available from Postgres; the MinIO artifact link is simply
+  absent.
+- MinIO does not yet store the full invoice package, source uploads, validation
+  report, or calculation trace.
+
+The host ports are shifted up by one from Docker defaults to avoid conflicts
+with another local stack:
 
 | Service | Host URL/Port | Container Default |
 | --- | --- | --- |
@@ -268,9 +257,12 @@ The Postgres init script creates starter tables for app users, projects,
 dataset configs, monthly snapshots, validation results, row edit history,
 object metadata, and the five editable input tables:
 `contract_values`, `yearly_inputs`, `monthly_inputs`,
-`monthly_performance_guarantee`, and `performance_tests`. MinIO creates the
-bucket from `MINIO_BUCKET` and enables object versioning for future artifact
-storage.
+`monthly_performance_guarantee`, and `performance_tests`.
+
+The MinIO init container creates the bucket from `MINIO_BUCKET` and enables
+object versioning. The app reads S3-compatible settings from `S3_*`
+environment variables, so `S3_BUCKET` should match `MINIO_BUCKET` for local
+development.
 
 Application settings are loaded by `app/settings.py`. Environment variables
 take precedence for local Docker runs, with `st.secrets` used as the hosted
