@@ -265,7 +265,7 @@ def render_database_flow(project_id, project_name):
             }
             for table_name, row_count in row_counts.items()
         ],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 

@@ -13,6 +13,7 @@ from calculations import (
     calculate_monthly_payment,
     calculate_performance_test_mcc,
     calculate_risk_adjustment_with_waiting_periods,
+    calculate_initial_mcc,
 )
 from classes import BessMonthlyResult
 from datetime import date
@@ -65,17 +66,14 @@ def calculate_monthly_results(
             performance_tests,
         )
         if applicable_test is None:
-            # Appendix F Section 3(b): before a same-year Performance Test has
-            # become effective, the annual MCC cap uses Tested Result (TR).
-            # TR is an externally supplied yearly input; the contract does not
-            # define a standalone derivation rule for it.
-            if yearly.tr is None:
-                raise ValueError(
-                    "Missing TR for agreement year "
-                    f"{monthly_input.agreement_year}. TR is required before "
-                    "a same-year Performance Test becomes effective."
-                )
-            mcc = calculate_annual_mcc(yearly.dde, contract.ddd, yearly.tr)
+            if monthly_input.agreement_year == 1:
+                mcc = calculate_initial_mcc(contract.design_dmax)
+            else:
+                if yearly.tr is None:
+                    raise ValueError(
+                        f"Missing TR for agreement year {monthly_input.agreement_year}."
+                    )
+                mcc = calculate_annual_mcc(yearly.dde, contract.ddd, yearly.tr)
         else:
             # Appendix F Section 3(c): once an approved same-year Performance
             # Test is effective, MCC is based on TDE versus 99% of DDE.

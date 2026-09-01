@@ -81,7 +81,7 @@ def render_summary_comparison_from_runs(runs, project_id, dataset_name):
 
         st.altair_chart(
             _comparison_bar_chart(comparison_df, metric_key),
-            use_container_width=True,
+            width="stretch",
         )
         if "Previous Runs Average" not in set(comparison_df["Comparison"]):
             st.caption("No previous runs yet for average comparison.")
@@ -116,7 +116,7 @@ def render_analytics_summary(engine, project_id, dataset_name):
                         y_axis_title="Dollars",
                         y_format="$,.2f",
                     ),
-                    use_container_width=True,
+                    width="stretch",
                 )
 
         with generation_col:
@@ -130,7 +130,7 @@ def render_analytics_summary(engine, project_id, dataset_name):
                         y_axis_title="Metric value",
                         y_format=",.2f",
                     ),
-                    use_container_width=True,
+                    width="stretch",
                 )
 
 

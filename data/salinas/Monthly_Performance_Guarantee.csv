@@ -1,25 +1,25 @@
 timestamp_month,agreement_year,CE,DE,AE_beg,AE_end,notes
-2026-01,1,6840.00,5870.00,118.00,121.00,Sample metered monthly charge/discharge data; actual efficiency about 85.86%.
-2026-02,1,6120.00,5202.00,121.00,116.00,Sample lower-efficiency month; actual efficiency about 84.92%.
-2026-03,1,7425.00,6405.00,116.00,124.00,Sample metered monthly charge/discharge data; actual efficiency about 86.37%.
-2026-04,1,7010.00,6040.00,124.00,119.00,Sample metered monthly charge/discharge data; actual efficiency about 86.09%.
-2026-05,1,8230.00,7070.00,119.00,128.00,Sample metered monthly charge/discharge data; actual efficiency about 86.01%.
-2026-06,1,7690.00,6570.00,128.00,122.00,Sample metered monthly charge/discharge data; actual efficiency about 85.36%.
-2026-07,1,8015.00,6840.00,122.00,117.00,Sample metered monthly charge/discharge data; actual efficiency about 85.28%.
-2026-08,1,7880.00,6705.00,117.00,125.00,Sample metered monthly charge/discharge data; actual efficiency about 85.19%.
-2026-09,1,7310.00,6290.00,125.00,130.00,Sample metered monthly charge/discharge data; actual efficiency about 86.11%.
-2026-10,1,6955.00,5985.00,130.00,126.00,Sample metered monthly charge/discharge data; actual efficiency about 86.00%.
-2026-11,1,7160.00,6135.00,126.00,120.00,Sample metered monthly charge/discharge data; actual efficiency about 85.60%.
-2026-12,1,7545.00,6500.00,120.00,127.00,Sample metered monthly charge/discharge data; actual efficiency about 86.24%.
-2027-01,2,6725.00,5780.00,127.00,122.00,Sample metered monthly charge/discharge data; actual efficiency about 85.87%.
-2027-02,2,6385.00,5488.00,122.00,126.00,Sample metered monthly charge/discharge data; actual efficiency about 86.01%.
-2027-03,2,7590.00,6460.00,126.00,119.00,Sample metered monthly charge/discharge data; actual efficiency about 85.02%.
-2027-04,2,7815.00,6720.00,119.00,124.00,Sample metered monthly charge/discharge data; actual efficiency about 86.05%.
-2027-05,2,8350.00,7200.00,124.00,132.00,Sample metered monthly charge/discharge data; actual efficiency about 86.32%.
-2027-06,2,8055.00,6920.00,132.00,125.00,Sample metered monthly charge/discharge data; actual efficiency about 85.82%.
-2027-07,2,8195.00,7045.00,125.00,129.00,Sample metered monthly charge/discharge data; actual efficiency about 86.02%.
-2027-08,2,7975.00,6760.00,129.00,121.00,Sample lower-efficiency month; actual efficiency about 84.66%.
-2027-09,2,7480.00,6425.00,121.00,126.00,Sample metered monthly charge/discharge data; actual efficiency about 85.96%.
-2027-10,2,6895.00,5940.00,126.00,130.00,Sample metered monthly charge/discharge data; actual efficiency about 86.21%.
-2027-11,2,7215.00,6205.00,130.00,123.00,Sample metered monthly charge/discharge data; actual efficiency about 85.90%.
-2027-12,2,7685.00,6615.00,123.00,128.00,Sample metered monthly charge/discharge data; actual efficiency about 86.08%.
+2026-01,1,6690.35,5824.27,129.10,132.81,Sample metered monthly charge/discharge data; actual efficiency about 87.11%.
+2026-02,1,7821.94,6814.01,128.89,120.84,Sample metered monthly charge/discharge data; actual efficiency about 87.01%.
+2026-03,1,7814.57,6772.67,129.17,138.70,Sample metered monthly charge/discharge data; actual efficiency about 86.79%.
+2026-04,1,6233.19,5363.80,131.40,131.91,Sample metered monthly charge/discharge data; actual efficiency about 86.06%.
+2026-05,1,8168.41,7081.14,131.28,131.72,Sample metered monthly charge/discharge data; actual efficiency about 86.69%.
+2026-06,1,6795.92,5854.63,116.32,114.10,Sample metered monthly charge/discharge data; actual efficiency about 86.12%.
+2026-07,1,7034.19,6078.65,134.43,129.34,Sample metered monthly charge/discharge data; actual efficiency about 86.34%.
+2026-08,1,7343.39,6343.00,119.13,123.24,Sample metered monthly charge/discharge data; actual efficiency about 86.43%.
+2026-09,1,6048.21,5292.94,121.14,116.16,Sample metered monthly charge/discharge data; actual efficiency about 87.43%.
+2026-10,1,8410.02,7137.14,117.65,117.36,Sample lower-efficiency month; actual efficiency about 84.86%.
+2026-11,1,7214.88,6221.79,115.99,109.25,Sample metered monthly charge/discharge data; actual efficiency about 86.14%.
+2026-12,1,8435.19,7300.26,113.72,103.84,Sample metered monthly charge/discharge data; actual efficiency about 86.43%.
+2027-01,2,7293.35,6319.95,122.69,131.08,Sample metered monthly charge/discharge data; actual efficiency about 86.77%.
+2027-02,2,6603.37,5468.86,116.13,125.37,Sample lower-efficiency month; actual efficiency about 82.96%.
+2027-03,2,7203.05,6203.71,131.99,134.57,Sample metered monthly charge/discharge data; actual efficiency about 86.16%.
+2027-04,2,8179.86,7037.17,124.63,124.62,Sample metered monthly charge/discharge data; actual efficiency about 86.03%.
+2027-05,2,7162.40,6184.16,113.29,117.54,Sample metered monthly charge/discharge data; actual efficiency about 86.40%.
+2027-06,2,6217.57,5394.50,130.74,126.34,Sample metered monthly charge/discharge data; actual efficiency about 86.69%.
+2027-07,2,7660.29,6633.16,121.07,111.72,Sample metered monthly charge/discharge data; actual efficiency about 86.47%.
+2027-08,2,6409.85,5552.51,125.27,123.26,Sample metered monthly charge/discharge data; actual efficiency about 86.59%.
+2027-09,2,8544.09,7312.21,110.57,114.73,Sample metered monthly charge/discharge data; actual efficiency about 85.63%.
+2027-10,2,7859.56,6618.70,108.78,112.60,Sample lower-efficiency month; actual efficiency about 84.26%.
+2027-11,2,6845.68,5843.19,116.43,115.25,Sample metered monthly charge/discharge data; actual efficiency about 85.34%.
+2027-12,2,7931.49,6825.72,113.16,106.86,Sample metered monthly charge/discharge data; actual efficiency about 85.98%.

@@ -7,7 +7,7 @@ from data_writer import BESS_MONTHLY_RESULT_COLUMNS
 def render_results(results_df, report_text):
     st.success("Calculation complete.")
     st.subheader("Monthly Results")
-    st.dataframe(results_df, use_container_width=True, hide_index=True)
+    st.dataframe(results_df, width="stretch", hide_index=True)
 
     col1, col2 = st.columns(2)
     with col1:

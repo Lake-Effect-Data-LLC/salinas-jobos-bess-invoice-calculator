@@ -192,7 +192,7 @@ def render_contract_values_editor(
     if not override_mode:
         st.dataframe(
             editable_table,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             column_config=column_config,
         )
@@ -200,7 +200,7 @@ def render_contract_values_editor(
 
     edited_table = st.data_editor(
         editable_table,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         num_rows="dynamic",
         disabled=list(editable_table.columns),
@@ -549,7 +549,7 @@ def _render_guarded_editor(
     if override_mode:
         return st.data_editor(
             editable_table,
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             num_rows="dynamic",
             disabled=["id"],
@@ -559,14 +559,14 @@ def _render_guarded_editor(
 
     st.dataframe(
         editable_table,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config=column_config,
     )
     st.caption("Add new rows below. Existing rows are locked unless Override Mode is on.")
     new_rows = st.data_editor(
         editable_table.iloc[0:0].copy(),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         num_rows="dynamic",
         disabled=["id"],

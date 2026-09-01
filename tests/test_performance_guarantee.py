@@ -447,7 +447,7 @@ class PerformanceGuaranteeTest(unittest.TestCase):
 
         self.assertAlmostEqual(results[0].mcc, 96.0)
 
-    def test_monthly_results_require_tr_before_effective_performance_test(self):
+    def test_monthly_results_use_design_dmax_for_year_one_without_performance_test(self):
         contract_values = {
             1: BessContractValues(
                 agreement_year=1,
@@ -475,6 +475,60 @@ class PerformanceGuaranteeTest(unittest.TestCase):
             )
         ]
 
+        results = calculate_monthly_results(
+            contract_values,
+            yearly_inputs,
+            monthly_inputs,
+        )
+
+        # Appendix F/A Section 3(a): at the Commercial Operation Date, MCC
+        # equals Design Dmax. No TR is required for Agreement Year 1 before
+        # a Performance Test becomes effective.
+        self.assertAlmostEqual(results[0].mcc, 100.0)
+
+    def test_monthly_results_require_tr_before_effective_performance_test_year_two(self):
+        contract_values = {
+            1: BessContractValues(
+                agreement_year=1,
+                cppf=23696.0,
+                cpppif=1200.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+            ),
+            2: BessContractValues(
+                agreement_year=2,
+                cppf=24169.92,
+                cpppif=1224.0,
+                ddd=4.0,
+                design_dmax=100.0,
+                design_duration_energy=400.0,
+                annual_duration_energy_degradation_rate=0.0,
+            ),
+        }
+        yearly_inputs = {
+            1: BessYearlyInputs(agreement_year=1, dde=400.0, tr=100.0),
+            2: BessYearlyInputs(agreement_year=2, dde=400.0),
+        }
+        monthly_inputs = [
+            BessMonthlyInputs(
+                timestamp_month="2027-01",
+                agreement_year=2,
+                adj=0.0,
+                bphrs=744.0,
+                pohrs=0.0,
+                unavhrs=0.0,
+                unavprodhrs=0.0,
+                gse=0.0,
+                pfm=0.0,
+                ip=0.0,
+            )
+        ]
+
+        # Section 3(b)'s TR-based annual cap applies starting Agreement Year
+        # 2 (it governs MCC for "the following Agreement Year"), so a missing
+        # TR should still raise once Year 1 is no longer involved.
         with self.assertRaisesRegex(ValueError, "Missing TR"):
             calculate_monthly_results(
                 contract_values,

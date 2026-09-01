@@ -292,3 +292,8 @@ def calculate_efficiency_liquidated_damages(
 
     energy_shortfall = max((CE * GE) - DE, 0)
     return calculate_liquidated_damages_rate(RER, CPP) * energy_shortfall
+
+def calculate_initial_mcc(design_dmax):
+    if design_dmax <= 0:
+        raise ValueError("Design DMAX must be greater than zero.")
+    return design_dmax
